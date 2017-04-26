@@ -47,26 +47,6 @@
 
     break
 
-
-
-# Specific functionality
-
-## Maps
-
-    load map with filename <filename>
-
-## Layers
-
-    add map layer with [id <id> and] <filename> to index <index> => id
-    add empty map layer [with id <id>] to index <index> => id
-
-    remove layer with id <id>
-
-    show layer with id <id>
-    hide layer with id <id>
-
-    move layer with id <id> from index <index> to <index>
-
 ## Coroutines
 
     start coroutine <function_name> => id
@@ -81,3 +61,38 @@
     ###
     Multiline comment
     ###
+
+
+# Specific functionality
+
+## Maps
+
+    load map with [<id> and] filename <filename> => id
+
+    show map <id>
+    hide map <id>
+
+## Layers
+
+    add map layer with [id <id> and] <filename> to index <index> => id
+    add empty map layer [with id <id>] to index <index> => id
+
+    remove layer <id>
+
+    show layer <id>
+    hide layer <id>
+
+    move layer <id> from index <index> to <index>
+
+## Sprites
+
+    load sprite with [<id> and] filename <filename> => id
+
+    add sprite <id> [to layer <id>]
+    remove sprite <id>
+
+    show sprite <id>
+    hide sprite <id>
+
+    move sprite <id> to front
+    move sprite <id> to back
