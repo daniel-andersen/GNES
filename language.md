@@ -67,12 +67,6 @@
     not
     is
 
-    Example: if x is y and y is not z then ...
-    Example: if x == y and y != z then ...
-    Example: if x < y or y < z then ...
-    Example: if x then ...
-    Example: if not x then ...
-
 ## Comments
 
     # Comment
@@ -114,3 +108,26 @@
 
     move sprite <id> to front
     move sprite <id> to back
+
+
+
+# Examples
+
+## Language basics
+
+    if x is y and y is not z then ...
+    if x == y and y != z then ...
+    if x < y or y < z then ...
+    if x then ...
+    if not x then ...
+
+    class Test
+        property name
+        property age = 17
+
+        function something()
+            if name is "Daniel" and age < 20 then
+                ...
+            end
+        end
+    end
