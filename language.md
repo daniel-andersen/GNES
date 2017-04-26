@@ -1,5 +1,9 @@
 # Language basics
 
+## Variables
+
+    <name> = <expr>
+
 ## If/then/else
 
     if <expr> then <expr> [else expr]
@@ -20,6 +24,8 @@
 
     class <name> [of type <name>]
     end
+
+    property <name> [= <expr>]
 
 ## Arrays
 
@@ -54,6 +60,19 @@
     stop coroutine with id <id>
     stop all coroutines
 
+## Logical operators
+
+    and
+    or
+    not
+    is
+
+    Example: if x is y and y is not z then ...
+    Example: if x == y and y != z then ...
+    Example: if x < y or y < z then ...
+    Example: if x then ...
+    Example: if not x then ...
+
 ## Comments
 
     # Comment
@@ -61,7 +80,6 @@
     ###
     Multiline comment
     ###
-
 
 # Specific functionality
 
