@@ -25,14 +25,14 @@ gulp.task('css', function() {
 gulp.task('html', function() {
   gulp.src('html/**/*.html')
     .pipe(pug())
-    .pipe(gulp.dest('build/html'))
+    .pipe(gulp.dest('build'))
     .pipe(livereload());
 });
 
 gulp.task('coffee', function() {
   gulp.src('./src/**/*.coffee')
     .pipe(coffee({bare: true}))
-    .pipe(gulp.dest('build/src'))
+    .pipe(gulp.dest('build/scripts'))
     .pipe(livereload());
 });
 
