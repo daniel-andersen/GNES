@@ -16,3 +16,7 @@ console.log("---> " + globals.mainThread.resolveVariable("test").value)
 
 globals.mainThread.popEncapsulatedScope()
 console.log("---> " + globals.mainThread.resolveVariable("test").value)
+
+language = new Language()
+tokenizer = new Tokenizer(language)
+console.log(tokenizer.tokenizeLine("if a is 123 then 1 else 2"))

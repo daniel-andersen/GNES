@@ -66,6 +66,8 @@
     or
     not
     is
+    ==
+    !=
 
 ## Comments
 
