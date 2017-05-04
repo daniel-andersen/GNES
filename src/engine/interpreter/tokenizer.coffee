@@ -1,7 +1,7 @@
 class Tokenizer
   constructor: (@language) ->
 
-  tokenizeFile: (lines) -> [@tokenizeLine(line) for line in lines]
+  tokenizeLines: (lines) -> (@tokenizeLine(line) for line in lines)
 
   tokenizeLine: (line) ->
     tokens = []
@@ -18,7 +18,7 @@ class Tokenizer
       token = token[1]
 
       # Add token
-      type = if token of @language.tokenTypes then @language.tokenTypes[token] else ExpressionType.variable
+      type = if token of @language.tokenTypes then @language.tokenTypes[token] else @language.tokenType.Variable
 
       tokens.push({
         'type': type

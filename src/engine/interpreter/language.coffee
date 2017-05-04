@@ -1,42 +1,61 @@
-ExpressionType =
-  variable: -1
-  singleLineComment: 0
-  multiLineComment: 1
-  andOperator: 2
-  orOperator: 3
-  equalOperator: 4
-  notEqualOperator: 5
-  negationOperator: 6
-  plusOperator: 7
-  minusOperator: 8
-  multiplyOperator: 9
-  divideOperator: 10
-  assignmentOperator: 11
-  ifOperator: 12
-  thenOperator: 13
-  elseOperator: 14
-  endOperator: 15
-
 class Language
 
   constructor: ->
 
+    @tokenType =
+      Any: -2
+      Variable: -1
+      SingleLineComment: 0
+      MultiLineComment: 1
+      And: 2
+      Or: 3
+      Equal: 4
+      NotEqual: 5
+      Negation: 6
+      Plus: 7
+      Minus: 8
+      Multiply: 9
+      Divide: 10
+      Assignment: 11
+      If: 12
+      Then: 13
+      Else: 14
+      End: 15
+      ParenthesesStart: 16
+      ParenthesesEnd: 17
+
+    @statement =
+      SingleLineComment: 0
+      MultiLineComment: 1
+      Assignment: 2
+      If: 3
+      IfThenElse: 4
+      Else: 5
+      ElseIf: 6
+      End: 7
+
+    @statementStart =
+      "#{@tokenType.SingleLineComment}": @statement.SingleLineComment
+      "#{@tokenType.MultiLineComment}": @statement.MultiLineComment
+      "#{@tokenType.If}": @statement.If
+      "#{@tokenType.Else}": @statement.Else
+      "#{@tokenType.End}": @statement.End
+
     @tokenTypes =
-      '#': ExpressionType.singleLineComment
-      '###': ExpressionType.multiLineComment
-      'and': ExpressionType.andOperator
-      'or': ExpressionType.orOperator
-      '==': ExpressionType.equalOperator
-      'is': ExpressionType.equalOperator
-      '!=': ExpressionType.notEqualOperator
-      'is not': ExpressionType.notEqualOperator
-      'not': ExpressionType.negationOperator
-      '+': ExpressionType.plusOperator
-      '-': ExpressionType.minusOperator
-      '*': ExpressionType.multiplyOperator
-      '/': ExpressionType.divideOperator
-      '=': ExpressionType.assignmentOperator
-      'if': ExpressionType.ifOperator
-      'then': ExpressionType.thenOperator
-      'else': ExpressionType.elseOperator
-      'end': ExpressionType.endOperator
+      '#': @tokenType.SingleLineComment
+      '###': @tokenType.MultiLineComment
+      'and': @tokenType.And
+      'or': @tokenType.Or
+      '==': @tokenType.Equal
+      'is': @tokenType.Equal
+      '!=': @tokenType.NotEqual
+      'not': @tokenType.Negation
+      '+': @tokenType.Plus
+      '-': @tokenType.Minus
+      '*': @tokenType.Multiply
+      '/': @tokenType.Divide
+      '=': @tokenType.Assignment
+      'if': @tokenType.If
+      'then': @tokenType.Then
+      'else': @tokenType.Else
+      'end': @tokenType.End
