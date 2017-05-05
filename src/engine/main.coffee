@@ -21,15 +21,20 @@ if false
 if false
   language = new Language()
   tokenizer = new Tokenizer(language)
-  console.log(tokenizer.tokenizeLine("if a is 123 then 1 else 2"))
+  console.log(tokenizer.tokenizeLines(['if a is 123 then a = "THIS IS A TEST" else 2']))
 
 if true
   lines = [
     [
-      "if x > 5 then x = 10 else x = 20",
-      "if x is 10 then",
-      "  x = 20"
-      "end"
+      '###'
+      'This is a multiline comment'
+      '###'
+      'if x == 5 then str = "x equals 5" else str = "x does not equal 5"'
+      'if str is "x equals 5" then   # This is a comment'
+      '  print("x equals 5")'
+      'else'
+      '  print("x does not equal 5")'
+      'end'
     ]
   ]
 

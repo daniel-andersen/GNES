@@ -23,23 +23,8 @@ class Language
       End: 15
       ParenthesesStart: 16
       ParenthesesEnd: 17
-
-    @statement =
-      SingleLineComment: 0
-      MultiLineComment: 1
-      Assignment: 2
-      If: 3
-      IfThenElse: 4
-      Else: 5
-      ElseIf: 6
-      End: 7
-
-    @statementStart =
-      "#{@tokenType.SingleLineComment}": @statement.SingleLineComment
-      "#{@tokenType.MultiLineComment}": @statement.MultiLineComment
-      "#{@tokenType.If}": @statement.If
-      "#{@tokenType.Else}": @statement.Else
-      "#{@tokenType.End}": @statement.End
+      StringDelimiter: 18
+      StringConstant: 19
 
     @tokenTypes =
       '#': @tokenType.SingleLineComment
@@ -59,3 +44,21 @@ class Language
       'then': @tokenType.Then
       'else': @tokenType.Else
       'end': @tokenType.End
+      '"': @tokenType.StringDelimiter
+
+    @statement =
+      SingleLineComment: 0
+      MultiLineComment: 1
+      Assignment: 2
+      If: 3
+      IfThenElse: 4
+      Else: 5
+      ElseIf: 6
+      End: 7
+
+    @statementStart =
+      "#{@tokenType.SingleLineComment}": @statement.SingleLineComment
+      "#{@tokenType.MultiLineComment}": @statement.MultiLineComment
+      "#{@tokenType.If}": @statement.If
+      "#{@tokenType.Else}": @statement.Else
+      "#{@tokenType.End}": @statement.End
