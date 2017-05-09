@@ -58,26 +58,34 @@ class SourceTree
 
     console.log(sourceTree)
 
-  buildNode: (tokens) ->
+  buildNode: (tokens, nodeClass) ->
 
     # End of file
     if tokens.length == 0
       return [new EOFNode(), []]
 
-    # Parse statement
-    nodeClass = @findStatementNodeClass(tokens)
-    if nodeClass?
-      return @buildStatement(tokens, nodeClass)
+    # Find node statement class
+    if not nodeClass?
+      nodeClass = @findStatementNodeClass(tokens)
 
-    # Parse expression
-    return @buildExpression(tokens)
+    # Find node expression class
+    if not nodeClass?
+      nodeClass = @findExpressionNodeClass(tokens)
+
+    if not nodeClass?
+      return [new ParseError(type = 'Syntax Error', message = 'Unexpected keyword "' + tokens[0] + '"'), []]
+
+    # Build node
+    node = new nodeClass()
+    tokens = node.build(tokens)
+    return [node, tokens]
 
   buildStatement: (tokens, nodeClass = undefined) ->
     if not nodeClass?
       nodeClass = @findStatementNodeClass(tokens)
 
     if not nodeClass?
-      return new ParseError(type = 'Syntax Error', message = 'Expected statement, but found ' + tokens[0])
+      return [new ParseError(type = 'Syntax Error', message = 'Unexpected keyword "' + tokens[0] + '"'), []]
 
     node = new nodeClass()
     remainingTokens = node.build(tokens)
@@ -88,11 +96,25 @@ class SourceTree
       nodeClass = @findExpressionNodeClass(tokens)
 
     if not nodeClass?
-      return new ParseError(type = 'Syntax Error', message = 'Expected expression, but found ' + tokens[0])
+      return [new ParseError(type = 'Syntax Error', message = 'Unexpected keyword "' + tokens[0] + '"'), []]
 
     node = new nodeClass()
     remainingTokens = node.build(tokens)
     return [node, remainingTokens]
+
+  findNodeClass: (tokens) ->
+
+    # End of file
+    if tokens.length == 0
+      return EOFNode
+
+    # Find statement class
+    nodeClass = @findStatementNodeClass(tokens)
+    if nodeClass?
+      return nodeClass
+
+    # Parse expression
+    return @findExpressionNodeClass(tokens)
 
   findStatementNodeClass: (tokens) ->
 
@@ -159,19 +181,21 @@ class SourceTree
         # Handle EOL
         tokens = @handleEOL(tokens)
 
+        # Find node class
+        nodeClass = self.findNodeClass(tokens)
+
+        # Check if end node
+        if nodeClass in endNodes
+          return remainingTokens
+
         # Build node
-        [node, tokens] = self.buildNode(tokens)
+        [node, tokens] = self.buildNode(tokens, nodeClass)
         if not node?
           break
 
         # Check if end of file reached
         if node instanceof EOFNode
           break
-
-        # Check if stop nodes
-        for endNode in endNodes
-          if node instanceof endNode
-            return remainingTokens
 
         # Add node
         @children.push(node)

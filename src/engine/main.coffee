@@ -38,7 +38,6 @@ if true
     ]
   ]
 
-  ###
   lines = [
     [
       'x = 1'
@@ -52,7 +51,6 @@ if true
       'a = "test"'
     ]
   ]
-  ###
 
   language = new Language()
   sourceTree = new SourceTree(language)
