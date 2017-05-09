@@ -125,7 +125,10 @@ class SourceTree
   findExpressionNodeClass: (tokens) ->
     return ExpressionNode  # TODO!
 
-
+  nextToken: (tokens) ->
+    while tokens.length > 0 and (tokens[0].type == @language.tokenType.EOL or tokens[0].type == @language.tokenType.EOF)
+      tokens = tokens[1..]
+    return if tokens.length > 0 then tokens[0] else @language.tokenType.EOF
 
   class TreeNode
     constructor: (@parent = undefined)->
@@ -212,6 +215,10 @@ class SourceTree
       if not @thenNode instanceof ThenNode
         return new ParseError(type = 'Syntax Error', message = 'Expected THEN')
 
+      # Check singleline IF THEN
+      if @thenNode.singleline and self.nextToken(tokens).type not in [self.language.tokenType.Else, self.language.tokenType.End]
+        return tokens
+
       # Build ELSE and ELSE IF
       while true
 
@@ -232,6 +239,10 @@ class SourceTree
         else if node instanceof ElseNode
           @elseNode = node
 
+          # Check singleline IF THEN ELSE
+          if @thenNode.singleline and @elseNode.singleline and self.nextToken(tokens).type not in [self.language.tokenType.Else, self.language.tokenType.End]
+            return tokens
+
         # END node
         else if node instanceof EndNode
           return tokens
@@ -241,26 +252,64 @@ class SourceTree
           return new ParseError(type = 'Syntax Error', message = 'Expected END')
 
   class ThenNode extends BlockNode
+    constructor: ->
+      super()
+      @singleline = false
+
     build: (tokens) ->
 
       # Consume THEN token
       @tokens.push(tokens[0])
       tokens = tokens[1..]
 
-      # Build statements
-      return super(tokens, endNodes = [ElseIfNode, ElseNode, EndNode])
+      # Check singleline vs multiline
+      @singleline = tokens[0].type != self.language.tokenType.EOL
+
+      # Singleline THEN
+      if @singleline
+        @singleline = true
+
+        [node, tokens] = self.buildStatement(tokens)
+        @children.push(node)
+
+        @tokens = @tokens.concat(node.tokens)
+
+        return tokens
+
+      # Multiline THEN
+      else
+        return super(tokens, endNodes = [ElseIfNode, ElseNode, EndNode])
 
   class ElseIfNode extends TreeNode
 
   class ElseNode extends BlockNode
+    constructor: ->
+      super()
+      @singleline = false
+
     build: (tokens) ->
 
       # Consume ELSE token
       @tokens.push(tokens[0])
       tokens = tokens[1..]
 
-      # Build statements
-      return super(tokens, endNodes = [ElseIfNode, ElseNode, EndNode])
+      # Check singleline vs multiline
+      @singleline = tokens[0].type != self.language.tokenType.EOL
+
+      # Singleline ELSE
+      if @singleline
+        @singleline = true
+
+        [node, tokens] = self.buildStatement(tokens)
+        @children.push(node)
+
+        @tokens = @tokens.concat(node.tokens)
+
+        return tokens
+
+      # Multiline ELSE
+      else
+        return super(tokens, endNodes = [ElseIfNode, ElseNode, EndNode])
 
   class EndNode extends TreeNode
 
