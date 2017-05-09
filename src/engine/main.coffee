@@ -38,6 +38,22 @@ if true
     ]
   ]
 
+  ###
+  lines = [
+    [
+      'x = 1'
+      'if a == 2 then'
+      '  x = 2'
+      '  y = 3'
+      'else'
+      '  z = 3 + "TEST"'
+      'end'
+      ''
+      'a = "test"'
+    ]
+  ]
+  ###
+
   language = new Language()
   sourceTree = new SourceTree(language)
   sourceTree.build(lines)

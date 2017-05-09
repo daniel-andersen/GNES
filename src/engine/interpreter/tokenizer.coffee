@@ -5,13 +5,11 @@ class Tokenizer
     tokenPattern = /^\s*(\w+|"|[^A-Za-z0-9_"]+)/i
 
     # Parse all lines
-    allTokens = []
+    tokens = []
 
     multilineComment = false
 
     for line in lines
-
-      lineTokens = []
 
       while true
 
@@ -49,15 +47,24 @@ class Tokenizer
 
         # Add token if not part of multiline comment
         if not multilineComment
-          lineTokens.push({
+          tokens.push({
             'type': type
             'token': token
           })
 
-      # Add line tokens
-      allTokens.push(lineTokens)
+      # Add EOL
+      tokens.push({
+        'type': @language.tokenType.EOL
+        'token': ''
+      })
 
-    return allTokens
+    # Add EOF
+    tokens.push({
+      'type': @language.tokenType.EOF
+      'token': ''
+    })
+
+    return tokens
 
   findTokenForwards: (type, tokens, fromIndex = 0) ->
     for i in [fromIndex...tokens.length]
