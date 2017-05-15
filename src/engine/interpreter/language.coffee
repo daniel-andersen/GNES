@@ -23,10 +23,14 @@ class Language
       Then: 15
       Else: 16
       End: 17
-      ParenthesisStart: 18
-      ParenthesisEnd: 19
-      StringDelimiter: 20
-      StringConstant: 21
+      While: 18
+      Do: 19
+      For: 20
+      In: 21
+      ParenthesisStart: 22
+      ParenthesisEnd: 23
+      StringDelimiter: 24
+      StringConstant: 25
 
     @tokenTypes =
       '#': @tokenType.SingleLineComment
@@ -46,6 +50,10 @@ class Language
       'then': @tokenType.Then
       'else': @tokenType.Else
       'end': @tokenType.End
+      'while': @tokenType.While
+      'do': @tokenType.Do
+      'for': @tokenType.For
+      'in': @tokenType.In
       '(': @tokenType.ParenthesisStart
       ')': @tokenType.ParenthesisEnd
       '"': @tokenType.StringDelimiter
@@ -58,14 +66,31 @@ class Language
       @tokenType.Then
       @tokenType.Else
       @tokenType.End
+      @tokenType.While
+      @tokenType.Do
+      @tokenType.For
+      @tokenType.In
     ]
 
-    @statementType =
-      SingleLineComment: 0
-      MultiLineComment: 1
-      Assignment: 2
-      If: 3
-      IfThenElse: 4
-      Else: 5
-      ElseIf: 6
-      End: 7
+    @arithmeticTokens = [
+      @tokenType.And
+      @tokenType.Or
+      @tokenType.Plus
+      @tokenType.Minus
+      @tokenType.Multiply
+      @tokenType.Divide
+      @tokenType.Equal
+      @tokenType.NotEqual
+      @tokenType.Not
+    ]
+
+    @arithmeticOperationPriority =
+      "#{@tokenType.And}": 6
+      "#{@tokenType.Or}": 5
+      "#{@tokenType.Multiply}": 4
+      "#{@tokenType.Divide}": 3
+      "#{@tokenType.Plus}": 2
+      "#{@tokenType.Minus}": 2
+      "#{@tokenType.Equal}": 1
+      "#{@tokenType.NotEqual}": 1
+      "#{@tokenType.Not}": 0

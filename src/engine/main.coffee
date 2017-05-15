@@ -40,12 +40,17 @@ if true
 
   lines = [
     [
-      'x = 1'
-      'if a == 2 then'
-      '  x = 2'
-      '  y = 3'
-      'else'
-      '  z = 3 + "TEST"'
+      'for x in (2 + y) do'
+      '  f(x)'
+      'end'
+      'while a == 1 do'
+      '  x = 1'
+      '  if a == 2 then'
+      '    x = 2'
+      '    y = 3'
+      '  else'
+      '    z = 3 + "TEST"'
+      '  end'
       'end'
       ''
       'a = "test"'

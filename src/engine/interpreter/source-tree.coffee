@@ -34,13 +34,34 @@ class SourceTree
           nodeClass: EndNode
         }
       ]
+      "#{@language.tokenType.While}": [
+        {
+          startTokens: [@language.tokenType.While]
+          nodeClass: WhileNode
+        }
+      ]
+      "#{@language.tokenType.Do}": [
+        {
+          startTokens: [@language.tokenType.Do]
+          nodeClass: DoNode
+        }
+      ]
+      "#{@language.tokenType.For}": [
+        {
+          startTokens: [@language.tokenType.For]
+          nodeClass: ForNode
+        }
+      ]
+      "#{@language.tokenType.In}": [
+        {
+          startTokens: [@language.tokenType.In]
+          nodeClass: InNode
+        }
+      ]
       "#{@language.tokenType.Variable}": [
         {
           startTokens: [@language.tokenType.Variable, @language.tokenType.Assignment]
           nodeClass: AssignmentNode
-        }, {
-          startTokens: [@language.tokenType.Variable, @language.tokenType.ParenthesisStart]
-          nodeClass: FunctionCallNode
         }
       ]
 
@@ -176,12 +197,12 @@ class SourceTree
     build: (tokens, endNodes = []) ->
       while tokens.length > 0
 
-        remainingTokens = tokens
-
         # Handle EOL
         tokens = @handleEOL(tokens)
 
         # Find node class
+        remainingTokens = tokens
+
         nodeClass = self.findNodeClass(tokens)
 
         # Check if end node
@@ -221,7 +242,7 @@ class SourceTree
       @tokens.push(tokens[0])
       tokens = tokens[1..]
 
-      # Build test expression
+      # Build TEST expression
       [@testNode, tokens] = self.buildNode(tokens)
       if not @testNode?
         return new ParseError(type = 'Syntax Error', message = 'Expected expression')
@@ -242,6 +263,8 @@ class SourceTree
       # Check singleline IF THEN
       if @thenNode.singleline and self.nextToken(tokens).type not in [self.language.tokenType.Else, self.language.tokenType.End]
         return tokens
+
+      @tokens = @tokens.concat(@thenNode.tokens)
 
       # Build ELSE and ELSE IF
       while true
@@ -337,12 +360,160 @@ class SourceTree
 
   class EndNode extends TreeNode
 
-  class ExpressionNode extends TreeNode
+  class WhileNode extends TreeNode
+    constructor: ->
+      super()
+      @testNode = undefined
+      @doNode = undefined
+
     build: (tokens) ->
+
+      # Consume WHILE token
+      @tokens.push(tokens[0])
+      tokens = tokens[1..]
+
+      # Build TEST expression
+      [@testNode, tokens] = self.buildNode(tokens)
+      if not @testNode?
+        return new ParseError(type = 'Syntax Error', message = 'Expected expression')
+
+      if not @testNode instanceof ExpressionNode
+        return new ParseError(type = 'Syntax Error', message = 'Expected expression')
+
+      @tokens = @tokens.concat(@testNode.tokens)
+
+      # Build DO node
+      [@doNode, tokens] = self.buildNode(tokens)
+      if not @doNode?
+        return new ParseError(type = 'Syntax Error', message = 'Expected DO')
+
+      if not @doNode instanceof DoNode
+        return new ParseError(type = 'Syntax Error', message = 'Expected DO')
+
+      @tokens = @tokens.concat(@doNode.tokens)
+
+      return tokens
+
+  class DoNode extends BlockNode
+    constructor: ->
+      super()
+
+    build: (tokens) ->
+
+      # Consume DO token
+      @tokens.push(tokens[0])
+      tokens = tokens[1..]
+
+      # Build DO block
+      tokens = super(tokens, endNodes = [EndNode])
+
+      # Consume END token
+      @tokens.push(tokens[0])
+      tokens = tokens[1..]
+
+      return tokens
+
+  class ForNode extends TreeNode
+    constructor: ->
+      super()
+      @variableNode = undefined
+      @inNode = undefined
+      @doNode = undefined
+
+    build: (tokens) ->
+
+      # Consume FOR token
+      @tokens.push(tokens[0])
+      tokens = tokens[1..]
+
+      # Build VARIABLE node
+      @variableNode = new VariableNode()
+      tokens = @variableNode.build(tokens)
+
+      if not @variableNode instanceof VariableNode
+        return new ParseError(type = 'Syntax Error', message = 'Expected variable')
+
+      @tokens = @tokens.concat(@variableNode.tokens)
+
+      # Build IN node
+      [@inNode, tokens] = self.buildNode(tokens)
+      if not @inNode?
+        return new ParseError(type = 'Syntax Error', message = 'Expected expression')
+
+      if not @inNode instanceof InNode
+        return new ParseError(type = 'Syntax Error', message = 'Expected expression')
+
+      @tokens = @tokens.concat(@inNode.tokens)
+
+      # Build DO node
+      [@doNode, tokens] = self.buildNode(tokens)
+      if not @doNode?
+        return new ParseError(type = 'Syntax Error', message = 'Expected DO')
+
+      if not @doNode instanceof DoNode
+        return new ParseError(type = 'Syntax Error', message = 'Expected DO')
+
+      @tokens = @tokens.concat(@doNode.tokens)
+
+      return tokens
+
+  class InNode extends TreeNode
+    constructor: ->
+      super()
+      @expressionNode = undefined
+
+    build: (tokens) ->
+
+      # Consume IN token
+      @tokens.push(tokens[0])
+      tokens = tokens[1..]
+
+      # Build EXPRESSION node
+      [@expressionNode, tokens] = self.buildNode(tokens)
+      if not @expressionNode?
+        return new ParseError(type = 'Syntax Error', message = 'Expected expression')
+
+      if not @expressionNode instanceof ExpressionNode
+        return new ParseError(type = 'Syntax Error', message = 'Expected expression')
+
+      @tokens = @tokens.concat(@expressionNode.tokens)
+
+      return tokens
+
+  class ExpressionNode extends TreeNode
+    constructor: ->
+      super()
+      @children = []
+
+    build: (tokens) ->
+
+      # Find end of expression (= any statement token)
       while tokens.length > 0 and tokens[0].type not in self.language.statementTokens and tokens[0].type != self.language.tokenType.EOL
         @tokens.push(tokens[0])
         tokens = tokens[1..]
+
+      expressionTokens = @tokens[..]
+
+      # Remove start and end parenthesis, if any
+      if tokens[0].type == self.language.tokenType.ParenthesisStart
+        if tokens[-1..].type == self.language.tokenType.ParenthesisEnd
+          return new ParseError(type = 'Syntax Error', message = 'Expected end parenthesis')
+        expressionTokens = @tokens[1...-1]
+
+      # ........ parse in SourceTree class! PlusNode, MinusNode, EqualNode, etc.
+      for token in @tokens
+        if token.type in self.language.arithmeticTokens
+          console.log(token)
+
       return tokens
+
+  class FunctionCallNode extends ExpressionNode
+    build: (tokens) ->
+      return super(tokens)
+
+  class ArithmeticExpressionNode extends ExpressionNode
+    build: (tokens) ->
+      return super(tokens)
 
   class AssignmentNode extends TreeNode
     constructor: ->
@@ -362,7 +533,7 @@ class SourceTree
       @tokens.push(tokens[0])
       tokens = tokens[1..]
 
-      # Build expression node
+      # Build EXPRESSION node
       [@expressionNode, tokens] = self.buildNode(tokens)
       if not @expressionNode?
         return new ParseError(type = 'Syntax Error', message = 'Expected expression')
@@ -382,8 +553,6 @@ class SourceTree
     build: (tokens) ->
       @name = tokens[0]
       super(tokens)
-
-  class FunctionCallNode extends TreeNode
 
   class EOFNode extends TreeNode
 
