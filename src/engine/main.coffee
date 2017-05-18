@@ -57,6 +57,30 @@ if true
     ]
   ]
 
+  ###
+  lines = [
+    [
+      'while x > 10 do'
+      '  if x > 8 then x = 2 else y = 2'
+      '  if x > 0 then'
+      '    y = 3'
+      '  end'
+      '  y = 2'
+      '  z = 3'
+      'end'
+      'b = 10 + 20'
+      'c = 30 + 40'
+      'if a == 1 then y = 2 else z = 3'
+      'if a == 1 then'
+      '  b = 1'
+      '  c = 2 + 3'
+      'else'
+      '  d = 4'
+      'end'
+    ]
+  ]
+  ###
+
   language = new Language()
   sourceTree = new SourceTree(language)
   sourceTree.build(lines)

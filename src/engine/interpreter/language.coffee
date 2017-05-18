@@ -58,6 +58,18 @@ class Language
       ')': @tokenType.ParenthesisEnd
       '"': @tokenType.StringDelimiter
 
+    @statementType =
+      SinglelineIf: 0
+      MultilineIf: 1
+      SinglelineWhile: 2
+      MultilineWhile: 3
+      For: 4
+      Assignment: 5
+      Expression: 6
+
+
+
+
     @statementTokens = [
       @tokenType.SingleLineComment
       @tokenType.MultiLineComment

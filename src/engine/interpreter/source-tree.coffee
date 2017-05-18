@@ -6,63 +6,59 @@ class SourceTree
 
     @tokenizer = new Tokenizer(@language)
 
-    @statementClasses =
-      "#{@language.tokenType.If}": [
-        {
-          startTokens: [@language.tokenType.If]
-          nodeClass: IfNode
-        }
+    @statements =
+      "#{@language.statementType.SinglelineIf}": [
+        {type: "token", token: @language.tokenType.If}
+        {type: "expression", id: "expression"}
+        {type: "token", token: @language.tokenType.Then}
+        {type: "statement", id: "then"}
+        {type: "group", required: false, group: [
+          {type: "token", token: @language.tokenType.Else}
+          {type: "statement", id: "else"}
+        ]}
+        {type: "token", token: @language.tokenType.EOL}
       ]
-      "#{@language.tokenType.Then}": [
-        {
-          startTokens: [@language.tokenType.Then]
-          nodeClass: ThenNode
-        }
+      "#{@language.statementType.MultilineIf}": [
+        {type: "token", token: @language.tokenType.If}
+        {type: "expression", id: "expression"}
+        {type: "token", token: @language.tokenType.Then}
+        {type: "token", token: @language.tokenType.EOL}
+        {type: "subtree", id: "then"}
+        {type: "group", required: false, group: [
+          {type: "token", token: @language.tokenType.Else}
+          {type: "token", token: @language.tokenType.EOL}
+          {type: "subtree", id: "else"}
+        ]}
+        {type: "token", token: @language.tokenType.End}
       ]
-      "#{@language.tokenType.Else}": [
-        {
-          startTokens: [@language.tokenType.Else, @language.tokenType.If]
-          nodeClass: ElseIfNode
-        }, {
-          startTokens: [@language.tokenType.Else]
-          nodeClass: ElseNode
-        }
+      "#{@language.statementType.SinglelineWhile}": [
+        {type: "token", token: @language.tokenType.While}
+        {type: "expression", id: "expression"}
+        {type: "token", token: @language.tokenType.Do}
+        {type: "statement", id: "do"}
+        {type: "token", token: @language.tokenType.EOL}
       ]
-      "#{@language.tokenType.End}": [
-        {
-          startTokens: [@language.tokenType.End]
-          nodeClass: EndNode
-        }
+      "#{@language.statementType.MultilineWhile}": [
+        {type: "token", token: @language.tokenType.While}
+        {type: "expression", id: "expression"}
+        {type: "token", token: @language.tokenType.Do}
+        {type: "token", token: @language.tokenType.EOL}
+        {type: "subtree", id: "do"}
+        {type: "token", token: @language.tokenType.End}
       ]
-      "#{@language.tokenType.While}": [
-        {
-          startTokens: [@language.tokenType.While]
-          nodeClass: WhileNode
-        }
+      "#{@language.statementType.For}": [
+        {type: "token", token: @language.tokenType.For}
+        {type: "token", token: @language.tokenType.Variable, id: "variable"}
+        {type: "token", token: @language.tokenType.In}
+        {type: "expression", id: "expression"}
+        {type: "token", token: @language.tokenType.Do}
+        {type: "subtree", id: "do"}
+        {type: "token", token: @language.tokenType.End}
       ]
-      "#{@language.tokenType.Do}": [
-        {
-          startTokens: [@language.tokenType.Do]
-          nodeClass: DoNode
-        }
-      ]
-      "#{@language.tokenType.For}": [
-        {
-          startTokens: [@language.tokenType.For]
-          nodeClass: ForNode
-        }
-      ]
-      "#{@language.tokenType.In}": [
-        {
-          startTokens: [@language.tokenType.In]
-          nodeClass: InNode
-        }
-      ]
-      "#{@language.tokenType.Variable}": [
-        {
-          startTokens: [@language.tokenType.Variable, @language.tokenType.Assignment]
-          nodeClass: AssignmentNode
-        }
+      "#{@language.statementType.Assignment}": [
+        {type: "token", token: @language.tokenType.Variable, id: "variable"}
+        {type: "token", token: @language.tokenType.Assignment}
+        {type: "expression", id: "expression"}
       ]
 
   build: (files) ->
@@ -73,493 +69,203 @@ class SourceTree
     # Tokenize lines
     tokens = @tokenizer.tokenizeLines(lines)
 
-    # Reset tree
-    sourceTree = new TopLevelNode(tokens)
-    sourceTree.build(tokens, endNodes = [EOFNode])
+    # Parse tokens
+    block = @parseBlock(tokens)
 
-    console.log(sourceTree)
+    console.log("---------")
+    console.log("Result:")
+    console.log(block)
+    console.log("---------")
 
-  buildNode: (tokens, nodeClass) ->
+  parseBlock: (tokens) ->
 
-    # End of file
-    if tokens.length == 0
-      return [new EOFNode(), []]
+    blockNode = new BlockNode()
 
-    # Find node statement class
-    if not nodeClass?
-      nodeClass = @findStatementNodeClass(tokens)
+    # Parse nodes
+    while tokens.length > 0
+      node = @parse(tokens)
+      if not node?
+        return blockNode
 
-    # Find node expression class
-    if not nodeClass?
-      nodeClass = @findExpressionNodeClass(tokens)
+      # Add node
+      blockNode.nodes.push(node)
+      blockNode.tokens = blockNode.tokens.concat(node.tokens)
 
-    if not nodeClass?
-      return [new ParseError(type = 'Syntax Error', message = 'Unexpected keyword "' + tokens[0] + '"'), []]
+      # Remove tokens
+      tokens = tokens[node.tokens.length..]
 
-    # Build node
-    node = new nodeClass()
-    tokens = node.build(tokens)
-    return [node, tokens]
+    return blockNode
 
-  buildStatement: (tokens, nodeClass = undefined) ->
-    if not nodeClass?
-      nodeClass = @findStatementNodeClass(tokens)
+  parse: (tokens) ->
 
-    if not nodeClass?
-      return [new ParseError(type = 'Syntax Error', message = 'Unexpected keyword "' + tokens[0] + '"'), []]
-
-    node = new nodeClass()
-    remainingTokens = node.build(tokens)
-    return [node, remainingTokens]
-
-  buildExpression: (tokens, nodeClass = undefined) ->
-    if not nodeClass?
-      nodeClass = @findExpressionNodeClass(tokens)
-
-    if not nodeClass?
-      return [new ParseError(type = 'Syntax Error', message = 'Unexpected keyword "' + tokens[0] + '"'), []]
-
-    node = new nodeClass()
-    remainingTokens = node.build(tokens)
-    return [node, remainingTokens]
-
-  findNodeClass: (tokens) ->
-
-    # End of file
-    if tokens.length == 0
-      return EOFNode
-
-    # Find statement class
-    nodeClass = @findStatementNodeClass(tokens)
-    if nodeClass?
-      return nodeClass
-
-    # Parse expression
-    return @findExpressionNodeClass(tokens)
-
-  findStatementNodeClass: (tokens) ->
-
-    # Find valid statements based on first token
-    statements = @statementClasses[tokens[0].type]
-    if not statements?
+    # No tokens left
+    if tokens.length == 0 or tokens[0].type == @language.tokenType.EOF
       return undefined
 
-    # Find tree node from statement list
-    node = undefined
+    # Newline
+    if tokens[0].type == @language.tokenType.EOL
+      return new NewlineNode([tokens[0]])
 
-    for statement in statements
-      if tokens.length < statement.startTokens.length
-        continue
+    # Parse statement
+    statement = @parseStatement(tokens)
+    if statement?
+      return statement
 
-      # Check if tokens matches statement
-      valid = true
-      for i in [0...statement.startTokens.length]
-        if statement.startTokens[i] != tokens[i].type
-          valid = false
-          break
+    # Parse expression
+    expression = @parseExpression(tokens)
+    if expression?
+      return expression
 
-      # Statement found
-      if valid
-        return statement.nodeClass
-
-    # Not found
     return undefined
 
-  findExpressionNodeClass: (tokens) ->
-    return ExpressionNode  # TODO!
+  parseStatement: (tokens) ->
 
-  nextToken: (tokens) ->
-    while tokens.length > 0 and (tokens[0].type == @language.tokenType.EOL or tokens[0].type == @language.tokenType.EOF)
-      tokens = tokens[1..]
-    return if tokens.length > 0 then tokens[0] else @language.tokenType.EOF
+    # Match all statements
+    for type of @statements
+      statement = @matchStatement(@statements[type], tokens)
+      if statement?
+        return statement
 
-  class TreeNode
-    constructor: (@parent = undefined)->
-      @tokens = []
+    return undefined
 
-    build: (tokens) ->
-      # Nothing to do - consume first token
-      @tokens.push(tokens[0])
-      return tokens[1..]
+  parseExpression: (tokens) ->
 
-    handleEOL: (tokens) ->
-      while tokens.length > 0 and (tokens[0].type == self.language.tokenType.EOL or tokens[0].type == self.language.tokenType.EOF)
-        @tokens.push(tokens[0])
-        tokens = tokens[1..]
-      return tokens
-
-
-  class BlockNode extends TreeNode
-    constructor: ->
-      super()
-      @children = []
-
-    build: (tokens, endNodes = []) ->
-      while tokens.length > 0
-
-        # Handle EOL
-        tokens = @handleEOL(tokens)
-
-        # Find node class
-        remainingTokens = tokens
-
-        nodeClass = self.findNodeClass(tokens)
-
-        # Check if end node
-        if nodeClass in endNodes
-          return remainingTokens
-
-        # Build node
-        [node, tokens] = self.buildNode(tokens, nodeClass)
-        if not node?
-          break
-
-        # Check if end of file reached
-        if node instanceof EOFNode
-          break
-
-        # Add node
-        @children.push(node)
-
-        # Add tokens
-        @tokens = @tokens.concat(node.tokens)
-
-      return tokens
-
-  class TopLevelNode extends BlockNode
-
-  class IfNode extends TreeNode
-    constructor: ->
-      super()
-      @testNode = undefined
-      @thenNode = undefined
-      @elseIfNodes = []
-      @elseNode = undefined
-
-    build: (tokens) ->
-
-      # Consume IF token
-      @tokens.push(tokens[0])
+    # Find end of expression (= any statement token)
+    expressionTokens = []
+    while tokens.length > 0 and tokens[0].type not in @language.statementTokens and tokens[0].type != @language.tokenType.EOL and tokens[0].type != @language.tokenType.EOF
+      expressionTokens.push(tokens[0])
       tokens = tokens[1..]
 
-      # Build TEST expression
-      [@testNode, tokens] = self.buildNode(tokens)
-      if not @testNode?
-        return new ParseError(type = 'Syntax Error', message = 'Expected expression')
+    if expressionTokens.length > 0
+      return new ExpressionNode(expressionTokens)
 
-      if not @testNode instanceof ExpressionNode
-        return new ParseError(type = 'Syntax Error', message = 'Expected expression')
+    return undefined
 
-      @tokens = @tokens.concat(@testNode.tokens)
+  matchStatement: (statement, tokens) ->
+    position = 0
 
-      # Build THEN node
-      [@thenNode, tokens] = self.buildNode(tokens)
-      if not @thenNode?
-        return new ParseError(type = 'Syntax Error', message = 'Expected THEN')
+    matchedNodes = []
+    matchedTokens = []
 
-      if not @thenNode instanceof ThenNode
-        return new ParseError(type = 'Syntax Error', message = 'Expected THEN')
+    tokens = tokens[..]
 
-      # Check singleline IF THEN
-      if @thenNode.singleline and self.nextToken(tokens).type not in [self.language.tokenType.Else, self.language.tokenType.End]
-        return tokens
+    # Match statement
+    while position < statement.length
 
-      @tokens = @tokens.concat(@thenNode.tokens)
+      # Check any tokens left
+      if tokens.length <= 0
+        return undefined
 
-      # Build ELSE and ELSE IF
-      while true
+      # Match entry
+      entry = statement[position]
+      node = @matchEntry(entry, tokens)
 
-        # Handle EOL
-        tokens = @handleEOL(tokens)
+      if not node?
+        return undefined
 
-        # Build node
-        [node, tokens] = self.buildNode(tokens)
-        @tokens = @tokens.concat(node.tokens)
+      tokens = tokens[node.tokens.length..]
 
-        # ELSE IF node
-        if node instanceof ElseIfNode
-          if @elseNode?
-            return new ParseError(type = 'Syntax Error', message = 'Expected END, not ELSE IF')
-          @elseIfNodes.push(node)
+      matchedNodes.push(node)
+      matchedTokens = matchedTokens.concat(node.tokens)
 
-        # ELSE node
-        else if node instanceof ElseNode
-          @elseNode = node
+      position += 1
 
-          # Check singleline IF THEN ELSE
-          if @thenNode.singleline and @elseNode.singleline and self.nextToken(tokens).type not in [self.language.tokenType.Else, self.language.tokenType.End]
-            return tokens
+    return new StatementNode(matchedTokens, matchedNodes)
 
-        # END node
-        else if node instanceof EndNode
-          return tokens
+  matchEntry: (entry, tokens) ->
+    return switch entry['type']
+      when 'token' then @matchTokenEntry(entry, tokens)
+      when 'expression' then @matchExpressionEntry(entry, tokens)
+      when 'statement' then @matchStatementEntry(entry, tokens)
+      when 'group' then @matchGroupEntry(entry, tokens)
+      when 'subtree' then @matchSubtreeEntry(entry, tokens)
+      else undefined
 
-        # Error
-        else
-          return new ParseError(type = 'Syntax Error', message = 'Expected END')
+  matchTokenEntry: (entry, tokens) ->
+    if 'token' of entry
+      if tokens[0].type == entry['token']
+        return new TokenNode([tokens[0]], tokens[0])
+    if 'tokens' of entry
+      if tokens[0].type in entry['tokens']
+        return new TokenNode([tokens[0]], tokens[0])
+    return undefined
 
-  class ThenNode extends BlockNode
-    constructor: ->
-      super()
-      @singleline = false
+  matchExpressionEntry: (entry, tokens) ->
+    expressionNode = @parseExpression(tokens)
+    if expressionNode instanceof ExpressionNode
+      return expressionNode
+    return undefined
 
-    build: (tokens) ->
+  matchStatementEntry: (entry, tokens) ->
+    statementNode = @parseStatement(tokens)
+    if statementNode instanceof StatementNode
+      return statementNode
+    return undefined
 
-      # Consume THEN token
-      @tokens.push(tokens[0])
-      tokens = tokens[1..]
+  matchGroupEntry: (entry, tokens) ->
+    statement = @matchStatement(entry['group'], tokens)
+    if statement?
+      return new GroupNode(statement.tokens, statement)
 
-      # Check singleline vs multiline
-      @singleline = tokens[0].type != self.language.tokenType.EOL
+    required = if 'required' of entry then entry['required'] else true
+    if not required
+      return new GroupNode()
 
-      # Singleline THEN
-      if @singleline
-        @singleline = true
+    return undefined
 
-        [node, tokens] = self.buildStatement(tokens)
-        @children.push(node)
+  matchSubtreeEntry: (entry, tokens) ->
+    blockNode = @parseBlock(tokens)
+    if blockNode?
+      return blockNode
 
-        @tokens = @tokens.concat(node.tokens)
+    required = if 'required' of entry then entry['required'] else true
+    if not required
+      return new BlockNode()
 
-        return tokens
+    return undefined
 
-      # Multiline THEN
-      else
-        return super(tokens, endNodes = [ElseIfNode, ElseNode, EndNode])
 
-  class ElseIfNode extends TreeNode
 
-  class ElseNode extends BlockNode
-    constructor: ->
-      super()
-      @singleline = false
+  class Node
+    constructor: (@tokens) ->
 
-    build: (tokens) ->
+  class TokenNode extends Node
+    constructor: (@tokens=[], @token) ->
+      super(@tokens)
 
-      # Consume ELSE token
-      @tokens.push(tokens[0])
-      tokens = tokens[1..]
+  class StatementNode extends Node
+    constructor: (@tokens=[], @nodes) ->
+      super(@tokens)
 
-      # Check singleline vs multiline
-      @singleline = tokens[0].type != self.language.tokenType.EOL
+  class ExpressionNode extends Node
 
-      # Singleline ELSE
-      if @singleline
-        @singleline = true
+  class BlockNode extends Node
+    constructor: (@tokens=[], @nodes=[]) ->
+      super(@tokens)
 
-        [node, tokens] = self.buildStatement(tokens)
-        @children.push(node)
+  class GroupNode extends Node
+    constructor: (@tokens=[], @node=undefined) ->
+      super(@tokens)
 
-        @tokens = @tokens.concat(node.tokens)
+  class NewlineNode extends Node
 
-        return tokens
 
-      # Multiline ELSE
-      else
-        return super(tokens, endNodes = [ElseIfNode, ElseNode, EndNode])
 
-  class EndNode extends TreeNode
 
-  class WhileNode extends TreeNode
-    constructor: ->
-      super()
-      @testNode = undefined
-      @doNode = undefined
 
-    build: (tokens) ->
 
-      # Consume WHILE token
-      @tokens.push(tokens[0])
-      tokens = tokens[1..]
 
-      # Build TEST expression
-      [@testNode, tokens] = self.buildNode(tokens)
-      if not @testNode?
-        return new ParseError(type = 'Syntax Error', message = 'Expected expression')
 
-      if not @testNode instanceof ExpressionNode
-        return new ParseError(type = 'Syntax Error', message = 'Expected expression')
 
-      @tokens = @tokens.concat(@testNode.tokens)
 
-      # Build DO node
-      [@doNode, tokens] = self.buildNode(tokens)
-      if not @doNode?
-        return new ParseError(type = 'Syntax Error', message = 'Expected DO')
 
-      if not @doNode instanceof DoNode
-        return new ParseError(type = 'Syntax Error', message = 'Expected DO')
 
-      @tokens = @tokens.concat(@doNode.tokens)
 
-      return tokens
 
-  class DoNode extends BlockNode
-    constructor: ->
-      super()
 
-    build: (tokens) ->
 
-      # Consume DO token
-      @tokens.push(tokens[0])
-      tokens = tokens[1..]
 
-      # Build DO block
-      tokens = super(tokens, endNodes = [EndNode])
 
-      # Consume END token
-      @tokens.push(tokens[0])
-      tokens = tokens[1..]
 
-      return tokens
 
-  class ForNode extends TreeNode
-    constructor: ->
-      super()
-      @variableNode = undefined
-      @inNode = undefined
-      @doNode = undefined
-
-    build: (tokens) ->
-
-      # Consume FOR token
-      @tokens.push(tokens[0])
-      tokens = tokens[1..]
-
-      # Build VARIABLE node
-      @variableNode = new VariableNode()
-      tokens = @variableNode.build(tokens)
-
-      if not @variableNode instanceof VariableNode
-        return new ParseError(type = 'Syntax Error', message = 'Expected variable')
-
-      @tokens = @tokens.concat(@variableNode.tokens)
-
-      # Build IN node
-      [@inNode, tokens] = self.buildNode(tokens)
-      if not @inNode?
-        return new ParseError(type = 'Syntax Error', message = 'Expected expression')
-
-      if not @inNode instanceof InNode
-        return new ParseError(type = 'Syntax Error', message = 'Expected expression')
-
-      @tokens = @tokens.concat(@inNode.tokens)
-
-      # Build DO node
-      [@doNode, tokens] = self.buildNode(tokens)
-      if not @doNode?
-        return new ParseError(type = 'Syntax Error', message = 'Expected DO')
-
-      if not @doNode instanceof DoNode
-        return new ParseError(type = 'Syntax Error', message = 'Expected DO')
-
-      @tokens = @tokens.concat(@doNode.tokens)
-
-      return tokens
-
-  class InNode extends TreeNode
-    constructor: ->
-      super()
-      @expressionNode = undefined
-
-    build: (tokens) ->
-
-      # Consume IN token
-      @tokens.push(tokens[0])
-      tokens = tokens[1..]
-
-      # Build EXPRESSION node
-      [@expressionNode, tokens] = self.buildNode(tokens)
-      if not @expressionNode?
-        return new ParseError(type = 'Syntax Error', message = 'Expected expression')
-
-      if not @expressionNode instanceof ExpressionNode
-        return new ParseError(type = 'Syntax Error', message = 'Expected expression')
-
-      @tokens = @tokens.concat(@expressionNode.tokens)
-
-      return tokens
-
-  class ExpressionNode extends TreeNode
-    constructor: ->
-      super()
-      @children = []
-
-    build: (tokens) ->
-
-      # Find end of expression (= any statement token)
-      while tokens.length > 0 and tokens[0].type not in self.language.statementTokens and tokens[0].type != self.language.tokenType.EOL
-        @tokens.push(tokens[0])
-        tokens = tokens[1..]
-
-      expressionTokens = @tokens[..]
-
-      # Remove start and end parenthesis, if any
-      if tokens[0].type == self.language.tokenType.ParenthesisStart
-        if tokens[-1..].type == self.language.tokenType.ParenthesisEnd
-          return new ParseError(type = 'Syntax Error', message = 'Expected end parenthesis')
-        expressionTokens = @tokens[1...-1]
-
-      # ........ parse in SourceTree class! PlusNode, MinusNode, EqualNode, etc.
-      for token in @tokens
-        if token.type in self.language.arithmeticTokens
-          console.log(token)
-
-      return tokens
-
-  class FunctionCallNode extends ExpressionNode
-    build: (tokens) ->
-      return super(tokens)
-
-  class ArithmeticExpressionNode extends ExpressionNode
-    build: (tokens) ->
-      return super(tokens)
-
-  class AssignmentNode extends TreeNode
-    constructor: ->
-      super()
-      @variableNode = undefined
-      @expressionNode = undefined
-
-    build: (tokens) ->
-
-      # Build VARIABLE node
-      @variableNode = new VariableNode()
-      tokens = @variableNode.build(tokens)
-
-      @tokens = @tokens.concat(@variableNode.tokens)
-
-      # Consume ASSIGNMENT node
-      @tokens.push(tokens[0])
-      tokens = tokens[1..]
-
-      # Build EXPRESSION node
-      [@expressionNode, tokens] = self.buildNode(tokens)
-      if not @expressionNode?
-        return new ParseError(type = 'Syntax Error', message = 'Expected expression')
-
-      if not @expressionNode instanceof ExpressionNode
-        return new ParseError(type = 'Syntax Error', message = 'Expected expression')
-
-      @tokens = @tokens.concat(@expressionNode.tokens)
-
-      return tokens
-
-  class VariableNode extends TreeNode
-    constructor: ->
-      super()
-      @name = undefined
-
-    build: (tokens) ->
-      @name = tokens[0]
-      super(tokens)
-
-  class EOFNode extends TreeNode
-
-  class ParseError extends TreeNode
-    constructor: (@type, @message, @example = undefined) ->
-      super
-
-  class InternalError extends TreeNode
-    constructor: (@type, @message, @example = undefined) ->
-      super
+#
