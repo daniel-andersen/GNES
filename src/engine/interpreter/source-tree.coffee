@@ -122,7 +122,7 @@ class SourceTree
 
     # Match all statements
     for type of @statements
-      statement = @matchStatement(@statements[type], tokens)
+      statement = @matchStatement(@statements[type], tokens, type)
       if statement?
         return statement
 
@@ -141,7 +141,7 @@ class SourceTree
 
     return undefined
 
-  matchStatement: (statement, tokens) ->
+  matchStatement: (statement, tokens, type) ->
     position = 0
 
     matchedNodes = []
@@ -170,7 +170,7 @@ class SourceTree
 
       position += 1
 
-    return new StatementNode(matchedTokens, matchedNodes)
+    return new StatementNode(matchedTokens, matchedNodes, type)
 
   matchEntry: (entry, tokens) ->
     return switch entry['type']
@@ -234,7 +234,7 @@ class SourceTree
       super(@tokens)
 
   class StatementNode extends Node
-    constructor: (@tokens=[], @nodes) ->
+    constructor: (@tokens=[], @nodes=[], @type=undefined) ->
       super(@tokens)
 
   class ExpressionNode extends Node
@@ -248,6 +248,8 @@ class SourceTree
       super(@tokens)
 
   class NewlineNode extends Node
+    constructor: (@tokens=[]) ->
+      super(@tokens)
 
 
 
