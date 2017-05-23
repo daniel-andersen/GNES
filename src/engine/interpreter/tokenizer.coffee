@@ -24,7 +24,8 @@ class Tokenizer
         line = line.replace(tokenPattern, '')
 
         # Find token type
-        type = if token of @language.tokenTypes then @language.tokenTypes[token] else @language.tokenType.Variable
+        lowerCaseToken = token.toLowerCase()
+        type = if lowerCaseToken of @language.tokenTypes then @language.tokenTypes[lowerCaseToken] else @language.tokenType.Variable
 
         # Single line comment - ignore rest of line
         if type == @language.tokenType.SingleLineComment

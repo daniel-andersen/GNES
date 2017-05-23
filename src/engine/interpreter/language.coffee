@@ -31,6 +31,12 @@ class Language
       ParenthesisEnd: 23
       StringDelimiter: 24
       StringConstant: 25
+      Continue: 26
+      Break: 27
+      Class: 28
+      Function: 29
+      Of: 30
+      Type: 31
 
     @tokenTypes =
       '#': @tokenType.SingleLineComment
@@ -54,6 +60,12 @@ class Language
       'do': @tokenType.Do
       'for': @tokenType.For
       'in': @tokenType.In
+      'continue': @tokenType.Continue
+      'break': @tokenType.Break
+      'class': @tokenType.Class
+      'function': @tokenType.Function
+      'of': @tokenType.Of
+      'type': @tokenType.Type
       '(': @tokenType.ParenthesisStart
       ')': @tokenType.ParenthesisEnd
       '"': @tokenType.StringDelimiter
@@ -66,6 +78,10 @@ class Language
       For: 4
       Assignment: 5
       Expression: 6
+      Continue: 7
+      Break: 8
+      Class: 9
+      Function: 10
 
 
 
@@ -82,6 +98,10 @@ class Language
       @tokenType.Do
       @tokenType.For
       @tokenType.In
+      @tokenType.Continue
+      @tokenType.Break
+      @tokenType.Class
+      @tokenType.Function
     ]
 
     @arithmeticTokens = [
@@ -106,3 +126,76 @@ class Language
       "#{@tokenType.Equal}": 1
       "#{@tokenType.NotEqual}": 1
       "#{@tokenType.Not}": 0
+
+    @statements =
+      "#{@statementType.SinglelineIf}": [
+        {type: "token", token: @tokenType.If}
+        {type: "expression", id: "expression"}
+        {type: "token", token: @tokenType.Then}
+        {type: "statement", id: "then"}
+        {type: "group", required: false, group: [
+          {type: "token", token: @tokenType.Else}
+          {type: "statement", id: "else"}
+        ]}
+        {type: "token", token: @tokenType.EOL}
+      ]
+      "#{@statementType.MultilineIf}": [
+        {type: "token", token: @tokenType.If}
+        {type: "expression", id: "expression"}
+        {type: "token", token: @tokenType.Then}
+        {type: "token", token: @tokenType.EOL}
+        {type: "subtree", id: "then"}
+        {type: "group", required: false, group: [
+          {type: "token", token: @tokenType.Else}
+          {type: "token", token: @tokenType.EOL}
+          {type: "subtree", id: "else"}
+        ]}
+        {type: "token", token: @tokenType.End}
+      ]
+      "#{@statementType.SinglelineWhile}": [
+        {type: "token", token: @tokenType.While}
+        {type: "expression", id: "expression"}
+        {type: "token", token: @tokenType.Do}
+        {type: "statement", id: "do"}
+        {type: "token", token: @tokenType.EOL}
+      ]
+      "#{@statementType.MultilineWhile}": [
+        {type: "token", token: @tokenType.While}
+        {type: "expression", id: "expression"}
+        {type: "token", token: @tokenType.Do}
+        {type: "token", token: @tokenType.EOL}
+        {type: "subtree", id: "do"}
+        {type: "token", token: @tokenType.End}
+      ]
+      "#{@statementType.For}": [
+        {type: "token", token: @tokenType.For}
+        {type: "token", token: @tokenType.Variable, id: "variable"}
+        {type: "token", token: @tokenType.In}
+        {type: "expression", id: "expression"}
+        {type: "token", token: @tokenType.Do}
+        {type: "subtree", id: "do"}
+        {type: "token", token: @tokenType.End}
+      ]
+      "#{@statementType.Assignment}": [
+        {type: "token", token: @tokenType.Variable, id: "variable"}
+        {type: "token", token: @tokenType.Assignment}
+        {type: "expression", id: "expression"}
+      ]
+      "#{@statementType.Continue}": [
+        {type: "token", token: @tokenType.Continue}
+      ]
+      "#{@statementType.Break}": [
+        {type: "token", token: @tokenType.Break}
+      ]
+      "#{@statementType.Class}": [
+        {type: "token", token: @tokenType.Class}
+        {type: "token", token: @tokenType.Variable, id: "className"}
+        {type: "group", required: false, group: [
+          {type: "token", token: @tokenType.Of}
+          {type: "token", token: @tokenType.Type}
+          {type: "token", token: @tokenType.Variable, id: "ofTypeName"}
+        ]}
+        {type: "token", token: @tokenType.EOL}
+        {type: "subtree", id: "content"}
+        {type: "token", token: @tokenType.End}
+      ]

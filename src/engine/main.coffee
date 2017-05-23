@@ -48,8 +48,10 @@ if true
       '  if a == 2 then'
       '    x = 2'
       '    y = 3'
+      '    continue'
       '  else'
       '    z = 3 + "TEST"'
+      '    break'
       '  end'
       'end'
       ''
@@ -57,7 +59,6 @@ if true
     ]
   ]
 
-  ###
   lines = [
     [
       'while x > 10 do'
@@ -79,7 +80,17 @@ if true
       'end'
     ]
   ]
-  ###
+
+  lines = [
+    [
+      'class Test of type XYZ'
+      '  f(x)'
+      '  g(y)'
+      '  h(z)'
+      '  x = 2'
+      'end'
+    ]
+  ]
 
   language = new Language()
   sourceTree = new SourceTree(language)

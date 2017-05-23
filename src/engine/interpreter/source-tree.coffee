@@ -6,61 +6,6 @@ class SourceTree
 
     @tokenizer = new Tokenizer(@language)
 
-    @statements =
-      "#{@language.statementType.SinglelineIf}": [
-        {type: "token", token: @language.tokenType.If}
-        {type: "expression", id: "expression"}
-        {type: "token", token: @language.tokenType.Then}
-        {type: "statement", id: "then"}
-        {type: "group", required: false, group: [
-          {type: "token", token: @language.tokenType.Else}
-          {type: "statement", id: "else"}
-        ]}
-        {type: "token", token: @language.tokenType.EOL}
-      ]
-      "#{@language.statementType.MultilineIf}": [
-        {type: "token", token: @language.tokenType.If}
-        {type: "expression", id: "expression"}
-        {type: "token", token: @language.tokenType.Then}
-        {type: "token", token: @language.tokenType.EOL}
-        {type: "subtree", id: "then"}
-        {type: "group", required: false, group: [
-          {type: "token", token: @language.tokenType.Else}
-          {type: "token", token: @language.tokenType.EOL}
-          {type: "subtree", id: "else"}
-        ]}
-        {type: "token", token: @language.tokenType.End}
-      ]
-      "#{@language.statementType.SinglelineWhile}": [
-        {type: "token", token: @language.tokenType.While}
-        {type: "expression", id: "expression"}
-        {type: "token", token: @language.tokenType.Do}
-        {type: "statement", id: "do"}
-        {type: "token", token: @language.tokenType.EOL}
-      ]
-      "#{@language.statementType.MultilineWhile}": [
-        {type: "token", token: @language.tokenType.While}
-        {type: "expression", id: "expression"}
-        {type: "token", token: @language.tokenType.Do}
-        {type: "token", token: @language.tokenType.EOL}
-        {type: "subtree", id: "do"}
-        {type: "token", token: @language.tokenType.End}
-      ]
-      "#{@language.statementType.For}": [
-        {type: "token", token: @language.tokenType.For}
-        {type: "token", token: @language.tokenType.Variable, id: "variable"}
-        {type: "token", token: @language.tokenType.In}
-        {type: "expression", id: "expression"}
-        {type: "token", token: @language.tokenType.Do}
-        {type: "subtree", id: "do"}
-        {type: "token", token: @language.tokenType.End}
-      ]
-      "#{@language.statementType.Assignment}": [
-        {type: "token", token: @language.tokenType.Variable, id: "variable"}
-        {type: "token", token: @language.tokenType.Assignment}
-        {type: "expression", id: "expression"}
-      ]
-
   build: (files) ->
     @buildFromLines(file) for file in files
 
@@ -121,8 +66,8 @@ class SourceTree
   parseStatement: (tokens) ->
 
     # Match all statements
-    for type of @statements
-      statement = @matchStatement(@statements[type], tokens, type)
+    for type of @language.statements
+      statement = @matchStatement(@language.statements[type], tokens, type)
       if statement?
         return statement
 
