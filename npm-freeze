@@ -1,1 +1,0 @@
-npm ls | grep -E "^(├|└)─" | cut -d" " -f2 | awk -v quote='"' 'BEGIN { FS = "@" } ; { print quote $1 quote,":",quote $2 quote"," }' | sed -e 's/ :/:/g' > package.json.tmp && echo '{"dependencies": {' > package.json && cat package.json.tmp >> package.json && sed '$ s/.$//' package.json > package.json.tmp && echo '}}' >> package.json.tmp && mv package.json.tmp package.json

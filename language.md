@@ -46,6 +46,9 @@
     while <expr> do
     end
 
+    loop
+    until <expr>
+    
     continue
 
     break

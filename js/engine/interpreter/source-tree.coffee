@@ -77,7 +77,7 @@ class SourceTree
 
     # Find end of expression (= any statement token)
     expressionTokens = []
-    while tokens.length > 0 and tokens[0].type not in @language.statementTokens and tokens[0].type != @language.tokenType.EOL and tokens[0].type != @language.tokenType.EOF
+    while tokens.length > 0 and !@language.statementTokens.includes(tokens[0].type) and tokens[0].type != @language.tokenType.EOL and tokens[0].type != @language.tokenType.EOF
       expressionTokens.push(tokens[0])
       tokens = tokens[1..]
 
