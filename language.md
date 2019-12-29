@@ -18,7 +18,7 @@
     function <name>(<parameter>, ...)
     end
 
-    <name>(<expr>, ...)
+    <name>(<assignment>, ...)
 
 ## Classes
 
@@ -48,7 +48,7 @@
 
     loop
     until <expr>
-    
+
     continue
 
     break

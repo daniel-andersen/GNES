@@ -28,7 +28,7 @@ export class SourceTree {
     }
 
     parseBlock(tokens) {
-        tokens = tokens.slice(0)
+        tokens = this.duplicateTokens(tokens)
 
         const blockNode = new BlockNode()
 
@@ -39,8 +39,10 @@ export class SourceTree {
                 return blockNode
             }
 
-            // Add node
-            blockNode.nodes.push(node)
+            // Add node if not newline
+            if (!(node instanceof NewlineNode)) {
+                blockNode.nodes.push(node)
+            }
             blockNode.tokens = blockNode.tokens.concat(node.tokens)
 
             // Remove tokens
@@ -51,7 +53,7 @@ export class SourceTree {
     }
 
     parse(tokens) {
-        tokens = tokens.slice(0)
+        tokens = this.duplicateTokens(tokens)
 
         // No tokens left
         if (tokens.length == 0 || tokens[0].type == this.language.tokenType.EOF) {
@@ -79,13 +81,13 @@ export class SourceTree {
     }
 
     parseStatement(tokens) {
-        tokens = tokens.slice(0)
+        tokens = this.duplicateTokens(tokens)
 
         // Match all statements
         for (let type of Object.keys(this.language.statements)) {
-            const statement = this.matchStatement(this.language.statements[type], tokens, type)
-            if (statement !== undefined) {
-                return statement
+            const match = this.matchStatement(this.language.statements[type], tokens)
+            if (match !== undefined) {
+                return this.getStatementOfType(match.matchedTokens, match.matchedNodes, type)
             }
         }
 
@@ -93,7 +95,7 @@ export class SourceTree {
     }
 
     parseExpression(tokens) {
-        tokens = tokens.slice(0)
+        tokens = this.duplicateTokens(tokens)
 
         // Find end of expression (= any statement token)
         const expressionTokens = []
@@ -102,15 +104,103 @@ export class SourceTree {
             tokens.splice(0, 1)
         }
 
-        if (expressionTokens.length > 0) {
-            return new ExpressionNode(expressionTokens)
+        if (expressionTokens.length <= 0) {
+            return undefined
         }
 
+        // Constant
+        if (expressionTokens.length == 1) {
+            return new ConstantNode(expressionTokens)
+        }
+
+        // Build arithmetic tree
+        const arithmeticNode = this.parseArithmeticNode(expressionTokens)
+        if (arithmeticNode !== undefined) {
+            return arithmeticNode
+        }
+
+        // Function call
+        if (expressionTokens[0].type == this.language.tokenType.Variable && expressionTokens[1].type == this.language.tokenType.ParenthesisStart) {
+            const expressionNode = this.parseExpression(this.findGroupedExpressionTokens(expressionTokens.slice(1)))
+            return new FunctionCallNode(expressionTokens, expressionNode)
+        }
+
+        // Grouped expression
+        if (expressionTokens[0].type == this.language.tokenType.ParenthesisStart) {
+            return this.parseExpression(this.findGroupedExpressionTokens(expressionTokens))
+        }
+    }
+
+    parseArithmeticNode(tokens) {
+        tokens = this.duplicateTokens(tokens)
+
+        // Find arithmetic token of most significance
+        let parenthesisCount = 0
+        let arithmeticToken = undefined
+        let arithmeticTokenPosition = undefined
+
+        for (let i = 0; i < tokens.length; i++) {
+            const token = tokens[i]
+
+            // Handle parenthesis groups
+            if (token.type == this.language.tokenType.ParenthesisStart) {
+                parenthesisCount += 1
+                continue
+            }
+            if (token.type == this.language.tokenType.ParenthesisEnd) {
+                parenthesisCount -= 1
+                continue
+            }
+            if (parenthesisCount < 0) {
+                console.log("Error parsing expression! Too many end parenthesis found!")
+                console.log(tokens)
+                return undefined
+            }
+
+            // Skip tokens inside parenthesis group
+            if (parenthesisCount > 0) {
+                continue
+            }
+
+            // Determine arithmetic operation priority
+            if (this.language.arithmeticTokens.includes(token.type) && (arithmeticToken === undefined || this.language.arithmeticOperationPriority[token] > this.language.arithmeticOperationPriority[arithmeticToken])) {
+                arithmeticToken = token
+                arithmeticTokenPosition = i
+            }
+        }
+
+        if (arithmeticToken === undefined) {
+            return undefined
+        }
+
+        // Build subtrees
+        const leftSideExpressionNode = this.parseExpression(tokens.slice(0, arithmeticTokenPosition))
+        const rightSideExpressionNode = this.parseExpression(tokens.slice(arithmeticTokenPosition + 1))
+
+        return new ArithmeticNode(tokens, leftSideExpressionNode, arithmeticToken, rightSideExpressionNode)
+    }
+
+    findGroupedExpressionTokens(tokens) {
+        let parenthesisCount = 0
+
+        for (let i = 0; i < tokens.length; i++) {
+            const token = tokens[i]
+
+            if (token.type == this.language.tokenType.ParenthesisStart) {
+                parenthesisCount += 1
+            }
+            if (token.type == this.language.tokenType.ParenthesisEnd) {
+                parenthesisCount -= 1
+            }
+            if (parenthesisCount === 0) {
+                return tokens.slice(1, i)
+            }
+        }
         return undefined
     }
 
-    matchStatement(statement, tokens, type) {
-        tokens = tokens.slice(0)
+    matchStatement(statement, tokens) {
+        tokens = this.duplicateTokens(tokens)
 
         let position = 0
 
@@ -133,19 +223,36 @@ export class SourceTree {
                 return undefined
             }
 
+            // Remove tokens
             tokens.splice(0, node.tokens.length)
 
-            matchedNodes.push(node)
+            // Flatten group node
+            if (node instanceof GroupNode) {
+                matchedNodes.push(...node.nodes)
+            }
+
+            // Add normal node
+            else {
+
+                // Set ID on node
+                node.id = entry.id
+
+                // Add node
+                matchedNodes.push(node)
+            }
+
+            // Add matched tokens
             matchedTokens = matchedTokens.concat(node.tokens)
 
+            // Advance match
             position += 1
         }
 
-        return new StatementNode(matchedTokens, matchedNodes, type)
+        return {matchedTokens, matchedNodes}
     }
 
     matchEntry(entry, tokens) {
-        tokens = tokens.slice(0)
+        tokens = this.duplicateTokens(tokens)
 
         switch (entry['type']) {
             case 'token': {
@@ -155,7 +262,11 @@ export class SourceTree {
                 return this.matchExpressionEntry(entry, tokens)
             }
             case 'statement': {
-                return this.matchStatementEntry(entry, tokens)
+                const entry = this.matchStatementEntry(entry, tokens)
+                if (entry !== undefined) {
+                    return entry
+                }
+                return this.matchExpressionEntry(entry, tokens)
             }
             case 'group': {
                 return this.matchGroupEntry(entry, tokens)
@@ -170,7 +281,7 @@ export class SourceTree {
     }
 
     matchTokenEntry(entry, tokens) {
-        tokens = tokens.slice(0)
+        tokens = this.duplicateTokens(tokens)
 
         if ('token' in entry) {
             if (tokens[0].type == entry['token']) {
@@ -186,7 +297,7 @@ export class SourceTree {
     }
 
     matchExpressionEntry(entry, tokens) {
-        tokens = tokens.slice(0)
+        tokens = this.duplicateTokens(tokens)
 
         const expressionNode = this.parseExpression(tokens)
         if (expressionNode instanceof ExpressionNode) {
@@ -196,7 +307,7 @@ export class SourceTree {
     }
 
     matchStatementEntry(entry, tokens) {
-        tokens = tokens.slice(0)
+        tokens = this.duplicateTokens(tokens)
 
         const statementNode = this.parseStatement(tokens)
         if (statementNode instanceof StatementNode) {
@@ -206,11 +317,11 @@ export class SourceTree {
     }
 
     matchGroupEntry(entry, tokens) {
-        tokens = tokens.slice(0)
+        tokens = this.duplicateTokens(tokens)
 
-        const statement = this.matchStatement(entry['group'], tokens)
-        if (statement !== undefined) {
-            return new GroupNode(statement.tokens, statement)
+        const match = this.matchStatement(entry['group'], tokens)
+        if (match !== undefined) {
+            return new GroupNode(match.matchedTokens, match.matchedNodes)
         }
 
         const required = 'required' in entry ? entry['required'] : true
@@ -222,7 +333,7 @@ export class SourceTree {
     }
 
     matchSubtreeEntry(entry, tokens) {
-        tokens = tokens.slice(0)
+        tokens = this.duplicateTokens(tokens)
 
         const blockNode = this.parseBlock(tokens)
         if (blockNode !== undefined) {
@@ -235,6 +346,47 @@ export class SourceTree {
         }
 
         return undefined
+    }
+
+    getStatementOfType(tokens, nodes, type) {
+        if (type == this.language.statementType.Assignment) {
+            return new AssignmentNode(tokens, this.getNodeWithId(nodes, 'variable').token.token, this.getNodeWithId(nodes, 'expression'))
+        }
+        if (type == this.language.statementType.SinglelineIf || type == this.language.statementType.MultilineIf) {
+            return new IfNode(tokens, this.getNodeWithId(nodes, 'expression'), this.getNodeWithId(nodes, 'then'), this.getNodeWithId(nodes, 'else'))
+        }
+        if (type == this.language.statementType.SinglelineWhile || type == this.language.statementType.MultilineWhile) {
+            return new WhileNode(tokens, this.getNodeWithId(nodes, 'expression'), this.getNodeWithId(nodes, 'do'))
+        }
+        if (type == this.language.statementType.SinglelineDoUntil || type == this.language.statementType.MultilineDoUntil) {
+            return new DoUntilNode(tokens, this.getNodeWithId(nodes, 'expression'), this.getNodeWithId(nodes, 'do'))
+        }
+        if (type == this.language.statementType.For) {
+            return new ForNode(tokens, this.getNodeWithId(nodes, 'variable').token.token, this.getNodeWithId(nodes, 'expression'), this.getNodeWithId(nodes, 'do'))
+        }
+        if (type == this.language.statementType.Continue) {
+            return new ContinueNode(tokens)
+        }
+        if (type == this.language.statementType.Break) {
+            return new BreakNode(tokens)
+        }
+        if (type == this.language.statementType.Class) {
+            return new ClassNode(tokens, this.getNodeWithId(nodes, 'className').token.token, this.getNodeWithId(nodes, 'ofTypeName').token.token, this.getNodeWithId(nodes, 'content'))
+        }
+        return undefined
+    }
+
+    getNodeWithId(nodes, id) {
+        for (let node of nodes) {
+            if (node.id == id) {
+                return node
+            }
+        }
+        return undefined
+    }
+
+    duplicateTokens(tokens) {
+        return tokens.slice(0)
     }
 }
 
@@ -254,14 +406,102 @@ export class TokenNode extends Node {
 }
 
 export class StatementNode extends Node {
-    constructor(tokens=[], nodes=[], type=undefined) {
+    constructor(tokens=[]) {
         super(tokens)
-        this.nodes = nodes
-        this.type = type
+    }
+}
+
+export class AssignmentNode extends StatementNode {
+    constructor(tokens=[], variableName, expressionNode) {
+        super(tokens)
+        this.variableName = variableName
+        this.expressionNode = expressionNode
+    }
+}
+
+export class IfNode extends StatementNode {
+    constructor(tokens=[], testExpressionNode, thenExpressionNode, elseExpressionNode) {
+        super(tokens)
+        this.testExpressionNode = testExpressionNode
+        this.thenExpressionNode = thenExpressionNode
+        this.elseExpressionNode = elseExpressionNode
+    }
+}
+
+export class WhileNode extends StatementNode {
+    constructor(tokens=[], testExpressionNode, doBlock) {
+        super(tokens)
+        this.testExpressionNode = testExpressionNode
+        this.doBlock = doBlock
+    }
+}
+
+export class DoUntilNode extends StatementNode {
+    constructor(tokens=[], testExpressionNode, doBlock) {
+        super(tokens)
+        this.testExpressionNode = testExpressionNode
+        this.doBlock = doBlock
+    }
+}
+
+export class ForNode extends StatementNode {
+    constructor(tokens=[], variableName, testExpressionNode, doBlock) {
+        super(tokens)
+        this.variableName = variableName
+        this.testExpressionNode = testExpressionNode
+        this.doBlock = doBlock
+    }
+}
+
+export class ContinueNode extends StatementNode {
+    constructor(tokens=[]) {
+        super(tokens)
+    }
+}
+
+export class BreakNode extends StatementNode {
+    constructor(tokens=[]) {
+        super(tokens)
     }
 }
 
 export class ExpressionNode extends Node {
+    constructor(tokens=[]) {
+        super(tokens)
+    }
+}
+
+export class ConstantNode extends ExpressionNode {
+    constructor(tokens=[]) {
+        super(tokens)
+        this.constant = tokens[0]
+    }
+}
+
+export class FunctionCallNode extends ExpressionNode {
+    constructor(tokens=[], expressionNode) {
+        super(tokens)
+        this.functionName = tokens[0]
+        this.expressionNode = expressionNode
+    }
+}
+
+export class ArithmeticNode extends ExpressionNode {
+    constructor(tokens=[], leftSideExpressionNode, arithmeticToken, rightSideExpressionNode) {
+        super(tokens)
+        this.leftSideExpressionNode = leftSideExpressionNode
+        this.arithmeticToken = arithmeticToken
+        this.rightSideExpressionNode = rightSideExpressionNode
+    }
+}
+
+export class ClassNode extends Node {
+    constructor(tokens=[], className, ofTypeName, contentNode) {
+        super(tokens)
+        this.className = className
+        this.ofTypeName = ofTypeName
+        this.contentNode = contentNode
+    }
 }
 
 export class BlockNode extends Node {
@@ -272,9 +512,9 @@ export class BlockNode extends Node {
 }
 
 export class GroupNode extends Node {
-    constructor(tokens=[], node=undefined) {
+    constructor(tokens=[], nodes=[]) {
         super(tokens)
-        this.node = node
+        this.nodes = nodes
     }
 }
 

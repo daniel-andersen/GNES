@@ -46,9 +46,9 @@ export default class Engine {
                     '###',
                     'if x == 5 then str = "x equals 5" else str = "x does not equal 5"',
                     'if str is "x equals 5" then   # This is a comment',
-                    '  print("x equals 5")',
+                    '    print("x equals 5")',
                     'else',
-                    '  print("x does not equal 5")',
+                    '    print("x does not equal 5")',
                     'end'
                 ]
             ],
@@ -57,18 +57,18 @@ export default class Engine {
             [
                 [
                     'for x in (2 + y) do',
-                    '  f(x)',
+                    '    f(x)',
                     'end',
                     'while a == 1 do',
-                    '  x = 1',
-                    '  if a == 2 then',
-                    '    x = 2',
-                    '    y = 3',
-                    '    continue',
-                    '  else',
-                    '    z = 3 + "TEST"',
-                    '    break',
-                    '  end',
+                    '    x = 1',
+                    '    if a == 2 then',
+                    '        x = 2',
+                    '        y = 3',
+                    '        continue',
+                    '    else',
+                    '        z = 3 + "TEST"',
+                    '        break',
+                    '    end',
                     'end',
                     '',
                     'a = "test"'
@@ -79,21 +79,21 @@ export default class Engine {
             [
                 [
                     'while x > 10 do',
-                    '  if x > 8 then x = 2 else y = 2',
-                    '  if x > 0 then',
-                    '    y = 3',
-                    '  end',
-                    '  y = 2',
-                    '  z = 3',
+                    '    if x > 8 then x = 2 else y = 2',
+                    '    if x > 0 then',
+                    '        y = 3',
+                    '    end',
+                    '    y = 2',
+                    '    z = 3',
                     'end',
                     'b = 10 + 20',
                     'c = 30 + 40',
                     'if a == 1 then y = 2 else z = 3',
                     'if a == 1 then',
-                    '  b = 1',
-                    '  c = 2 + 3',
+                    '    b = 1',
+                    '    c = 2 + 3',
                     'else',
-                    '  d = 4',
+                    '    d = 4',
                     'end'
                 ]
             ],
@@ -102,11 +102,37 @@ export default class Engine {
             [
                 [
                     'class Test of type XYZ',
-                    '  f(x)',
-                    '  g(y)',
-                    '  h(z)',
-                    '  x = 2',
+                    '    f(x)',
+                    '    g(y)',
+                    '    h(z)',
+                    '    x = 2',
                     'end'
+                ]
+            ],
+
+            // 5
+            [
+                [
+                    'for x in f(x) do',
+                    '    x = 2',
+                    '    break',
+                    'end',
+                    'while x > 10 do',
+                    '   f(x)',
+                    '   g(x)',
+                    'end',
+                    'do',
+                    '   f(x)',
+                    '   g(x)',
+                    'until x > 20',
+                    'if x > 2 then',
+                    '    x = 2',
+                    'else',
+                    '    y = 2',
+                    'end',
+                    'x = 2 + 3',
+                    'f(x * 1 + 2)',
+                    '12 + (f(x + 23) + 24 * 35) * 456'
                 ]
             ]
         ]
