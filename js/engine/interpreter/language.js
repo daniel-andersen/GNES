@@ -40,6 +40,8 @@ export default class Language {
             'Function': 34,
             'Of': 35,
             'Type': 36,
+            'Colon': 37,
+            'Comma': 38,
         }
 
         this.tokenTypes = {
@@ -77,7 +79,9 @@ export default class Language {
             'type': this.tokenType.Type,
             '(': this.tokenType.ParenthesisStart,
             ')': this.tokenType.ParenthesisEnd,
-            '"': this.tokenType.StringDelimiter
+            '"': this.tokenType.StringDelimiter,
+            ':': this.tokenType.Colon,
+            ',': this.tokenType.Comma
         }
 
         this.statementType = {
@@ -99,7 +103,6 @@ export default class Language {
         this.statementTokens = [
             this.tokenType.SingleLineComment,
             this.tokenType.MultiLineComment,
-            this.tokenType.Assignment,
             this.tokenType.If,
             this.tokenType.Then,
             this.tokenType.Else,
@@ -229,7 +232,7 @@ export default class Language {
                 {type: "token", token: this.tokenType.EOL},
                 {type: "subtree", id: "content"},
                 {type: "token", token: this.tokenType.End}
-            ]
+            ],
         }
     }
 }

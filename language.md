@@ -15,10 +15,10 @@
 
 ## Functions
 
-    function <name>(<parameter>, ...)
+    function <name>(<name>: <parameter>, ...)
     end
 
-    <name>(<assignment>, ...)
+    <name>(<name>=<expr>, ...)
 
 ## Classes
 
@@ -46,7 +46,7 @@
     while <expr> do
     end
 
-    loop
+    do
     until <expr>
 
     continue

@@ -121,14 +121,58 @@ export class SourceTree {
 
         // Function call
         if (expressionTokens[0].type == this.language.tokenType.Variable && expressionTokens[1].type == this.language.tokenType.ParenthesisStart) {
-            const expressionNode = this.parseExpression(this.findGroupedExpressionTokens(expressionTokens.slice(1)))
-            return new FunctionCallNode(expressionTokens, expressionNode)
+            const assignmentNodes = this.parseParameters(this.findGroupedExpressionTokens(expressionTokens.slice(1)))
+            return new FunctionCallNode(expressionTokens, assignmentNodes)
         }
 
         // Grouped expression
         if (expressionTokens[0].type == this.language.tokenType.ParenthesisStart) {
             return this.parseExpression(this.findGroupedExpressionTokens(expressionTokens))
         }
+    }
+
+    parseParameters(tokens) {
+        tokens = this.duplicateTokens(tokens)
+
+        let assignmentNodes = []
+        let assignmentTokens = []
+
+        for (let i = 0; i < tokens.length; i++) {
+            const token = tokens[i]
+
+            // Add token to assignment
+            if (token.type != this.language.tokenType.Comma) {
+                assignmentTokens.push(token)
+            }
+
+            // Split assignments by comma
+            if (token.type == this.language.tokenType.Comma || i === tokens.length - 1) {
+
+                // Add assignment
+                const assignmentNode = this.parseAssignmentNode(assignmentTokens)
+                if (assignmentNode === undefined) {
+                    return undefined
+                }
+                assignmentNodes.push(assignmentNode)
+
+                // Reset assignment tokens
+                assignmentTokens = []
+            }
+        }
+
+        return assignmentNodes
+    }
+
+    parseAssignmentNode(tokens) {
+        tokens = this.duplicateTokens(tokens)
+
+        const assignmentNode = this.parseStatement(tokens)
+        if (assignmentNode === undefined || !(assignmentNode instanceof AssignmentNode)) {
+            console.log('Expected assignment!')
+            console.log(tokens.slice(0))
+            return undefined
+        }
+        return assignmentNode
     }
 
     parseArithmeticNode(tokens) {
@@ -479,10 +523,10 @@ export class ConstantNode extends ExpressionNode {
 }
 
 export class FunctionCallNode extends ExpressionNode {
-    constructor(tokens=[], expressionNode) {
+    constructor(tokens=[], parameterNodes) {
         super(tokens)
         this.functionName = tokens[0]
-        this.expressionNode = expressionNode
+        this.parameterNodes = parameterNodes
     }
 }
 

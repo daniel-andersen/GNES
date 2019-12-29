@@ -113,17 +113,18 @@ export default class Engine {
             // 5
             [
                 [
-                    'for x in f(x) do',
+                    'f(name="test af GNES!", country="Denmark", code=2*3)',
+                    'for x in f(x=2) do',
                     '    x = 2',
                     '    break',
                     'end',
                     'while x > 10 do',
-                    '   f(x)',
-                    '   g(x)',
+                    '   f(x=y*2)',
+                    '   g(x=3+y)',
                     'end',
                     'do',
-                    '   f(x)',
-                    '   g(x)',
+                    '   f(x=0)',
+                    '   g(x=1)',
                     'until x > 20',
                     'if x > 2 then',
                     '    x = 2',
@@ -131,8 +132,8 @@ export default class Engine {
                     '    y = 2',
                     'end',
                     'x = 2 + 3',
-                    'f(x * 1 + 2)',
-                    '12 + (f(x + 23) + 24 * 35) * 456'
+                    'f(test=x * 1 + 2)',
+                    '12 + (f(name=x+23) + 24 * 35) * 456'
                 ]
             ]
         ]
