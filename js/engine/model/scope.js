@@ -29,7 +29,7 @@ export class EncapsulatedScope {
 
         // Overwrite variable if it already exists
         if (currentVariable !== undefined) {
-            currentVariable.value = variable.value
+            currentVariable.setValue(variable.value())
         }
 
         // Create new variable in current scope

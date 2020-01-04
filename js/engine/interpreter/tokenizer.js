@@ -51,6 +51,7 @@ export default class Tokenizer {
                     if (line.startsWith('"')) {
                         line = line.substring(1)
                     }
+                    token = '"' + token + '"'
                 }
 
                 // Add token if not part of multiline comment

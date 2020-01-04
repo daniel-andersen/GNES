@@ -1,4 +1,6 @@
+import Interpreter from './interpreter/interpreter'
 import Language from './interpreter/language'
+import Execution from './interpreter/execution'
 import Tokenizer from './interpreter/tokenizer'
 import { SourceTree } from './interpreter/source-tree'
 import { Scope } from './model/scope'
@@ -14,19 +16,19 @@ export default class Engine {
 
     testVariables() {
         this.globals.mainThread.setVariable(new Variable("test", "Hello world!"))
-        console.log("---> " + this.globals.mainThread.resolveVariable("test").value)
+        console.log("---> " + this.globals.mainThread.resolveVariable("test").value())
 
         this.globals.mainThread.pushEncapsulatedScope().setVariable(new Variable("test", "Hello solar system!"))
-        console.log("---> " + this.globals.mainThread.resolveVariable("test").value)
+        console.log("---> " + this.globals.mainThread.resolveVariable("test").value())
 
         this.globals.mainThread.pushLocalScope().setVariable(new Variable("test", "Hello universe!"))
-        console.log("---> " + this.globals.mainThread.resolveVariable("test").value)
+        console.log("---> " + this.globals.mainThread.resolveVariable("test").value())
 
         this.globals.mainThread.popLocalScope()
-        console.log("---> " + this.globals.mainThread.resolveVariable("test").value)
+        console.log("---> " + this.globals.mainThread.resolveVariable("test").value())
 
         this.globals.mainThread.popEncapsulatedScope()
-        console.log("---> " + this.globals.mainThread.resolveVariable("test").value)
+        console.log("---> " + this.globals.mainThread.resolveVariable("test").value())
     }
 
     testTokenizer() {
@@ -132,7 +134,7 @@ export default class Engine {
                     '    y = 2',
                     'end',
                     'x = 2 + 3',
-                    'f(test=x * 1 + 2)',
+                    'f(test=x * (1 + 2))',
                     '12 + (f(name=x+23) + 24 * 35) * 456'
                 ]
             ]
@@ -141,6 +143,42 @@ export default class Engine {
         const language = new Language()
         const sourceTree = new SourceTree(language)
         sourceTree.build(lines[index])
+    }
+
+    testInterpreter(index) {
+        const tests = [
+
+            // 1
+            {
+                lines: [
+                    [
+                        'x = 1',
+                        'y = 8',
+                        'z = x + y / 2 * 2',
+                        '#z = "HELLO " + " WORLD"',
+                        '#z = z + " " + 42',
+                    ],
+                ],
+                result: 0
+            },
+        ]
+
+        const language = new Language()
+        const sourceTree = new SourceTree(language)
+        sourceTree.build(tests[index].lines)
+
+        const execution = new Execution(sourceTree.blocks[0])
+
+        const interpreter = new Interpreter(sourceTree)
+        interpreter.addExecution(execution)
+
+        while (!interpreter.hasStopped()) {
+            console.log('Performing execution step...')
+            interpreter.step()
+        }
+        console.log(execution.scope)
+
+        console.log('Done!')
     }
 }
 

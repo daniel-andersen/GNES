@@ -84,6 +84,12 @@ export default class Language {
             ',': this.tokenType.Comma
         }
 
+        this.expressionType = {
+            'FunctionCall': 0,
+            'ParameterAssignments': 1,
+            'ArithmeticExpression': 2
+        }
+
         this.statementType = {
             'SinglelineIf': 0,
             'MultilineIf': 1,
@@ -137,13 +143,20 @@ export default class Language {
         this.arithmeticOperationPriority = {
             [`${this.tokenType.And}`]: 6,
             [`${this.tokenType.Or}`]: 5,
-            [`${this.tokenType.Multiply}`]: 4,
-            [`${this.tokenType.Divide}`]: 3,
+            [`${this.tokenType.Divide}`]: 4,
+            [`${this.tokenType.Multiply}`]: 3,
             [`${this.tokenType.Plus}`]: 2,
             [`${this.tokenType.Minus}`]: 2,
             [`${this.tokenType.Equal}`]: 1,
             [`${this.tokenType.NotEqual}`]: 1,
             [`${this.tokenType.Not}`]: 0
+        }
+
+        this.expressions = {
+            [`${this.expressionType.FunctionCall}`]: [
+                {type: "token", token: this.tokenType.Variable, id: 'variable'},
+                {type: "parameterList", id: "parameters"},
+            ],
         }
 
         this.statements = {
