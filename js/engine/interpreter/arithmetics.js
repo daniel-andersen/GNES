@@ -15,6 +15,21 @@ export default class Arithmetics {
             case '/': {
                 return Arithmetics.divide(leftSideResult, rightSideResult)
             }
+            case '==': {
+                return Arithmetics.equals(leftSideResult, rightSideResult)
+            }
+            case '<': {
+                return Arithmetics.lessThan(leftSideResult, rightSideResult)
+            }
+            case '<=': {
+                return Arithmetics.lessThanOrEqual(leftSideResult, rightSideResult)
+            }
+            case '>': {
+                return Arithmetics.greaterThan(leftSideResult, rightSideResult)
+            }
+            case '>=': {
+                return Arithmetics.greaterThanOrEqual(leftSideResult, rightSideResult)
+            }
             default: {
                 throw 'Unknown arithmetic operation:', arithmeticToken.token
             }
@@ -35,18 +50,12 @@ export default class Arithmetics {
         if (leftSideResult.type == Constant.Type.Number && rightSideResult.type == Constant.Type.Number) {
             return new Constant(leftSideResult.value() - rightSideResult.value())
         }
-        if ((leftSideResult.type == Constant.Type.String || leftSideResult.type == Constant.Type.Number) && (rightSideResult.type == Constant.Type.String || rightSideResult.type == Constant.Type.Number)) {
-            throw 'Cannot minus string'
-        }
         throw 'Cannot minus expression'
     }
 
     static multiply(leftSideResult, rightSideResult) {
         if (leftSideResult.type == Constant.Type.Number && rightSideResult.type == Constant.Type.Number) {
             return new Constant(leftSideResult.value() * rightSideResult.value())
-        }
-        if ((leftSideResult.type == Constant.Type.String || leftSideResult.type == Constant.Type.Number) && (rightSideResult.type == Constant.Type.String || rightSideResult.type == Constant.Type.Number)) {
-            throw 'Cannot multiply string'
         }
         throw 'Cannot multiply expression'
     }
@@ -58,9 +67,38 @@ export default class Arithmetics {
             }
             return new Constant(leftSideResult.value() / rightSideResult.value())
         }
-        if ((leftSideResult.type == Constant.Type.String || leftSideResult.type == Constant.Type.Number) && (rightSideResult.type == Constant.Type.String || rightSideResult.type == Constant.Type.Number)) {
-            throw 'Cannot divide string'
-        }
         throw 'Cannot divide expression'
+    }
+
+    static equals(leftSideResult, rightSideResult) {
+        return new Constant(leftSideResult.value() == rightSideResult.value())
+    }
+
+    static lessThan(leftSideResult, rightSideResult) {
+        if (leftSideResult.type == Constant.Type.Number && rightSideResult.type == Constant.Type.Number) {
+            return new Constant(leftSideResult.value() < rightSideResult.value())
+        }
+        throw 'Cannot compare expression'
+    }
+
+    static lessThanOrEqual(leftSideResult, rightSideResult) {
+        if (leftSideResult.type == Constant.Type.Number && rightSideResult.type == Constant.Type.Number) {
+            return new Constant(leftSideResult.value() <= rightSideResult.value())
+        }
+        throw 'Cannot compare expression'
+    }
+
+    static greaterThan(leftSideResult, rightSideResult) {
+        if (leftSideResult.type == Constant.Type.Number && rightSideResult.type == Constant.Type.Number) {
+            return new Constant(leftSideResult.value() > rightSideResult.value())
+        }
+        throw 'Cannot compare expression'
+    }
+
+    static greaterThanOrEqual(leftSideResult, rightSideResult) {
+        if (leftSideResult.type == Constant.Type.Number && rightSideResult.type == Constant.Type.Number) {
+            return new Constant(leftSideResult.value() >= rightSideResult.value())
+        }
+        throw 'Cannot compare expression'
     }
 }

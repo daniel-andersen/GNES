@@ -152,11 +152,13 @@ export default class Engine {
             {
                 lines: [
                     [
-                        'x = 1',
-                        'y = 8',
-                        'z = x + y / 2 * 2',
-                        '#z = "HELLO " + " WORLD"',
-                        '#z = z + " " + 42',
+                        'x = 0',
+                        'while x < 10 do',
+                        '    x = x + 1',
+                        'end',
+                        'do',
+                        '    x = x - 1',
+                        'until x == 0',
                     ],
                 ],
                 result: 0
@@ -171,6 +173,13 @@ export default class Engine {
 
         const interpreter = new Interpreter(sourceTree)
         interpreter.addExecution(execution)
+
+        document.addEventListener('keydown', event => {
+            if (event.isComposing || event.keyCode === 229) {
+                return
+            }
+            interpreter.stop()
+        })
 
         while (!interpreter.hasStopped()) {
             console.log('Performing execution step...')

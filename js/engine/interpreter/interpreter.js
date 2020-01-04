@@ -9,6 +9,11 @@ export default class Interpreter {
         this.executions = []
     }
 
+    stop() {
+        console.log('Stopping interpreter...')
+        this.stopped = true
+    }
+
     hasStopped() {
         return this.stopped
     }

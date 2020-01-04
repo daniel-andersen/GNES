@@ -56,6 +56,27 @@ export class WhileNode extends StatementNode {
         this.testExpressionNode = testExpressionNode
         this.doBlock = doBlock
     }
+
+    *evaluate(scope) {
+        while (true) {
+
+            // Evaluate test expression
+            yield
+            const result = yield *this.testExpressionNode.evaluate(scope)
+            if (result === undefined) {
+                throw 'Result of while test undefined'
+            }
+
+            // Check if expression is false
+            if (result.isFalse()) {
+                return
+            }
+
+            // Perform block
+            yield
+            yield *this.doBlock.evaluate(scope)
+        }
+    }
 }
 
 export class DoUntilNode extends StatementNode {
@@ -63,6 +84,27 @@ export class DoUntilNode extends StatementNode {
         super(tokens)
         this.testExpressionNode = testExpressionNode
         this.doBlock = doBlock
+    }
+
+    *evaluate(scope) {
+        while (true) {
+
+            // Perform block
+            yield
+            yield *this.doBlock.evaluate(scope)
+
+            // Evaluate test expression
+            yield
+            const result = yield *this.testExpressionNode.evaluate(scope)
+            if (result === undefined) {
+                throw 'Result of while test undefined'
+            }
+
+            // Check if expression is false
+            if (result.isTrue()) {
+                return
+            }
+        }
     }
 }
 
@@ -169,18 +211,14 @@ export class BlockNode extends Node {
     }
 
     *evaluate(scope) {
-        scope.pushScope()
-
         for (let node of this.nodes) {
             yield
             yield *node.evaluate(scope)
         }
 
-        console.log('Block done:', scope.resolveVariable('x').value())
-        console.log('Block done:', scope.resolveVariable('y').value())
-        console.log('Block done:', scope.resolveVariable('z').value())
-
-        scope.popScope()
+        //console.log('Block done:', scope.resolveVariable('x').value())
+        //console.log('Block done:', scope.resolveVariable('y').value())
+        //console.log('Block done:', scope.resolveVariable('z').value())
     }
 }
 
