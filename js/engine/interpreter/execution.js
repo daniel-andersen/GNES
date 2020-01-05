@@ -1,7 +1,7 @@
-import { EncapsulatedScope, Scope } from '../model/scope'
+import { Scope } from '../model/scope'
 
 export default class Execution {
-    constructor(node, scope=new EncapsulatedScope()) {
+    constructor(node, scope=new Scope()) {
         this.node = node
         this.scope = scope
 

@@ -4,31 +4,12 @@ import Execution from './interpreter/execution'
 import Tokenizer from './interpreter/tokenizer'
 import { SourceTree } from './interpreter/source-tree'
 import { Scope } from './model/scope'
-import { Thread } from './thread/thread'
 import { Variable } from './model/variable'
 
 export default class Engine {
     constructor() {
         this.globals = {}
         this.globals.scope = new Scope()
-        this.globals.mainThread = new Thread()
-    }
-
-    testVariables() {
-        this.globals.mainThread.setVariable(new Variable("test", "Hello world!"))
-        console.log("---> " + this.globals.mainThread.resolveVariable("test").value())
-
-        this.globals.mainThread.pushEncapsulatedScope().setVariable(new Variable("test", "Hello solar system!"))
-        console.log("---> " + this.globals.mainThread.resolveVariable("test").value())
-
-        this.globals.mainThread.pushLocalScope().setVariable(new Variable("test", "Hello universe!"))
-        console.log("---> " + this.globals.mainThread.resolveVariable("test").value())
-
-        this.globals.mainThread.popLocalScope()
-        console.log("---> " + this.globals.mainThread.resolveVariable("test").value())
-
-        this.globals.mainThread.popEncapsulatedScope()
-        console.log("---> " + this.globals.mainThread.resolveVariable("test").value())
     }
 
     testTokenizer() {

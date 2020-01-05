@@ -1,22 +1,8 @@
-export class EncapsulatedScope {
+export class Scope {
 
-    constructor() {
-        this.scopes = []
-        this.pushScope()
-    }
-
-    pushScope() {
-        const scope = new Scope()
-        this.scopes.push(scope)
-        return scope
-    }
-
-    popScope() {
-        return this.scopes.pop()
-    }
-
-    currentScope() {
-        return this.scopes[this.scopes.length - 1]
+    constructor(parentScope=undefined) {
+        this.parentScope = parentScope
+        this.variables = {}
     }
 
     setVariable(variable) {
@@ -34,7 +20,7 @@ export class EncapsulatedScope {
 
         // Create new variable in current scope
         else {
-            this.currentScope().setVariable(variable)
+            this.variables[variable.name] = variable
         }
     }
 
@@ -43,31 +29,17 @@ export class EncapsulatedScope {
         Resolves a variable with the given name in the current scope.
         */
 
-        // Run backwards through local scopes
-        for (let i = this.scopes.length - 1; i >= 0; i--) {
-            const scope = this.scopes[i]
-            const variable = scope.resolveVariable(name)
-            if (variable !== undefined) {
-                return variable
-            }
+        // Variable set in this scope
+        if (name in this.variables) {
+            return this.variables[name]
+        }
+
+        // Resolve in parent scope
+        if (this.parentScope !== undefined) {
+            return this.parentScope.resolveVariable(name)
         }
 
         // Not found
         return undefined
-    }
-}
-
-export class Scope {
-
-    constructor() {
-        this.variables = {}
-    }
-
-    setVariable(variable) {
-        this.variables[variable.name] = variable
-    }
-
-    resolveVariable(name) {
-        return name in this.variables ? this.variables[name] : undefined
     }
 }
