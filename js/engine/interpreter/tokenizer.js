@@ -4,7 +4,7 @@ export default class Tokenizer {
     }
 
     tokenizeLines(lines) {
-        const tokenPattern = /^\s*(\w+|"|[^A-Za-z0-9_"]+)/i
+        const tokenPattern = /^\s*(\w+|"|[^A-Za-z0-9_\(\)"]+|\(|\))/i
 
         // Parse all lines
         const tokens = []

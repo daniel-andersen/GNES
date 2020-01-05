@@ -1,4 +1,5 @@
 import { Variable, Constant } from '../model/variable'
+import { Scope } from '../model/scope'
 import Arithmetics from './arithmetics'
 
 export class Node {
@@ -48,6 +49,30 @@ export class IfNode extends StatementNode {
         this.thenExpressionNode = thenExpressionNode
         this.elseExpressionNode = elseExpressionNode
     }
+
+    *evaluate(scope) {
+
+        // Evaluate test expression
+        yield
+        const result = yield *this.testExpressionNode.evaluate(scope)
+        if (result === undefined) {
+            throw 'Result of if expression undefined'
+        }
+
+        // Perform "true" block
+        if (result.isTrue()) {
+            yield
+            const result = yield *this.thenExpressionNode.evaluate(scope)
+            return result
+        }
+
+        // Perform "true" block
+        else if (this.elseExpressionNode !== undefined) {
+            yield
+            const result = yield *this.elseExpressionNode.evaluate(scope)
+            return result
+        }
+    }
 }
 
 export class WhileNode extends StatementNode {
@@ -79,7 +104,7 @@ export class WhileNode extends StatementNode {
     }
 }
 
-export class DoUntilNode extends StatementNode {
+export class RepeatUntilNode extends StatementNode {
     constructor(tokens=[], testExpressionNode, doBlock) {
         super(tokens)
         this.testExpressionNode = testExpressionNode
@@ -129,6 +154,43 @@ export class BreakNode extends StatementNode {
     }
 }
 
+export class ReturnNode extends StatementNode {
+    constructor(tokens=[], expressionNode) {
+        super(tokens)
+        this.expressionNode = expressionNode
+    }
+
+    *evaluate(scope) {
+        yield
+
+        if (this.expressionNode !== undefined) {
+            const result = yield *this.expressionNode.evaluate(scope)
+            return result
+        }
+    }
+}
+
+export class PrintNode extends StatementNode {
+    constructor(tokens=[], expressionNode) {
+        super(tokens)
+        this.expressionNode = expressionNode
+    }
+
+    *evaluate(scope) {
+
+        // Evaluate expression
+        let result = undefined
+        if (this.expressionNode !== undefined) {
+            yield
+            result = yield *this.expressionNode.evaluate(scope)
+        }
+
+        // Print result
+        yield
+        document.body.innerHTML += (result !== undefined ? result.value() : '') + '<br/>'
+    }
+}
+
 export class ExpressionNode extends Node {
     constructor(tokens=[]) {
         super(tokens)
@@ -161,6 +223,24 @@ export class FunctionCallNode extends ExpressionNode {
         this.functionName = functionName
         this.parameterListNode = parameterListNode
     }
+
+    *evaluate(scope) {
+
+        // Evaluate parameters and get scope
+        yield
+        const functionCallScope = yield *this.parameterListNode.evaluate(scope)
+
+        // Resolve function
+        const functionNode = scope.resolveFunction(this.functionName)
+        if (functionNode === undefined) {
+            throw 'Function "' + this.functionName + '" not found'
+        }
+
+        // Call function
+        yield
+        const result = yield *functionNode.contentNode.evaluate(functionCallScope)
+        return result
+    }
 }
 
 export class ArithmeticNode extends ExpressionNode {
@@ -172,18 +252,22 @@ export class ArithmeticNode extends ExpressionNode {
     }
 
     *evaluate(scope) {
+
+        // Evaluate left side of expression
         yield
         const leftSideResult = yield *this.leftSideExpressionNode.evaluate(scope)
         if (leftSideResult === undefined) {
             throw 'Result of left side expression is undefined'
         }
 
+        // Evaluate right side of expression
         yield
         const rightSideResult = yield *this.rightSideExpressionNode.evaluate(scope)
         if (rightSideResult === undefined) {
             throw 'Result of right side expression is undefined'
         }
 
+        // Perform arithmetic operation
         return Arithmetics.performOperation(this.arithmeticToken, leftSideResult, rightSideResult)
     }
 }
@@ -197,10 +281,46 @@ export class ClassNode extends Node {
     }
 }
 
+export class FunctionDefinitionNode extends Node {
+    constructor(tokens=[], functionName, parameterDefinitionsNode, contentNode) {
+        super(tokens)
+        this.functionName = functionName
+        this.parameterDefinitionsNode = parameterDefinitionsNode
+        this.contentNode = contentNode
+    }
+}
+
 export class ParameterListNode extends Node {
     constructor(tokens=[], assignmentNodes) {
         super(tokens)
         this.assignmentNodes = assignmentNodes
+    }
+
+    *evaluate(scope) {
+        const parameterListScope = new Scope(scope)
+
+        for (let node of this.assignmentNodes) {
+
+            // Evaluate expression in original scope
+            yield
+            const result = yield* node.expressionNode.evaluate(scope)
+            if (result === undefined) {
+                throw 'Result of expression is undefined'
+            }
+
+            // Assign variable in new scope
+            const variable = new Variable(node.variableName, result)
+            parameterListScope.setVariableInOwnScope(variable)
+        }
+
+        return parameterListScope
+    }
+}
+
+export class ParameterDefinitionsNode extends Node {
+    constructor(tokens=[], variableNodes) {
+        super(tokens)
+        this.variableNodes = variableNodes
     }
 }
 
@@ -211,14 +331,12 @@ export class BlockNode extends Node {
     }
 
     *evaluate(scope) {
+        let result = undefined
         for (let node of this.nodes) {
             yield
-            yield *node.evaluate(scope)
+            result = yield *node.evaluate(scope)
         }
-
-        //console.log('Block done:', scope.resolveVariable('x').value())
-        //console.log('Block done:', scope.resolveVariable('y').value())
-        //console.log('Block done:', scope.resolveVariable('z').value())
+        return result
     }
 }
 
@@ -232,5 +350,35 @@ export class GroupNode extends Node {  // Only used internally in SourceTree par
 export class NewlineNode extends Node {
     constructor(tokens=[]) {
         super(tokens)
+    }
+}
+
+export class FileNode extends Node {
+    constructor(tokens=[], nodes, scope) {
+        super(tokens)
+        this.nodes = nodes
+        this.scope = scope
+    }
+
+    *evaluate(scope) {
+        for (let node of this.nodes) {
+            yield
+            yield *node.evaluate(this.scope)  // Evaluate in its own scope
+        }
+    }
+}
+
+export class GlobalNode extends Node {
+    constructor(nodes, scope) {
+        super([])
+        this.nodes = nodes
+        this.scope = scope
+    }
+
+    *evaluate(scope) {
+        for (let node of this.nodes) {
+            yield
+            yield *node.evaluate(this.scope)  // Evaluate in its own scope
+        }
     }
 }

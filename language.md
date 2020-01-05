@@ -15,17 +15,19 @@
 
 ## Functions
 
-    function <name>(<name>: <parameter>, ...)
+    function <name>([<name>, ...])
     end
 
-    <name>(<name>=<expr>, ...)
+    <name>([<name>=<expr>, ...])
+
+    return [<expr>]
 
 ## Classes
 
     class <name> [of type <name>]
+        property <name> [= <expr>]
+        behaviour <name> of type <name>
     end
-
-    property <name> [= <expr>]
 
 ## Arrays
 
@@ -46,7 +48,7 @@
     while <expr> do
     end
 
-    do
+    repeat
     until <expr>
 
     continue

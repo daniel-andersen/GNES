@@ -27,21 +27,24 @@ export default class Language {
             'End': 21,
             'While': 22,
             'Do': 23,
-            'Until': 24,
-            'For': 25,
-            'In': 26,
-            'ParenthesisStart': 27,
-            'ParenthesisEnd': 28,
-            'StringDelimiter': 29,
-            'StringConstant': 30,
-            'Continue': 31,
-            'Break': 32,
-            'Class': 33,
-            'Function': 34,
-            'Of': 35,
-            'Type': 36,
-            'Colon': 37,
-            'Comma': 38,
+            'Repeat': 24,
+            'Until': 25,
+            'For': 26,
+            'In': 27,
+            'ParenthesisStart': 28,
+            'ParenthesisEnd': 29,
+            'StringDelimiter': 30,
+            'StringConstant': 31,
+            'Continue': 32,
+            'Break': 33,
+            'Class': 34,
+            'Function': 35,
+            'Of': 36,
+            'Type': 37,
+            'Colon': 38,
+            'Comma': 39,
+            'Return': 40,
+            'Print': 41,
         }
 
         this.tokenTypes = {
@@ -68,6 +71,7 @@ export default class Language {
             'end': this.tokenType.End,
             'while': this.tokenType.While,
             'do': this.tokenType.Do,
+            'repeat': this.tokenType.Repeat,
             'until': this.tokenType.Until,
             'for': this.tokenType.For,
             'in': this.tokenType.In,
@@ -81,7 +85,9 @@ export default class Language {
             ')': this.tokenType.ParenthesisEnd,
             '"': this.tokenType.StringDelimiter,
             ':': this.tokenType.Colon,
-            ',': this.tokenType.Comma
+            ',': this.tokenType.Comma,
+            'return': this.tokenType.Return,
+            'print': this.tokenType.Print,
         }
 
         this.expressionType = {
@@ -95,15 +101,17 @@ export default class Language {
             'MultilineIf': 1,
             'SinglelineWhile': 2,
             'MultilineWhile': 3,
-            'SinglelineDoUntil': 4,
-            'MultilineDoUntil': 5,
+            'SinglelineRepeatUntil': 4,
+            'MultilineRepeatUntil': 5,
             'For': 6,
             'Assignment': 7,
             'Expression': 8,
             'Continue': 9,
             'Break': 10,
             'Class': 11,
-            'Function': 12
+            'Function': 12,
+            'Return': 13,
+            'Print': 14,
         }
 
         this.statementTokens = [
@@ -115,13 +123,16 @@ export default class Language {
             this.tokenType.End,
             this.tokenType.While,
             this.tokenType.Do,
+            this.tokenType.Repeat,
             this.tokenType.Until,
             this.tokenType.For,
             this.tokenType.In,
             this.tokenType.Continue,
             this.tokenType.Break,
             this.tokenType.Class,
-            this.tokenType.Function
+            this.tokenType.Function,
+            this.tokenType.Return,
+            this.tokenType.Print,
         ]
 
         this.arithmeticTokens = [
@@ -154,7 +165,7 @@ export default class Language {
 
         this.expressions = {
             [`${this.expressionType.FunctionCall}`]: [
-                {type: "token", token: this.tokenType.Variable, id: 'variable'},
+                {type: "token", token: this.tokenType.Variable, id: 'name'},
                 {type: "parameterList", id: "parameters"},
             ],
         }
@@ -188,7 +199,7 @@ export default class Language {
                 {type: "token", token: this.tokenType.While},
                 {type: "expression", id: "expression"},
                 {type: "token", token: this.tokenType.Do},
-                {type: "statement", id: "do"},
+                {type: "statement", id: "content"},
                 {type: "token", token: this.tokenType.EOL}
             ],
             [`${this.statementType.MultilineWhile}`]: [
@@ -196,20 +207,20 @@ export default class Language {
                 {type: "expression", id: "expression"},
                 {type: "token", token: this.tokenType.Do},
                 {type: "token", token: this.tokenType.EOL},
-                {type: "subtree", id: "do"},
+                {type: "subtree", id: "content"},
                 {type: "token", token: this.tokenType.End}
             ],
-            [`${this.statementType.SinglelineDoUntil}`]: [
-                {type: "token", token: this.tokenType.Do},
-                {type: "statement", id: "do"},
+            [`${this.statementType.SinglelineRepeatUntil}`]: [
+                {type: "token", token: this.tokenType.Repeat},
+                {type: "statement", id: "content"},
                 {type: "token", token: this.tokenType.Until},
                 {type: "expression", id: "expression"},
                 {type: "token", token: this.tokenType.EOL}
             ],
-            [`${this.statementType.MultilineDoUntil}`]: [
-                {type: "token", token: this.tokenType.Do},
+            [`${this.statementType.MultilineRepeatUntil}`]: [
+                {type: "token", token: this.tokenType.Repeat},
                 {type: "token", token: this.tokenType.EOL},
-                {type: "subtree", id: "do"},
+                {type: "subtree", id: "content"},
                 {type: "token", token: this.tokenType.Until},
                 {type: "expression", id: "expression"},
                 {type: "token", token: this.tokenType.EOL},
@@ -234,6 +245,18 @@ export default class Language {
             [`${this.statementType.Break}`]: [
                 {type: "token", token: this.tokenType.Break}
             ],
+            [`${this.statementType.Return}`]: [
+                {type: "token", token: this.tokenType.Return},
+                {type: "group", required: false, group: [
+                    {type: "expression", id: "expression"}
+                ]}
+            ],
+            [`${this.statementType.Print}`]: [
+                {type: "token", token: this.tokenType.Print},
+                {type: "group", required: false, group: [
+                    {type: "expression", id: "expression"}
+                ]}
+            ],
             [`${this.statementType.Class}`]: [
                 {type: "token", token: this.tokenType.Class},
                 {type: "token", token: this.tokenType.Variable, id: "className"},
@@ -243,6 +266,13 @@ export default class Language {
                     {type: "token", token: this.tokenType.Variable, id: "ofTypeName"}
                 ]},
                 {type: "token", token: this.tokenType.EOL},
+                {type: "subtree", id: "content"},
+                {type: "token", token: this.tokenType.End}
+            ],
+            [`${this.statementType.Function}`]: [
+                {type: "token", token: this.tokenType.Function},
+                {type: "token", token: this.tokenType.Variable, id: 'name'},
+                {type: "parameterDefinitions", id: "parameters"},
                 {type: "subtree", id: "content"},
                 {type: "token", token: this.tokenType.End}
             ],

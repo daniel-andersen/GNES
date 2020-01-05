@@ -18,6 +18,9 @@ export default class Arithmetics {
             case '==': {
                 return Arithmetics.equals(leftSideResult, rightSideResult)
             }
+            case '!=': {
+                return Arithmetics.notEquals(leftSideResult, rightSideResult)
+            }
             case '<': {
                 return Arithmetics.lessThan(leftSideResult, rightSideResult)
             }
@@ -40,7 +43,8 @@ export default class Arithmetics {
         if (leftSideResult.type == Constant.Type.Number && rightSideResult.type == Constant.Type.Number) {
             return new Constant(leftSideResult.value() + rightSideResult.value())
         }
-        if ((leftSideResult.type == Constant.Type.String || leftSideResult.type == Constant.Type.Number) && (rightSideResult.type == Constant.Type.String || rightSideResult.type == Constant.Type.Number)) {
+        if ((leftSideResult.type == Constant.Type.String || leftSideResult.type == Constant.Type.Number || leftSideResult.type == Constant.Type.Boolean) &&
+            (rightSideResult.type == Constant.Type.String || rightSideResult.type == Constant.Type.Number || rightSideResult.type == Constant.Type.Boolean)) {
             return new Constant('"' + leftSideResult.value() + rightSideResult.value() + '"')
         }
         throw 'Cannot add expression'
@@ -72,6 +76,10 @@ export default class Arithmetics {
 
     static equals(leftSideResult, rightSideResult) {
         return new Constant(leftSideResult.value() == rightSideResult.value())
+    }
+
+    static notEquals(leftSideResult, rightSideResult) {
+        return new Constant(leftSideResult.value() != rightSideResult.value())
     }
 
     static lessThan(leftSideResult, rightSideResult) {

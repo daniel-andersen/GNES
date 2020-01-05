@@ -126,31 +126,21 @@ export default class Engine {
         sourceTree.build(lines[index])
     }
 
-    testInterpreter(index) {
+    async testInterpreter(index) {
         const tests = [
 
             // 1
             {
-                lines: [
-                    [
-                        'x = 0',
-                        'while x < 10 do',
-                        '    x = x + 1',
-                        'end',
-                        'do',
-                        '    x = x - 1',
-                        'until x == 0',
-                    ],
-                ],
+                filenames: ['/assets/tests/functions.basic'],
                 result: 0
             },
         ]
 
         const language = new Language()
         const sourceTree = new SourceTree(language)
-        sourceTree.build(tests[index].lines)
+        await sourceTree.build(tests[index].filenames)
 
-        const execution = new Execution(sourceTree.blocks[0])
+        const execution = new Execution(sourceTree.globalNode)
 
         const interpreter = new Interpreter(sourceTree)
         interpreter.addExecution(execution)
@@ -163,7 +153,6 @@ export default class Engine {
         })
 
         while (!interpreter.hasStopped()) {
-            console.log('Performing execution step...')
             interpreter.step()
         }
         console.log(execution.scope)
