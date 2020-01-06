@@ -7,35 +7,54 @@ export class SourceTree {
     constructor(language) {
         this.language = language
         this.tokenizer = new Tokenizer(language)
+        this.programNode = undefined
     }
 
     async build(files) {
 
         // Create global scope - will be populated with classes through building of source tree
-        this.globalScope = new Scope()
+        const globalScope = new Scope()
 
         // Create source tree
         const fileNodes = []
 
-        for (let file of files) {
-            const text = await Util.readTextFile(file)
-            const lines = text.split('\n')
-            const fileNode = this.buildFromLines(lines)
+        for (let filename of files) {
+            const fileNode = await this.buildFromFile(filename, globalScope)
 
             fileNodes.push(fileNode)
         }
 
         // Create global node
-        this.globalNode = new Node.GlobalNode(fileNodes, this.globalScope)
+        this.programNode = new Node.ProgramNode(fileNodes, globalScope)
+
+        // Postprocess source tree
+        this.postProcess(this.programNode)
     }
 
-    buildFromLines(lines) {
+    postProcess(programNode) {
+        for (let fileNode of programNode.fileNodes) {
+            for (let node of fileNode.nodes) {
+                if (node instanceof Node.ClassNode) {
+                    this.registerClass(node, programNode.scope, fileNode.scope)
+                }
+                if (node instanceof Node.FunctionDefinitionNode) {
+                    this.registerFunction(node, fileNode.scope)
+                }
+            }
+        }
+    }
+
+    async buildFromFile(filename, globalScope) {
+
+        // Read lines from file
+        const text = await Util.readTextFile(filename)
+        const lines = text.split('\n')
 
         // Tokenize lines
         const tokens = this.tokenizer.tokenizeLines(lines)
 
-        // Parse block
-        const fileNode = this.parseFile(tokens)
+        // Parse lines
+        const fileNode = this.parseFile(tokens, globalScope)
 
         console.log("---------")
         console.log("Result:")
@@ -45,10 +64,10 @@ export class SourceTree {
         return fileNode
     }
 
-    parseFile(tokens) {
+    parseFile(tokens, globalScope) {
         tokens = this.duplicateTokens(tokens)
 
-        const fileScope = new Scope(this.globalScope)
+        const fileScope = new Scope(globalScope)
         const fileNode = new Node.FileNode(tokens, [], fileScope)
 
         // Parse nodes
@@ -63,9 +82,6 @@ export class SourceTree {
                 fileNode.nodes.push(node)
             }
             fileNode.tokens = fileNode.tokens.concat(node.tokens)
-
-            // Register scope entities
-            this.registerScopeEntities(node, fileNode.scope)
 
             // Remove tokens
             tokens.splice(0, node.tokens.length)
@@ -89,7 +105,6 @@ export class SourceTree {
             // Add node if not newline
             if (!(node instanceof Node.NewlineNode)) {
                 blockNode.nodes.push(node)
-                this.registerScopeEntities(blockNode, node)
             }
             blockNode.tokens = blockNode.tokens.concat(node.tokens)
 
@@ -98,25 +113,6 @@ export class SourceTree {
         }
 
         return blockNode
-    }
-
-    registerScopeEntities(node, scope) {
-
-        // Register class
-        if (node instanceof Node.ClassNode) {
-            if (this.globalScope.resolveClass(node.className) !== undefined) {
-                throw 'Class with name "' + node.className + '" already defined'
-            }
-            this.globalScope.setClass(node)
-        }
-
-        // Register function
-        if (node instanceof Node.FunctionDefinitionNode) {
-            if (scope.resolveFunction(node.functionName) !== undefined) {
-                throw 'Function with name "' + node.functionName + '" already defined in this context'
-            }
-            scope.setFunction(node)
-        }
     }
 
     parse(tokens) {
@@ -133,15 +129,15 @@ export class SourceTree {
         }
 
         // Parse statement
-        const statement = this.parseStatement(tokens)
-        if (statement !== undefined) {
-            return statement
+        const statementNode = this.parseStatement(tokens)
+        if (statementNode !== undefined) {
+            return statementNode
         }
 
         // Parse expression
-        const expression = this.parseExpression(tokens)
-        if (expression !== undefined) {
-            return expression
+        const expressionNode = this.parseExpression(tokens)
+        if (expressionNode !== undefined) {
+            return expressionNode
         }
 
         return undefined
@@ -232,28 +228,46 @@ export class SourceTree {
         return undefined
     }
 
-    parseParameterList(tokens) {
+    parseCommaSeperatedTokens(tokens) {
         tokens = this.duplicateTokens(tokens)
+        if (tokens.length == 0) {
+            return undefined
+        }
 
         // Check starting with parenthesis
-        if (tokens.length == 0 || tokens[0].type != this.language.tokenType.ParenthesisStart) {
-            return undefined
-        }
+        const startParenthesis = tokens[0].type == this.language.tokenType.ParenthesisStart
 
         // Find parenthesis group
-        const groupedExpressionTokens = this.findGroupedExpressionTokens(tokens)
-        if (groupedExpressionTokens === undefined) {
-            return undefined
+        let innerTokens = []
+        let listTokens = []
+
+        if (startParenthesis) {
+            const groupedExpressionTokens = this.findGroupedExpressionTokens(tokens)
+            if (groupedExpressionTokens === undefined) {
+                return undefined
+            }
+            innerTokens = groupedExpressionTokens.groupTokens
+            listTokens = groupedExpressionTokens.allTokens
         }
-        const parameterTokens = groupedExpressionTokens.groupTokens
+
+        // Use newline as delimiter
+        else {
+            for (let token of tokens) {
+                if (token.type == this.language.tokenType.EOL) {
+                    break
+                }
+                innerTokens.push(token)
+            }
+            listTokens = this.duplicateTokens(innerTokens)
+        }
 
         // Parse parameters
-        let assignmentNodes = []
-        let assignmentTokens = []
+        let listNodes = []
+        let currentTokens = []
         let parenthesisCount = 0
 
-        for (let i = 0; i < parameterTokens.length; i++) {
-            const token = parameterTokens[i]
+        for (let i = 0; i < innerTokens.length; i++) {
+            const token = innerTokens[i]
 
             // Account for parenthesis
             if (token.type == this.language.tokenType.ParenthesisStart) {
@@ -266,66 +280,41 @@ export class SourceTree {
                 }
             }
             if (parenthesisCount > 0) {
-                assignmentTokens.push(token)
+                currentTokens.push(token)
                 continue
             }
 
             // Add token to assignment
             if (token.type != this.language.tokenType.Comma) {
-                assignmentTokens.push(token)
+                currentTokens.push(token)
             }
 
             // Split assignments by comma
-            if ((token.type == this.language.tokenType.Comma && parenthesisCount == 0) || i === parameterTokens.length - 1) {
+            if ((token.type == this.language.tokenType.Comma && parenthesisCount == 0) || i === innerTokens.length - 1) {
 
                 // Add assignment
-                const assignmentNode = this.parseAssignmentNode(assignmentTokens)
-                if (assignmentNode === undefined) {
+                const assignmentNode = this.parseAssignmentNode(currentTokens)
+                if (assignmentNode !== undefined) {
+                    listNodes.push(assignmentNode)
+                }
+
+                // Add constant
+                else if (currentTokens.length == 1) {
+                    const constantNode = new Node.ConstantNode(currentTokens, currentTokens[0].token)
+                    listNodes.push(constantNode)
+                }
+
+                // Neither assignment, nor constant
+                else {
                     return undefined
                 }
-                assignmentNodes.push(assignmentNode)
 
-                // Reset assignment tokens
-                assignmentTokens = []
+                // Reset tokens
+                currentTokens = []
             }
         }
 
-        return {tokens: groupedExpressionTokens.allTokens, assignmentNodes: assignmentNodes}
-    }
-
-    parseParameterDefinitions(tokens) {
-        tokens = this.duplicateTokens(tokens)
-
-        // Check starting with parenthesis
-        if (tokens.length == 0 || tokens[0].type != this.language.tokenType.ParenthesisStart) {
-            return undefined
-        }
-
-        // Find parenthesis group
-        const groupedExpressionTokens = this.findGroupedExpressionTokens(tokens)
-        if (groupedExpressionTokens === undefined) {
-            return undefined
-        }
-        const parameterTokens = groupedExpressionTokens.groupTokens
-
-        // Parse parameters
-        let variableNodes = []
-
-        for (let i = 0; i < parameterTokens.length; i++) {
-            const token = parameterTokens[i]
-
-            // Token
-            if (i % 2 === 0) {
-                variableNodes.push(new Node.ConstantNode([token], token))
-            }
-
-            // Comma
-            else if (token.type != this.language.tokenType.Comma) {
-                return undefined
-            }
-        }
-
-        return {tokens: groupedExpressionTokens.allTokens, variables: variableNodes}
+        return {tokens: listTokens, nodes: listNodes}
     }
 
     parseAssignmentNode(tokens) {
@@ -532,9 +521,9 @@ export class SourceTree {
     matchParameterListEntry(entry, tokens) {
         tokens = this.duplicateTokens(tokens)
 
-        const result = this.parseParameterList(tokens)
+        const result = this.parseCommaSeperatedTokens(tokens)
         if (result !== undefined) {
-            return new Node.ParameterListNode(result.tokens, result.assignmentNodes)
+            return new Node.ParameterListNode(result.tokens, result.nodes)
         }
         return undefined
     }
@@ -542,9 +531,9 @@ export class SourceTree {
     matchParameterDefinitionsEntry(entry, tokens) {
         tokens = this.duplicateTokens(tokens)
 
-        const result = this.parseParameterDefinitions(tokens)
+        const result = this.parseCommaSeperatedTokens(tokens)
         if (result !== undefined) {
-            return new Node.ParameterDefinitionsNode(result.tokens, result.variables)
+            return new Node.ParameterDefinitionsNode(result.tokens, result.nodes)
         }
         return undefined
     }
@@ -583,14 +572,17 @@ export class SourceTree {
 
     getExpressionOfType(tokens, nodes, type) {
         if (type == this.language.expressionType.FunctionCall) {
-            return new Node.FunctionCallNode(tokens, this.getNodeWithId(nodes, 'name').token.token, this.getNodeWithId(nodes, 'parameters'))
+            return new Node.FunctionCallNode(tokens, this.getTokenWithId(nodes, 'name'), this.getNodeWithId(nodes, 'parameters'))
+        }
+        if (type == this.language.expressionType.NewObject) {
+            return new Node.NewObjectNode(tokens, this.getNodeWithId(nodes, 'expression'))
         }
         return undefined
     }
 
     getStatementOfType(tokens, nodes, type) {
         if (type == this.language.statementType.Assignment) {
-            return new Node.AssignmentNode(tokens, this.getNodeWithId(nodes, 'variable').token.token, this.getNodeWithId(nodes, 'expression'))
+            return new Node.AssignmentNode(tokens, this.getTokenWithId(nodes, 'variable'), this.getNodeWithId(nodes, 'expression'))
         }
         if (type == this.language.statementType.SinglelineIf || type == this.language.statementType.MultilineIf) {
             return new Node.IfNode(tokens, this.getNodeWithId(nodes, 'expression'), this.getNodeWithId(nodes, 'then'), this.getNodeWithId(nodes, 'else'))
@@ -602,7 +594,7 @@ export class SourceTree {
             return new Node.RepeatUntilNode(tokens, this.getNodeWithId(nodes, 'expression'), this.getNodeWithId(nodes, 'content'))
         }
         if (type == this.language.statementType.For) {
-            return new Node.ForNode(tokens, this.getNodeWithId(nodes, 'variable').token.token, this.getNodeWithId(nodes, 'expression'), this.getNodeWithId(nodes, 'do'))
+            return new Node.ForNode(tokens, this.getTokenWithId(nodes, 'variable'), this.getNodeWithId(nodes, 'expression'), this.getNodeWithId(nodes, 'do'))
         }
         if (type == this.language.statementType.Continue) {
             return new Node.ContinueNode(tokens)
@@ -617,10 +609,13 @@ export class SourceTree {
             return new Node.PrintNode(tokens, this.getNodeWithId(nodes, 'expression'))
         }
         if (type == this.language.statementType.Class) {
-            return new Node.ClassNode(tokens, this.getNodeWithId(nodes, 'className').token.token, this.getNodeWithId(nodes, 'ofTypeName').token.token, this.getNodeWithId(nodes, 'content'))
+            return new Node.ClassNode(tokens, this.getTokenWithId(nodes, 'className'), this.getTokenWithId(nodes, 'ofTypeName'), this.getNodeWithId(nodes, 'content'))
         }
         if (type == this.language.statementType.Function) {
-            return new Node.FunctionDefinitionNode(tokens, this.getNodeWithId(nodes, 'name').token.token, this.getNodeWithId(nodes, 'parameters'), this.getNodeWithId(nodes, 'content'))
+            return new Node.FunctionDefinitionNode(tokens, this.getTokenWithId(nodes, 'name'), this.getNodeWithId(nodes, 'parameters'), this.getNodeWithId(nodes, 'content'))
+        }
+        if (type == this.language.statementType.Property) {
+            return new Node.PropertyNode(tokens, this.getNodeWithId(nodes, 'properties'))
         }
         return undefined
     }
@@ -634,7 +629,48 @@ export class SourceTree {
         return undefined
     }
 
+    getTokenWithId(nodes, id) {
+        for (let node of nodes) {
+            if (node.id == id) {
+                return node.token.token
+            }
+        }
+        return undefined
+    }
+
     duplicateTokens(tokens) {
         return tokens.slice(0)
+    }
+
+    registerClass(classNode, globalScope, fileScope) {
+        if (globalScope.resolveClass(classNode.className) !== undefined) {
+            throw 'Class with name "' + classNode.className + '" already defined'
+        }
+        globalScope.setClass(classNode)
+
+        classNode.scope = new Scope(fileScope)
+
+        for (let node of classNode.contentNode.nodes) {
+            if (node instanceof Node.PropertyNode) {
+                this.registerPropertyNode(classNode, node)
+            }
+            if (node instanceof Node.FunctionDefinitionNode) {
+                this.registerFunction(node, classNode.scope)
+            }
+        }
+    }
+
+    registerPropertyNode(classNode, propertyNode) {
+        if (classNode.propertyNodes === undefined) {
+            classNode.propertyNodes = []
+        }
+        classNode.propertyNodes.push(propertyNode)
+    }
+
+    registerFunction(node, scope) {
+        if (scope.resolveFunction(node.functionName) !== undefined) {
+            throw 'Function with name "' + node.functionName + '" already defined in this context'
+        }
+        scope.setFunction(node)
     }
 }

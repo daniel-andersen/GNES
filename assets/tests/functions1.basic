@@ -4,7 +4,7 @@ Function f1(name)
     Return "Hello " + name + "!"
 End
 
-Function f2(x, y)
+Function f2(x=1, y=2)
     Print "Sum of " + x + " and " + y + " is " + (x + y)
     return x + y
 End
@@ -17,7 +17,7 @@ End
 Print "Basic function calls"
 Print "---------------------"
 Print f1(name="Daniel")
-f2(x=1, y=2)
+f2()
 f2(x=f2(x=1, y=2), y=f2(x=3, y=4)+f2(x=5, y=5))
 f3()
 f3()

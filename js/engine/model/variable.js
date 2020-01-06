@@ -1,3 +1,5 @@
+import { ObjectInstance } from './object-instance'
+
 export class Variable {
     constructor(name, value) {
         this.name = name
@@ -10,8 +12,11 @@ export class Variable {
         if (this.rawValue instanceof Constant) {
             this.type = Variable.Type.Constant
         }
+        else if (this.rawValue instanceof ObjectInstance) {
+            this.type = Variable.Type.ObjectInstance
+        }
         else {
-            this.type = Variable.Type.ObjectReference
+            throw 'Unknown variable type "' + value + '"'
         }
     }
 
@@ -37,7 +42,7 @@ export class Variable {
 Variable.Type = {
     Unknown: -1,
     Constant: 0,
-    ObjectReference: 1
+    ObjectInstance: 1
 }
 
 

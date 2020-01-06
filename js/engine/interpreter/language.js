@@ -45,6 +45,9 @@ export default class Language {
             'Comma': 39,
             'Return': 40,
             'Print': 41,
+            'Property': 42,
+            'New': 43,
+            'Dot': 44,
         }
 
         this.tokenTypes = {
@@ -88,12 +91,16 @@ export default class Language {
             ',': this.tokenType.Comma,
             'return': this.tokenType.Return,
             'print': this.tokenType.Print,
+            'property': this.tokenType.Property,
+            'new': this.tokenType.New,
+            '.': this.tokenType.Dot,
         }
 
         this.expressionType = {
             'FunctionCall': 0,
             'ParameterAssignments': 1,
-            'ArithmeticExpression': 2
+            'NewObject': 2,
+            'ArithmeticExpression': 3
         }
 
         this.statementType = {
@@ -112,6 +119,7 @@ export default class Language {
             'Function': 12,
             'Return': 13,
             'Print': 14,
+            'Property': 15,
         }
 
         this.statementTokens = [
@@ -133,6 +141,7 @@ export default class Language {
             this.tokenType.Function,
             this.tokenType.Return,
             this.tokenType.Print,
+            this.tokenType.Property,
         ]
 
         this.arithmeticTokens = [
@@ -149,24 +158,30 @@ export default class Language {
             this.tokenType.GreaterThanOrEqual,
             this.tokenType.LessThan,
             this.tokenType.LessThanOrEqual,
+            this.tokenType.Dot,
         ]
 
         this.arithmeticOperationPriority = {
-            [`${this.tokenType.And}`]: 6,
-            [`${this.tokenType.Or}`]: 5,
-            [`${this.tokenType.Divide}`]: 4,
-            [`${this.tokenType.Multiply}`]: 3,
-            [`${this.tokenType.Plus}`]: 2,
-            [`${this.tokenType.Minus}`]: 2,
-            [`${this.tokenType.Equal}`]: 1,
-            [`${this.tokenType.NotEqual}`]: 1,
-            [`${this.tokenType.Not}`]: 0
+            [`${this.tokenType.Dot}`]: 7,
+            [`${this.tokenType.Not}`]: 6,
+            [`${this.tokenType.Divide}`]: 5,
+            [`${this.tokenType.Multiply}`]: 4,
+            [`${this.tokenType.Plus}`]: 3,
+            [`${this.tokenType.Minus}`]: 3,
+            [`${this.tokenType.Equal}`]: 2,
+            [`${this.tokenType.NotEqual}`]: 2,
+            [`${this.tokenType.And}`]: 1,
+            [`${this.tokenType.Or}`]: 0,
         }
 
         this.expressions = {
             [`${this.expressionType.FunctionCall}`]: [
                 {type: "token", token: this.tokenType.Variable, id: 'name'},
                 {type: "parameterList", id: "parameters"},
+            ],
+            [`${this.expressionType.NewObject}`]: [
+                {type: "token", token: this.tokenType.New},
+                {type: "expression", id: "expression"},
             ],
         }
 
@@ -275,6 +290,10 @@ export default class Language {
                 {type: "parameterDefinitions", id: "parameters"},
                 {type: "subtree", id: "content"},
                 {type: "token", token: this.tokenType.End}
+            ],
+            [`${this.statementType.Property}`]: [
+                {type: "token", token: this.tokenType.Property},
+                {type: "parameterDefinitions", id: "properties"},
             ],
         }
     }

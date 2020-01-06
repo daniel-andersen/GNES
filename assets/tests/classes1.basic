@@ -1,0 +1,30 @@
+z = "I'm z!"
+
+Class Car
+    Property x = 10
+    Property y = 20
+    Property z = 30
+    Property newZ = z
+
+    #Constructor(x, y)
+    #End
+
+    Function test()
+        Print "X: " + x
+        Print "Y: " + y
+    End
+End
+
+car1 = new Car()
+print car1.x
+
+car2 = new Car()
+print car2.x
+
+print car1.x + car2.x
+
+if car1.x == car2.x then print "YES!"
+
+Print x
+Print y
+Print z

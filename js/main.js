@@ -1,4 +1,4 @@
 import Engine from './engine/engine'
 
 const engine = new Engine()
-engine.testInterpreter(0)
+engine.run(["/assets/tests/classes1.basic"])

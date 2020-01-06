@@ -45,7 +45,7 @@ export class Scope {
 
     resolveVariable(name) {
         /*
-        Resolves a variable with the given name in the current scope.
+        Resolves a variable with the given name in the current scope or parent scopes.
         */
 
         // Variable set in this scope
@@ -60,6 +60,15 @@ export class Scope {
 
         // Not found
         return undefined
+    }
+
+    resolveVariableInOwnScope(name) {
+        /*
+        Resolves a variable with the given name in the current scope.
+        */
+
+        // Variable set in this scope
+        return name in this.variables ? this.variables[name] : undefined
     }
 
     setFunction(functionNode) {
