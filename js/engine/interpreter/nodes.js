@@ -1,6 +1,5 @@
-import { Variable, Constant } from '../model/variable'
+import { Variable, Constant, ObjectInstance } from '../model/variable'
 import { Scope } from '../model/scope'
-import { ObjectInstance } from '../model/object-instance'
 import Arithmetics from './arithmetics'
 
 export class Node {
@@ -26,7 +25,7 @@ export class StatementNode extends Node {
     }
 }
 
-export class AssignmentNode extends StatementNode {
+export class ParameterAssignmentNode extends StatementNode {
     constructor(tokens=[], variableName, expressionNode) {
         super(tokens)
         this.variableName = variableName
@@ -40,6 +39,71 @@ export class AssignmentNode extends StatementNode {
         }
         const variable = new Variable(this.variableName, result)
         scope.setVariable(variable)
+    }
+}
+
+export class AssignmentNode extends StatementNode {
+    constructor(tokens=[], variableExpressionNode, assignmentExpressionNode) {
+        super(tokens)
+        this.variableName = undefined
+        this.variableExpressionNode = variableExpressionNode
+        this.assignmentExpressionNode = assignmentExpressionNode
+
+        this.prepareVariableExpression()
+    }
+
+    prepareVariableExpression() {
+        if (this.variableExpressionNode instanceof ConstantNode) {
+            this.variableName = this.variableExpressionNode.constant.value()
+            this.variableExpressionNode = undefined
+            return
+        }
+
+        let parentNode = undefined
+        let arithmeticNode = this.variableExpressionNode
+
+        while (true) {
+            if (!(arithmeticNode instanceof ArithmeticNode)) {
+                throw 'Expected "." on object'
+            }
+            if (arithmeticNode.rightSideExpressionNode instanceof ConstantNode) {
+                break
+            }
+            parentNode = arithmeticNode
+            arithmeticNode = arithmeticNode.rightSideExpressionNode
+        }
+
+        if (parentNode === undefined) {
+            this.variableExpressionNode = arithmeticNode.leftSideExpressionNode
+        }
+        else {
+            parentNode.rightSideExpressionNode = arithmeticNode.leftSideExpressionNode
+        }
+        this.variableName = arithmeticNode.rightSideExpressionNode.constant.value()
+    }
+
+    *evaluate(scope) {
+
+        // Evaluate variable expression
+        let variableScope = scope
+
+        if (this.variableExpressionNode !== undefined) {
+            const variableResult = yield* this.variableExpressionNode.evaluate(scope)
+            if (variableResult === undefined || !(variableResult instanceof ObjectInstance)) {
+                throw 'Left side expression did not evaluate to an object'
+            }
+            variableScope = variableResult.scope
+        }
+
+        // Evaluate assignment expression
+        const assignmentResult = yield* this.assignmentExpressionNode.evaluate(scope)
+        if (assignmentResult === undefined) {
+            throw 'Result of expression is undefined'
+        }
+
+        // Set variable
+        const variable = new Variable(this.variableName, assignmentResult)
+        variableScope.setVariable(variable)
     }
 }
 
@@ -188,7 +252,17 @@ export class PrintNode extends StatementNode {
 
         // Print result
         yield
-        document.body.innerHTML += (result !== undefined ? result.value() : '') + '<br/>'
+        let text = ""
+        if (result !== undefined) {
+            if (result instanceof Constant) {
+                text = result.value()
+            }
+            if (result instanceof ObjectInstance) {
+                text = result.classNode.className
+            }
+        }
+        text = text.replace(/\s/g, '&nbsp;')
+        document.body.innerHTML += text + '<br/>'
     }
 }
 
@@ -251,7 +325,7 @@ export class FunctionCallNode extends ExpressionNode {
     }
 
     *evaluateParameters(scope, functionScope) {
-        for (let node of this.parameterListNode.assignmentNodes) {
+        for (let node of this.parameterListNode.parameterAssignmentNodes) {
 
             // Evaluate expression in original scope
             yield
@@ -274,7 +348,7 @@ export class FunctionCallNode extends ExpressionNode {
             if (node instanceof ConstantNode) {
                 parameterName = node.constant.value()
             }
-            else if (node instanceof AssignmentNode) {
+            else if (node instanceof ParameterAssignmentNode) {
                 parameterName = node.variableName
             }
             else {
@@ -326,13 +400,20 @@ export class NewObjectNode extends ExpressionNode {
         // Create instance of class
         const object = new ObjectInstance(classNode)
 
-        // Evaluate properties
+        // Evaluate parameters to constructor
+        yield
+        yield* this.functionCallNode.evaluateParameters(scope, object.scope)
+
+        // Evaluate unset properties
         for (let propertyNode of object.classNode.propertyNodes) {
             for (let node of propertyNode.parameterDefinitionsNode.nodes) {
-                if (node instanceof AssignmentNode) {
-                    yield
-                    const result = yield* node.expressionNode.evaluate(object.scope)
-                    object.scope.setVariable(new Variable(node.variableName, result))
+                if (node instanceof ParameterAssignmentNode) {
+                    const currentVariable = object.scope.resolveVariable(node.variableName)
+                    if (currentVariable === undefined || (currentVariable !== undefined && currentVariable.type == Variable.Type.Undefined)) {
+                        yield
+                        const result = yield* node.expressionNode.evaluate(object.scope)
+                        object.scope.setVariable(new Variable(node.variableName, result))
+                    }
                 }
             }
         }
@@ -391,9 +472,6 @@ export class ArithmeticNode extends ExpressionNode {
         // Evaluate right side of expression - in object scope
         yield
         const result = yield* this.rightSideExpressionNode.evaluate(objectInstance.scope)
-        if (result === undefined) {
-            throw 'Result of right side expression is undefined'
-        }
 
         return result
     }
@@ -419,9 +497,9 @@ export class FunctionDefinitionNode extends Node {
 }
 
 export class ParameterListNode extends Node {
-    constructor(tokens=[], assignmentNodes) {
+    constructor(tokens=[], parameterAssignmentNodes) {
         super(tokens)
-        this.assignmentNodes = assignmentNodes
+        this.parameterAssignmentNodes = parameterAssignmentNodes
     }
 }
 

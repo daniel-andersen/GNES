@@ -292,10 +292,10 @@ export class SourceTree {
             // Split assignments by comma
             if ((token.type == this.language.tokenType.Comma && parenthesisCount == 0) || i === innerTokens.length - 1) {
 
-                // Add assignment
-                const assignmentNode = this.parseAssignmentNode(currentTokens)
-                if (assignmentNode !== undefined) {
-                    listNodes.push(assignmentNode)
+                // Add parameter assignment
+                const parameterAssignmentNode = this.parseParameterAssignmentNode(currentTokens)
+                if (parameterAssignmentNode !== undefined) {
+                    listNodes.push(parameterAssignmentNode)
                 }
 
                 // Add constant
@@ -317,14 +317,20 @@ export class SourceTree {
         return {tokens: listTokens, nodes: listNodes}
     }
 
-    parseAssignmentNode(tokens) {
+    parseParameterAssignmentNode(tokens) {
         tokens = this.duplicateTokens(tokens)
 
+        // Parse assignment node
         const assignmentNode = this.parseStatement(tokens)
         if (assignmentNode === undefined || !(assignmentNode instanceof Node.AssignmentNode)) {
             return undefined
         }
-        return assignmentNode
+
+        // Convert into parameter assignment node
+        if (assignmentNode.variableExpressionNode !== undefined) {
+            return undefined
+        }
+        return new Node.ParameterAssignmentNode(assignmentNode.tokens.slice(0), assignmentNode.variableName, assignmentNode.assignmentExpressionNode)
     }
 
     parseArithmeticNode(tokens) {
@@ -582,7 +588,10 @@ export class SourceTree {
 
     getStatementOfType(tokens, nodes, type) {
         if (type == this.language.statementType.Assignment) {
-            return new Node.AssignmentNode(tokens, this.getTokenWithId(nodes, 'variable'), this.getNodeWithId(nodes, 'expression'))
+            return new Node.AssignmentNode(tokens, this.getNodeWithId(nodes, 'variableExpression'), this.getNodeWithId(nodes, 'assignmentExpression'))
+        }
+        if (type == this.language.statementType.ParameterAssignment) {
+            return new Node.ParameterAssignmentNode(tokens, this.getTokenWithId(nodes, 'variable'), this.getNodeWithId(nodes, 'expression'))
         }
         if (type == this.language.statementType.SinglelineIf || type == this.language.statementType.MultilineIf) {
             return new Node.IfNode(tokens, this.getNodeWithId(nodes, 'expression'), this.getNodeWithId(nodes, 'then'), this.getNodeWithId(nodes, 'else'))
@@ -649,6 +658,7 @@ export class SourceTree {
         globalScope.setClass(classNode)
 
         classNode.scope = new Scope(fileScope)
+        classNode.propertyNodes = []
 
         for (let node of classNode.contentNode.nodes) {
             if (node instanceof Node.PropertyNode) {
@@ -661,9 +671,6 @@ export class SourceTree {
     }
 
     registerPropertyNode(classNode, propertyNode) {
-        if (classNode.propertyNodes === undefined) {
-            classNode.propertyNodes = []
-        }
         classNode.propertyNodes.push(propertyNode)
     }
 

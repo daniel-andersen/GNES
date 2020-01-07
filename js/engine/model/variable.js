@@ -1,4 +1,5 @@
-import { ObjectInstance } from './object-instance'
+import { Scope } from './scope'
+import * as Node from '../interpreter/nodes'
 
 export class Variable {
     constructor(name, value) {
@@ -9,7 +10,10 @@ export class Variable {
     setValue(value) {
         this.rawValue = value
 
-        if (this.rawValue instanceof Constant) {
+        if (value === undefined || (this.rawValue instanceof Constant && this.rawValue.type == Constant.Type.Undefined)) {
+            this.type = Variable.Type.Undefined
+        }
+        else if (this.rawValue instanceof Constant) {
             this.type = Variable.Type.Constant
         }
         else if (this.rawValue instanceof ObjectInstance) {
@@ -42,15 +46,19 @@ export class Variable {
 Variable.Type = {
     Unknown: -1,
     Constant: 0,
-    ObjectInstance: 1
+    ObjectInstance: 1,
+    Undefined: 2
 }
 
 
 export class Constant {
-    constructor(value) {
+    constructor(value=undefined) {
         this.rawValue = value
 
-        if (typeof(this.rawValue) == typeof(true)) {
+        if (value === undefined) {
+            this.type = Constant.Type.Undefined
+        }
+        else if (typeof(this.rawValue) == typeof(true)) {
             this.type = Constant.Type.Boolean
         }
         else if (!isNaN(this.rawValue)) {
@@ -93,5 +101,30 @@ Constant.Type = {
     Boolean: 0,
     Number: 1,
     String: 2,
-    Variable: 3
+    Variable: 3,
+    Undefined: 4
+}
+
+export class ObjectInstance {
+    constructor(classNode) {
+        this.classNode = classNode
+        this.scope = new Scope(classNode.scope)
+
+        this.populateScope()
+    }
+
+    populateScope() {
+
+        // Create variables for properties
+        for (let propertyNode of this.classNode.propertyNodes) {
+            for (let node of propertyNode.parameterDefinitionsNode.nodes) {
+                if (node instanceof Node.ConstantNode) {
+                    this.scope.setVariableInOwnScope(new Variable(node.constant.value(), new Constant()))
+                }
+                if (node instanceof Node.AssignmentNode) {
+                    this.scope.setVariableInOwnScope(new Variable(node.variableName, new Constant()))
+                }
+            }
+        }
+    }
 }
