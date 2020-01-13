@@ -27,8 +27,7 @@ export default class Tokenizer {
                 line = line.replace(tokenPattern, '')
 
                 // Find token type
-                const lowerCaseToken = token.toLowerCase()
-                const type = lowerCaseToken in this.language.tokenTypes ? this.language.tokenTypes[lowerCaseToken] : this.language.tokenType.Variable
+                const type = token in this.language.tokenTypes ? this.language.tokenTypes[token] : this.language.tokenType.Variable
 
                 // Single line comment - ignore rest of line
                 if (type == this.language.tokenType.SingleLineComment) {
