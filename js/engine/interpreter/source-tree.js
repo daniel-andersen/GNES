@@ -32,6 +32,8 @@ export class SourceTree {
     }
 
     postProcess(programNode) {
+
+        // Register classes, functions, etc.
         for (let fileNode of programNode.fileNodes) {
             for (let node of fileNode.nodes) {
                 if (node instanceof Node.ClassNode) {
@@ -40,6 +42,14 @@ export class SourceTree {
                 if (node instanceof Node.FunctionDefinitionNode) {
                     this.registerFunction(node, fileNode.scope)
                 }
+            }
+        }
+
+        // Register extending classes
+        for (let className of Object.keys(programNode.scope.classes)) {
+            const classNode = programNode.scope.resolveClass(className)
+            if (classNode.ofTypeName !== undefined) {
+                this.registerExtendingClass(classNode, programNode.scope)
             }
         }
     }
@@ -657,7 +667,7 @@ export class SourceTree {
         }
         globalScope.setClass(classNode)
 
-        classNode.scope = new Scope(fileScope)
+        classNode.scope = new Scope(globalScope)
         classNode.propertyNodes = []
 
         for (let node of classNode.contentNode.nodes) {
@@ -679,5 +689,14 @@ export class SourceTree {
             throw 'Function with name "' + node.functionName + '" already defined in this context'
         }
         scope.setFunction(node)
+    }
+
+    registerExtendingClass(classNode, globalScope) {
+        const extendedClassNode = globalScope.resolveClass(classNode.ofTypeName)
+        if (extendedClassNode === undefined) {
+            throw 'Class of type "' + classNode.ofTypeName + '" not found'
+        }
+
+        classNode.scope.parentScope = extendedClassNode.scope
     }
 }

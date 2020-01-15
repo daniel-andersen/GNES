@@ -1,4 +1,12 @@
 export default class Util {
+    static currentTimeMillis() {
+        return new Date().getTime()
+    }
+
+    static sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms))
+    }
+
     static uuid() {
         return Util._S4() + Util._S4() + '-' + Util._S4() + '-' + Util._S4() + '-' + Util._S4() + '-' + Util._S4() + Util._S4() + Util._S4()
     }

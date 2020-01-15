@@ -1,7 +1,12 @@
+import Util from '../util/util'
+
 export default class Interpreter {
     constructor(sourceTree) {
         this.sourceTree = sourceTree
         this.reset()
+
+        this.runTimeMillis = 20
+        this.pauseTimeMillis = 5
     }
 
     reset() {
@@ -20,6 +25,20 @@ export default class Interpreter {
 
     addExecution(execution) {
         this.executions.push(execution)
+    }
+
+    async run() {
+        let nextPauseTime = Util.currentTimeMillis() + this.runTimeMillis
+
+        while (!this.hasStopped()) {
+            this.step()
+
+            // Pause execution a while
+            if (Util.currentTimeMillis() > nextPauseTime) {
+                await Util.sleep(this.pauseTimeMillis)
+                nextPauseTime = Util.currentTimeMillis() + this.runTimeMillis
+            }
+        }
     }
 
     step() {

@@ -23,16 +23,14 @@ export default class Engine {
         interpreter.addExecution(execution)
 
         document.addEventListener('keydown', event => {
-            if (event.isComposing || event.keyCode === 229) {
-                return
+            if (!event.isComposing && event.keyCode === 27) {
+                interpreter.stop()
             }
-            interpreter.stop()
         })
 
-        while (!interpreter.hasStopped()) {
-            interpreter.step()
-        }
-        console.log(execution.scope)
+        console.log('Running...')
+
+        interpreter.run()
 
         console.log('Done!')
     }
