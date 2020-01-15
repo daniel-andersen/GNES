@@ -612,8 +612,11 @@ export class SourceTree {
         if (type == this.language.statementType.SinglelineRepeatUntil || type == this.language.statementType.MultilineRepeatUntil) {
             return new Node.RepeatUntilNode(tokens, this.getNodeWithId(nodes, 'expression'), this.getNodeWithId(nodes, 'content'))
         }
-        if (type == this.language.statementType.For) {
-            return new Node.ForNode(tokens, this.getTokenWithId(nodes, 'variable'), this.getNodeWithId(nodes, 'expression'), this.getNodeWithId(nodes, 'do'))
+        if (type == this.language.statementType.ForIn) {
+            return new Node.ForInNode(tokens, this.getTokenWithId(nodes, 'variable'), this.getNodeWithId(nodes, 'expression'), this.getNodeWithId(nodes, 'do'))
+        }
+        if (type == this.language.statementType.ForFromTo) {
+            return new Node.ForFromToNode(tokens, this.getTokenWithId(nodes, 'variable'), this.getNodeWithId(nodes, 'fromExpression'), this.getNodeWithId(nodes, 'toExpression'), this.getNodeWithId(nodes, 'stepExpression'), this.getNodeWithId(nodes, 'do'))
         }
         if (type == this.language.statementType.Continue) {
             return new Node.ContinueNode(tokens)

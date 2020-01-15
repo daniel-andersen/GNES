@@ -1,0 +1,23 @@
+start = 1
+end = 5
+
+Print "Loop from " + start + " to " + end + ":"
+For x From start To end Do
+    Print x
+End
+
+Print
+Print "While"
+
+While start < end Do
+    start = start + 1
+    Print start
+End
+
+Print
+Print "Loop"
+
+Repeat
+    start = start + 1
+    Print start
+Until start >= end * 2

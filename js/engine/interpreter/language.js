@@ -49,6 +49,10 @@ export default class Language {
             'Property': 43,
             'New': 44,
             'Dot': 45,
+            'From': 46,
+            'To': 47,
+            'Step': 48,
+            'By': 49
         }
 
         this.tokenTypes = {
@@ -95,6 +99,10 @@ export default class Language {
             'Property': this.tokenType.Property,
             'New': this.tokenType.New,
             '.': this.tokenType.Dot,
+            'From': this.tokenType.From,
+            'To': this.tokenType.To,
+            'Step': this.tokenType.Step,
+            'By': this.tokenType.By,
         }
 
         this.expressionType = {
@@ -111,17 +119,18 @@ export default class Language {
             'MultilineWhile': 3,
             'SinglelineRepeatUntil': 4,
             'MultilineRepeatUntil': 5,
-            'For': 6,
-            'ParameterAssignment': 7,
-            'Assignment': 8,
-            'Expression': 9,
-            'Continue': 10,
-            'Break': 11,
-            'Class': 12,
-            'Function': 13,
-            'Return': 14,
-            'Print': 15,
-            'Property': 16,
+            'ForIn': 6,
+            'ForFromTo': 7,
+            'ParameterAssignment': 8,
+            'Assignment': 9,
+            'Expression': 10,
+            'Continue': 11,
+            'Break': 12,
+            'Class': 13,
+            'Function': 14,
+            'Return': 15,
+            'Print': 16,
+            'Property': 17,
         }
 
         this.statementTokens = [
@@ -145,6 +154,10 @@ export default class Language {
             this.tokenType.Return,
             this.tokenType.Print,
             this.tokenType.Property,
+            this.tokenType.From,
+            this.tokenType.To,
+            this.tokenType.Step,
+            this.tokenType.By,
         ]
 
         this.arithmeticTokens = [
@@ -248,11 +261,27 @@ export default class Language {
                 {type: "expression", id: "expression"},
                 {type: "token", token: this.tokenType.EOL},
             ],
-            [`${this.statementType.For}`]: [
+            [`${this.statementType.ForIn}`]: [
                 {type: "token", token: this.tokenType.For},
                 {type: "token", token: this.tokenType.Variable, id: "variable"},
                 {type: "token", token: this.tokenType.In},
                 {type: "expression", id: "expression"},
+                {type: "token", token: this.tokenType.Do},
+                {type: "subtree", id: "do"},
+                {type: "token", token: this.tokenType.End}
+            ],
+            [`${this.statementType.ForFromTo}`]: [
+                {type: "token", token: this.tokenType.For},
+                {type: "token", token: this.tokenType.Variable, id: "variable"},
+                {type: "token", token: this.tokenType.From},
+                {type: "expression", id: "fromExpression"},
+                {type: "token", token: this.tokenType.To},
+                {type: "expression", id: "toExpression"},
+                {type: "group", required: false, group: [
+                    {type: "token", token: this.tokenType.Step},
+                    {type: "token", token: this.tokenType.By},
+                    {type: "expression", id: "stepExpression"}
+                ]},
                 {type: "token", token: this.tokenType.Do},
                 {type: "subtree", id: "do"},
                 {type: "token", token: this.tokenType.End}

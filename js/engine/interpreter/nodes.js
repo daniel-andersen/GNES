@@ -216,7 +216,7 @@ export class RepeatUntilNode extends StatementNode {
 
             // Perform block
             yield
-            yield* this.doBlock.evaluate(scope)
+            const blockResult = yield* this.doBlock.evaluate(scope)
 
             if (blockResult !== undefined && blockResult.action === Result.Action.Return) {
                 return blockResult
@@ -240,12 +240,91 @@ export class RepeatUntilNode extends StatementNode {
     }
 }
 
-export class ForNode extends StatementNode {
+export class ForInNode extends StatementNode {
     constructor(tokens=[], variableName, testExpressionNode, doBlock) {
         super(tokens)
         this.variableName = variableName
         this.testExpressionNode = testExpressionNode
         this.doBlock = doBlock
+    }
+}
+
+export class ForFromToNode extends StatementNode {
+    constructor(tokens=[], variableName, fromExpressionNode, toExpressionNode, stepExpressionNode, doBlock) {
+        super(tokens)
+        this.variableName = variableName
+        this.fromExpressionNode = fromExpressionNode
+        this.toExpressionNode = toExpressionNode
+        this.stepExpressionNode = stepExpressionNode
+        this.doBlock = doBlock
+    }
+
+    *evaluate(scope) {
+
+        // Evaluate from expression
+        yield
+        const fromResult = yield* this.fromExpressionNode.evaluate(scope)
+        if (fromResult === undefined) {
+            throw 'Result of "From" undefined'
+        }
+        if (fromResult.type !== Result.Type.Expression) {
+            throw 'Expected expression'
+        }
+
+        // Default step by
+        let stepResult = new Result(new Constant(1), Result.Type.Expression)
+
+        // Push variable onto scope
+        const loopScope = new Scope(scope)
+        const variable = new Variable(this.variableName, fromResult.value)
+        loopScope.setVariable(variable)
+
+        while (true) {
+
+            // Evaluate to expression
+            yield
+            const toResult = yield* this.toExpressionNode.evaluate(loopScope)
+            if (toResult === undefined) {
+                throw 'Result of "To" undefined'
+            }
+            if (toResult.type !== Result.Type.Expression) {
+                throw 'Expected expression'
+            }
+
+            // Check if reached to
+            if (Arithmetics.greaterThan(stepResult.value, new Constant(0))) {
+                if (Arithmetics.greaterThan(variable.value(), toResult.value).value()) {
+                    return
+                }
+            }
+            else {
+                if (Arithmetics.lessThan(variable.value(), toResult.value).value()) {
+                    return
+                }
+            }
+
+            // Perform block
+            yield
+            const blockResult = yield* this.doBlock.evaluate(loopScope)
+            if (blockResult !== undefined && blockResult.action === Result.Action.Return) {
+                return blockResult
+            }
+
+            // Evaluate step by expression
+            if (this.stepExpressionNode !== undefined) {
+                yield
+                stepResult = yield* this.stepExpressionNode.evaluate(loopScope)
+                if (stepResult === undefined) {
+                    throw 'Result of "Step By" undefined'
+                }
+                if (stepResult.type !== Result.Type.Expression) {
+                    throw 'Expected expression'
+                }
+            }
+
+            // Step variable
+            variable.setValue(Arithmetics.plus(variable.value(), stepResult.value))
+        }
     }
 }
 
@@ -308,11 +387,11 @@ export class PrintNode extends StatementNode {
             if (result.value instanceof Constant) {
                 text = result.value.value()
             }
-            if (result.value instanceof ObjectInstance) {
+            else if (result.value instanceof ObjectInstance) {
                 text = result.value.classNode.className
             }
         }
-        text = text.replace(/\s/g, '&nbsp;')
+        text = ("" + text).replace(/\s/g, '&nbsp;')
         document.body.innerHTML += text + '<br/>'
     }
 }
@@ -335,7 +414,7 @@ export class ConstantNode extends ExpressionNode {
             if (variable !== undefined) {
                 return new Result(variable.value(), Result.Type.Expression)
             }
-            return undefined
+            throw 'Variable ' + this.constant.value() + " undefined"
         }
         else {
             return new Result(this.constant, Result.Type.Expression)
