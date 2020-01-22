@@ -8,6 +8,7 @@ export class SourceTree {
         this.language = language
         this.tokenizer = new Tokenizer(language)
         this.programNode = undefined
+        this.test = 0
     }
 
     async build(files) {
@@ -154,13 +155,21 @@ export class SourceTree {
     }
 
     parseStatement(tokens) {
+        if (this.test > 100) {
+            return undefined
+        }
         tokens = this.duplicateTokens(tokens)
 
         // Match all statements
-        for (let type of Object.keys(this.language.statements)) {
-            const match = this.matchStatement(this.language.statements[type], tokens)
+        for (let statement of this.language.statements) {
+            this.test += 1
+            if (this.test > 100) {
+                return undefined
+            }
+            const match = this.matchStatement(statement, tokens)
             if (match !== undefined) {
-                return this.getStatementOfType(match.matchedTokens, match.matchedNodes, type)
+                console.log(statement.node)
+                return statement.node(match.matchedTokens, match.matchedNodes, this)
             }
         }
 
@@ -193,7 +202,7 @@ export class SourceTree {
             }
 
             // Not expression token
-            if (parenthesisCount == 0 && this.language.statementTokens.includes(tokens[0].type)) {
+            if (parenthesisCount == 0 && !this.language.expressionTokens.includes(tokens[0].type)) {
                 break
             }
 
@@ -223,10 +232,10 @@ export class SourceTree {
         }
 
         // Match all expressions
-        for (let type of Object.keys(this.language.expressions)) {
-            const match = this.matchStatement(this.language.expressions[type], expressionTokens)
-            if (match !== undefined) {
-                return this.getExpressionOfType(match.matchedTokens, match.matchedNodes, type)
+        for (let expression of this.language.expressions) {
+            const statementNode = this.matchStatement(expression, expressionTokens)
+            if (statementNode !== undefined) {
+                return statementNode
             }
         }
 
@@ -420,7 +429,7 @@ export class SourceTree {
         let matchedTokens = []
 
         // Match statement
-        while (position < statement.length) {
+        while (position < statement.match.length) {
 
             // Check if any tokens left
             if (tokens.length <= 0) {
@@ -428,7 +437,7 @@ export class SourceTree {
             }
 
             // Match entry
-            const entry = statement[position]
+            const entry = statement.match[position]
             const node = this.matchEntry(entry, tokens)
 
             if (node === undefined) {
@@ -460,7 +469,7 @@ export class SourceTree {
             position += 1
         }
 
-        return {matchedTokens, matchedNodes}
+        return {matchedTokens, matchedNodes, statement}
     }
 
     matchEntry(entry, tokens) {
@@ -469,6 +478,9 @@ export class SourceTree {
         switch (entry['type']) {
             case 'token': {
                 return this.matchTokenEntry(entry, tokens)
+            }
+            case 'variable': {
+                return this.matchVariableEntry(entry, tokens)
             }
             case 'expression': {
                 return this.matchExpressionEntry(entry, tokens)
@@ -501,17 +513,25 @@ export class SourceTree {
     matchTokenEntry(entry, tokens) {
         tokens = this.duplicateTokens(tokens)
 
-        if ('token' in entry) {
-            if (tokens[0].type == entry['token']) {
-                return new Node.TokenNode([tokens[0]], tokens[0])
-            }
-        }
-        if ('tokens' in entry) {
-            if (tokens[0].type in entry['tokens']) {
-                return new Node.TokenNode([tokens[0]], tokens[0])
-            }
+        if (tokens[0].token == entry['token']) {
+            return new Node.TokenNode([tokens[0]], tokens[0])
         }
         return undefined
+    }
+
+    matchVariableEntry(entry, tokens) {
+        tokens = this.duplicateTokens(tokens)
+
+        if (this.language.expressionTokens.includes(tokens[0].type)) {
+            return undefined
+        }
+        if (this.language.arithmeticTokens.includes(tokens[0].type)) {
+            return undefined
+        }
+        if (tokens[0].token.charAt(0) != tokens[0].token.charAt(0).toUpperCase()) {
+            return undefined
+        }
+        return new Node.TokenNode([tokens[0]], tokens[0])
     }
 
     matchExpressionEntry(entry, tokens) {
@@ -559,7 +579,7 @@ export class SourceTree {
 
         const match = this.matchStatement(entry['group'], tokens)
         if (match !== undefined) {
-            return new Node.GroupNode(match.matchedTokens, match.matchedNodes)
+            return match.statement.node(match.matchedTokens, match.matchedNodes)
         }
 
         const required = 'required' in entry ? entry['required'] : true
@@ -583,62 +603,6 @@ export class SourceTree {
             return new Node.BlockNode()
         }
 
-        return undefined
-    }
-
-    getExpressionOfType(tokens, nodes, type) {
-        if (type == this.language.expressionType.FunctionCall) {
-            return new Node.FunctionCallNode(tokens, this.getTokenWithId(nodes, 'name'), this.getNodeWithId(nodes, 'parameters'))
-        }
-        if (type == this.language.expressionType.NewObject) {
-            return new Node.NewObjectNode(tokens, this.getNodeWithId(nodes, 'expression'))
-        }
-        return undefined
-    }
-
-    getStatementOfType(tokens, nodes, type) {
-        if (type == this.language.statementType.Assignment) {
-            return new Node.AssignmentNode(tokens, this.getNodeWithId(nodes, 'variableExpression'), this.getNodeWithId(nodes, 'assignmentExpression'))
-        }
-        if (type == this.language.statementType.ParameterAssignment) {
-            return new Node.ParameterAssignmentNode(tokens, this.getTokenWithId(nodes, 'variable'), this.getNodeWithId(nodes, 'expression'))
-        }
-        if (type == this.language.statementType.SinglelineIf || type == this.language.statementType.MultilineIf) {
-            return new Node.IfNode(tokens, this.getNodeWithId(nodes, 'expression'), this.getNodeWithId(nodes, 'then'), this.getNodeWithId(nodes, 'else'))
-        }
-        if (type == this.language.statementType.SinglelineWhile || type == this.language.statementType.MultilineWhile) {
-            return new Node.WhileNode(tokens, this.getNodeWithId(nodes, 'expression'), this.getNodeWithId(nodes, 'content'))
-        }
-        if (type == this.language.statementType.SinglelineRepeatUntil || type == this.language.statementType.MultilineRepeatUntil) {
-            return new Node.RepeatUntilNode(tokens, this.getNodeWithId(nodes, 'expression'), this.getNodeWithId(nodes, 'content'))
-        }
-        if (type == this.language.statementType.ForIn) {
-            return new Node.ForInNode(tokens, this.getTokenWithId(nodes, 'variable'), this.getNodeWithId(nodes, 'expression'), this.getNodeWithId(nodes, 'do'))
-        }
-        if (type == this.language.statementType.ForFromTo) {
-            return new Node.ForFromToNode(tokens, this.getTokenWithId(nodes, 'variable'), this.getNodeWithId(nodes, 'fromExpression'), this.getNodeWithId(nodes, 'toExpression'), this.getNodeWithId(nodes, 'stepExpression'), this.getNodeWithId(nodes, 'do'))
-        }
-        if (type == this.language.statementType.Continue) {
-            return new Node.ContinueNode(tokens)
-        }
-        if (type == this.language.statementType.Break) {
-            return new Node.BreakNode(tokens)
-        }
-        if (type == this.language.statementType.Return) {
-            return new Node.ReturnNode(tokens, this.getNodeWithId(nodes, 'expression'))
-        }
-        if (type == this.language.statementType.Print) {
-            return new Node.PrintNode(tokens, this.getNodeWithId(nodes, 'expression'))
-        }
-        if (type == this.language.statementType.Class) {
-            return new Node.ClassNode(tokens, this.getTokenWithId(nodes, 'className'), this.getTokenWithId(nodes, 'ofTypeName'), this.getNodeWithId(nodes, 'content'))
-        }
-        if (type == this.language.statementType.Function) {
-            return new Node.FunctionDefinitionNode(tokens, this.getTokenWithId(nodes, 'name'), this.getNodeWithId(nodes, 'parameters'), this.getNodeWithId(nodes, 'content'))
-        }
-        if (type == this.language.statementType.Property) {
-            return new Node.PropertyNode(tokens, this.getNodeWithId(nodes, 'properties'))
-        }
         return undefined
     }
 
