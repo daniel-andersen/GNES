@@ -27,7 +27,7 @@ export default class Tokenizer {
                 line = line.replace(tokenPattern, '')
 
                 // Find token type
-                const type = token in this.language.tokenTypes ? this.language.tokenTypes[token] : this.language.tokenType.Variable
+                const type = token in this.language.tokenTypes ? this.language.tokenTypes[token] : this.language.tokenType.Unknown
 
                 // Single line comment - ignore rest of line
                 if (type == this.language.tokenType.SingleLineComment) {
@@ -51,6 +51,21 @@ export default class Tokenizer {
                         line = line.substring(1)
                     }
                     token = '"' + token + '"'
+                }
+
+                // Number
+                if (type == this.language.tokenType.Unknown && !isNaN(token)) {
+                    type = this.language.tokenType.Number
+                }
+
+                // Name (upper case start)
+                if (type == this.language.tokenType.Unknown && token.charAt(0) == token.charAt(0).toUpperCase()) {
+                    type = this.language.tokenType.Name
+                }
+
+                // Variable (lower case start)
+                if (type == this.language.tokenType.Unknown && token.charAt(0) == token.charAt(0).toLowerCase()) {
+                    type = this.language.tokenType.Variable
                 }
 
                 // Add token if not part of multiline comment

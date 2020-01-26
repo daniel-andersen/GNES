@@ -405,7 +405,7 @@ export class ExpressionNode extends Node {
 export class ConstantNode extends ExpressionNode {
     constructor(tokens=[], constant) {
         super(tokens)
-        this.constant = new Constant(constant)
+        this.constant = constant
     }
 
     *evaluate(scope) {
@@ -517,20 +517,18 @@ export class FunctionCallNode extends ExpressionNode {
 }
 
 export class NewObjectNode extends ExpressionNode {
-    constructor(tokens=[], functionCallNode) {
+    constructor(tokens=[], className, parameterListNode) {
         super(tokens)
-        this.functionCallNode = functionCallNode
-        if (!(this.functionCallNode instanceof FunctionCallNode)) {
-            throw 'Expected Class name after New'
-        }
+        this.className = className
+        this.parameterListNode = parameterListNode
     }
 
     *evaluate(scope) {
 
         // Resolve class
-        const classNode = scope.resolveClass(this.functionCallNode.functionName)
+        const classNode = scope.resolveClass(this.className)
         if (classNode === undefined) {
-            throw 'Class "' + this.functionCallNode.functionName + '" not found'
+            throw 'Class "' + this.className + '" not found'
         }
 
         // Create instance of class
@@ -538,7 +536,7 @@ export class NewObjectNode extends ExpressionNode {
 
         // Evaluate parameters to constructor
         yield
-        yield* this.functionCallNode.evaluateParameters(scope, object.scope)
+        yield* this.evaluateParameters(scope, object.scope)
 
         // Evaluate unset properties
         for (let propertyNode of object.classNode.propertyNodes) {
@@ -561,6 +559,25 @@ export class NewObjectNode extends ExpressionNode {
         }
 
         return new Result(object, Result.Type.Expression)
+    }
+
+    *evaluateParameters(scope, classScope) {
+        for (let node of this.parameterListNode.parameterAssignmentNodes) {
+
+            // Evaluate expression in original scope
+            yield
+            const result = yield* node.expressionNode.evaluate(scope)
+            if (result === undefined) {
+                throw 'Result of expression is undefined'
+            }
+            if (result.type !== Result.Type.Expression) {
+                throw 'Expected expression'
+            }
+
+            // Assign variable in new scope
+            const variable = new Variable(node.variableName, result.value)
+            classScope.setVariableInOwnScope(variable)
+        }
     }
 }
 

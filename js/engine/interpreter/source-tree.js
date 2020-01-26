@@ -1,6 +1,7 @@
 import Tokenizer from './tokenizer'
 import * as Node from './nodes'
 import Util from '../util/util'
+import { Variable, Constant } from '../model/variable'
 import { Scope } from '../model/scope'
 
 export class SourceTree {
@@ -8,7 +9,6 @@ export class SourceTree {
         this.language = language
         this.tokenizer = new Tokenizer(language)
         this.programNode = undefined
-        this.test = 0
     }
 
     async build(files) {
@@ -101,7 +101,7 @@ export class SourceTree {
         return fileNode
     }
 
-    parseBlock(tokens) {
+    parseBlock(tokens, end=undefined) {
         tokens = this.duplicateTokens(tokens)
 
         const blockNode = new Node.BlockNode()
@@ -110,6 +110,11 @@ export class SourceTree {
         while (tokens.length > 0) {
             const node = this.parse(tokens)
             if (node === undefined) {
+                return blockNode
+            }
+
+            // Check end token
+            if (node instanceof Node.ConstantNode && end !== undefined && end.indexOf(node.constant.value()) > -1) {
                 return blockNode
             }
 
@@ -155,20 +160,12 @@ export class SourceTree {
     }
 
     parseStatement(tokens) {
-        if (this.test > 100) {
-            return undefined
-        }
         tokens = this.duplicateTokens(tokens)
 
         // Match all statements
         for (let statement of this.language.statements) {
-            this.test += 1
-            if (this.test > 100) {
-                return undefined
-            }
             const match = this.matchStatement(statement, tokens)
             if (match !== undefined) {
-                console.log(statement.node)
                 return statement.node(match.matchedTokens, match.matchedNodes, this)
             }
         }
@@ -203,7 +200,11 @@ export class SourceTree {
 
             // Not expression token
             if (parenthesisCount == 0 && !this.language.expressionTokens.includes(tokens[0].type)) {
-                break
+
+                // Make sure not a "New Class" expression
+                if (expressionTokens.length == 0 || expressionTokens[expressionTokens.length - 1].type != this.language.tokenType.New || tokens[0].type != this.language.tokenType.Name) {
+                    break
+                }
             }
 
             // End of line
@@ -222,7 +223,7 @@ export class SourceTree {
 
         // Constant
         if (expressionTokens.length == 1) {
-            return new Node.ConstantNode(expressionTokens, expressionTokens[0].token)
+            return new Node.ConstantNode(expressionTokens, new Constant(expressionTokens[0].token))
         }
 
         // Build arithmetic tree
@@ -233,9 +234,9 @@ export class SourceTree {
 
         // Match all expressions
         for (let expression of this.language.expressions) {
-            const statementNode = this.matchStatement(expression, expressionTokens)
-            if (statementNode !== undefined) {
-                return statementNode
+            const match = this.matchStatement(expression, expressionTokens)
+            if (match !== undefined) {
+                return expression.node(match.matchedTokens, match.matchedNodes, this)
             }
         }
 
@@ -319,7 +320,7 @@ export class SourceTree {
 
                 // Add constant
                 else if (currentTokens.length == 1) {
-                    const constantNode = new Node.ConstantNode(currentTokens, currentTokens[0].token)
+                    const constantNode = new Node.ConstantNode(currentTokens, new Constant(currentTokens[0].token))
                     listNodes.push(constantNode)
                 }
 
@@ -439,7 +440,6 @@ export class SourceTree {
             // Match entry
             const entry = statement.match[position]
             const node = this.matchEntry(entry, tokens)
-
             if (node === undefined) {
                 return undefined
             }
@@ -479,6 +479,9 @@ export class SourceTree {
             case 'token': {
                 return this.matchTokenEntry(entry, tokens)
             }
+            case 'name': {
+                return this.matchNameEntry(entry, tokens)
+            }
             case 'variable': {
                 return this.matchVariableEntry(entry, tokens)
             }
@@ -512,26 +515,37 @@ export class SourceTree {
 
     matchTokenEntry(entry, tokens) {
         tokens = this.duplicateTokens(tokens)
-
-        if (tokens[0].token == entry['token']) {
+        if ('token' in entry && tokens[0].token == entry['token']) {
+            return new Node.TokenNode([tokens[0]], tokens[0])
+        }
+        if ('code' in entry && tokens[0].type == entry['code']) {
             return new Node.TokenNode([tokens[0]], tokens[0])
         }
         return undefined
     }
 
+    matchNameEntry(entry, tokens) {
+        tokens = this.duplicateTokens(tokens)
+
+        if (tokens[0].type != this.language.tokenType.Name) {
+            return undefined
+        }
+        return new Node.ConstantNode([tokens[0]], new Constant(tokens[0].token))
+    }
+
     matchVariableEntry(entry, tokens) {
         tokens = this.duplicateTokens(tokens)
 
-        if (this.language.expressionTokens.includes(tokens[0].type)) {
+        if (tokens[0].type != this.language.tokenType.Variable) {
             return undefined
         }
         if (this.language.arithmeticTokens.includes(tokens[0].type)) {
             return undefined
         }
-        if (tokens[0].token.charAt(0) != tokens[0].token.charAt(0).toUpperCase()) {
+        if (tokens[0].token.charAt(0) != tokens[0].token.charAt(0).toLowerCase()) {
             return undefined
         }
-        return new Node.TokenNode([tokens[0]], tokens[0])
+        return new Node.ConstantNode([tokens[0]], new Constant(tokens[0].token))
     }
 
     matchExpressionEntry(entry, tokens) {
@@ -593,7 +607,7 @@ export class SourceTree {
     matchSubtreeEntry(entry, tokens) {
         tokens = this.duplicateTokens(tokens)
 
-        const blockNode = this.parseBlock(tokens)
+        const blockNode = this.parseBlock(tokens, entry.end)
         if (blockNode !== undefined) {
             return blockNode
         }
@@ -615,10 +629,14 @@ export class SourceTree {
         return undefined
     }
 
-    getTokenWithId(nodes, id) {
+    getConstantNameWithId(nodes, id) {
         for (let node of nodes) {
             if (node.id == id) {
-                return node.token.token
+                if (node instanceof Node.ConstantNode && node.constant.type == Constant.Type.Variable) {
+                    return node.constant.value()
+                } else {
+                    throw "Expected variable"
+                }
             }
         }
         return undefined

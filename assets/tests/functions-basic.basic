@@ -18,8 +18,6 @@ Print "(2 + 3) * 5 = " + multiply(a=sum(a=2, b=3), b=5)
 Print "Does functions work correctly? " + (sum(a=multiply(a=2, b=5), b=multiply(a=3, b=5)) == 25)
 Print
 
-Print
-
 Function lessThan(x, y)
     Return x < y
 End
