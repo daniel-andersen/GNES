@@ -21,6 +21,7 @@
         "@babel/preset-env": "^7.6.3",
         "@babel/runtime": "^7.7.7",
         "babel-loader": "^8.0.6",
+        "phaser": "^3.22.0",
         "worker-loader": "^2.0.0"
     }
 }

@@ -9,9 +9,17 @@ export default class Tokenizer {
         // Parse all lines
         const tokens = []
 
-        var multilineComment = false
+        let multilineComment = false
+
+        let lineNumber = 1
+        let linePosition = 0
+        let tokenIndex = 0
+        let tokenStartPosition = 0
+        let tokenEndPosition = linePosition
 
         for (let line of lines) {
+
+            linePosition = 0
 
             while (true) {
 
@@ -24,7 +32,15 @@ export default class Tokenizer {
                 token = token[1].trim()
 
                 // Remove token from line
-                line = line.replace(tokenPattern, '')
+                const resultingLine = line.replace(tokenPattern, '')
+
+                tokenStartPosition = linePosition
+                linePosition += line.length - resultingLine.length
+                tokenEndPosition = linePosition - 1
+
+                tokenIndex += 1
+
+                line = resultingLine
 
                 // Find token type
                 const type = token in this.language.tokenTypes ? this.language.tokenTypes[token] : this.language.tokenType.Unknown
@@ -72,7 +88,11 @@ export default class Tokenizer {
                 if (!multilineComment) {
                     tokens.push({
                         'type': type,
-                        'token': token
+                        'token': token,
+                        'lineNumber': lineNumber,
+                        'tokenStartPosition': tokenStartPosition,
+                        'tokenEndPosition': tokenEndPosition,
+                        'tokenIndex': tokenIndex
                     })
                 }
             }
@@ -80,14 +100,24 @@ export default class Tokenizer {
             // Add EOL
             tokens.push({
                 'type': this.language.tokenType.EOL,
-                'token': ''
+                'token': '',
+                'lineNumber': lineNumber,
+                'tokenStartPosition': tokenEndPosition,
+                'tokenEndPosition': tokenEndPosition,
+                'tokenIndex': tokenIndex
             })
+
+            lineNumber += 1
         }
 
         // Add EOF
         tokens.push({
             'type': this.language.tokenType.EOF,
-            'token': ''
+            'token': '',
+            'lineNumber': lineNumber,
+            'tokenStartPosition': 0,
+            'tokenEndPosition': 0,
+            'tokenIndex': tokenIndex
         })
 
         return tokens
