@@ -1,8 +1,8 @@
 import Interpreter from './interpreter/interpreter'
-import Language from './interpreter/language'
+import Language from './language/language'
 import Execution from './interpreter/execution'
 import Tokenizer from './interpreter/tokenizer'
-import { SourceTree } from './interpreter/source-tree'
+import { SourceTree } from './language/source-tree'
 import { Scope } from './model/scope'
 import { Variable } from './model/variable'
 
@@ -10,12 +10,15 @@ export default class Engine {
     constructor() {
         this.globals = {}
         this.globals.scope = new Scope()
+        this.builtins = [
+            "/assets/language/sprites/sprite.basic"
+        ]
     }
 
     async run(filenames) {
         const language = new Language()
         const sourceTree = new SourceTree(language)
-        await sourceTree.build(filenames)
+        await sourceTree.build(this.builtins.concat(filenames))
 
         const execution = new Execution(sourceTree.programNode)
 

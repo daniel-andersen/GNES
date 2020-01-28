@@ -1,5 +1,5 @@
 import { Scope } from './scope'
-import * as Node from '../interpreter/nodes'
+import * as Node from '../language/nodes'
 
 export class Variable {
     constructor(name, value) {

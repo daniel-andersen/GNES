@@ -1,8 +1,9 @@
-import Tokenizer from './tokenizer'
+import Tokenizer from '../interpreter/tokenizer'
 import * as Node from './nodes'
 import Util from '../util/util'
 import { Variable, Constant } from '../model/variable'
 import { Scope } from '../model/scope'
+import { Error } from '../model/error'
 
 export class SourceTree {
     constructor(language) {
@@ -27,6 +28,11 @@ export class SourceTree {
 
         // Create global node
         this.programNode = new Node.ProgramNode(fileNodes, globalScope)
+
+        console.log("---------")
+        console.log("Result:")
+        console.log(this.programNode)
+        console.log("---------")
 
         // Postprocess source tree
         this.postProcess(this.programNode)
@@ -64,15 +70,8 @@ export class SourceTree {
         // Tokenize lines
         const tokens = this.tokenizer.tokenizeLines(lines)
 
-        // Parse lines
-        const fileNode = this.parseFile(tokens, globalScope)
-
-        console.log("---------")
-        console.log("Result:")
-        console.log(fileNode)
-        console.log("---------")
-
-        return fileNode
+        // Parse file
+        return this.parseFile(tokens, globalScope)
     }
 
     parseFile(tokens, globalScope) {
@@ -86,6 +85,9 @@ export class SourceTree {
             const node = this.parse(tokens)
             if (node === undefined) {
                 return fileNode
+            }
+            if (node instanceof Error) {
+                return node
             }
 
             // Add node if not newline
@@ -119,6 +121,9 @@ export class SourceTree {
             if (node === undefined) {
                 return blockNode
             }
+            if (node instanceof Error) {
+                return node
+            }
 
             // Add node if not newline
             if (!(node instanceof Node.NewlineNode)) {
@@ -147,38 +152,24 @@ export class SourceTree {
         }
 
         // Parse statement
-        let statementNode = undefined
-        let statementError = undefined
-        try {
-            statementNode = this.parseStatement(tokens)
-            if (statementNode !== undefined) {
-                return statementNode
-            }
-        } catch (error) {
-            statementError = error
+        const statementResult = this.parseStatement(tokens)
+        if (!(statementResult instanceof Error)) {
+            return statementResult
         }
 
         // Parse expression
-        let expressionNode = undefined
-        let expressionError = undefined
-        try {
-            expressionNode = this.parseExpression(tokens)
-            if (expressionNode !== undefined) {
-                return expressionNode
-            }
-        } catch (error) {
-            expressionError = error
+        const expressionResult = this.parseExpression(tokens)
+        if (!(expressionResult instanceof Error)) {
+            return expressionResult
         }
 
         // Re-throw error
-        if (statementError !== undefined) {
-            throw statementError
+        if (statementResult.firstToken.tokenIndex >= expressionResult.firstToken.tokenIndex) {
+            return statementResult
         }
-        if (expressionError !== undefined) {
-            throw expressionError
+        else {
+            return expressionResult
         }
-
-        return undefined
     }
 
     parseStatement(tokens) {
@@ -187,22 +178,21 @@ export class SourceTree {
         // Match all statements
         let bestError = undefined
         let bestTokenIndex = tokens[0].tokenIndex
+
         for (let statement of this.language.statements) {
-            let match = undefined
-            try {
-                match = this.matchStatement(statement, tokens)
-            } catch (error) {
-                if (error.token !== undefined && error.token.tokenIndex > bestTokenIndex) {
-                    bestError = error
-                    bestTokenIndex = error.token.tokenIndex
+            const result = this.matchStatement(statement, tokens)
+            if (result instanceof Error) {
+                if (result.firstToken !== undefined && result.firstToken.tokenIndex > bestTokenIndex) {
+                    bestError = result
+                    bestTokenIndex = result.firstToken.tokenIndex
                 }
             }
-            if (match !== undefined) {
-                return statement.node(match.matchedTokens, match.matchedNodes, this)
+            else {
+                return statement.node(result.matchedTokens, result.matchedNodes, this)
             }
         }
 
-        throw bestError || {error: 'Unexpected symbol "' + tokens[0].token + '".', token: tokens[0]}
+        return bestError || new Error('Unexpected symbol "' + tokens[0].token + '".', tokens[0])
     }
 
     parseExpression(tokens) {
@@ -250,7 +240,7 @@ export class SourceTree {
         }
 
         if (expressionTokens.length <= 0) {
-            return undefined
+            return new Error('Expression expected', tokens[0])
         }
 
         // Constant
@@ -260,18 +250,19 @@ export class SourceTree {
 
         // Build arithmetic tree
         const arithmeticNode = this.parseArithmeticNode(expressionTokens)
-        if (arithmeticNode !== undefined) {
+        if (!(arithmeticNode instanceof Error)) {
             return arithmeticNode
         }
 
         // Match all expressions
+        let error = undefined
         for (let expression of this.language.expressions) {
-            try {
-                const match = this.matchStatement(expression, expressionTokens)
-                if (match !== undefined) {
-                    return expression.node(match.matchedTokens, match.matchedNodes, this)
-                }
-            } catch (error) {
+            const statementResult = this.matchStatement(expression, expressionTokens)
+            if (statementResult instanceof Error) {
+                error = statementResult
+            }
+            else {
+                return expression.node(statementResult.matchedTokens, statementResult.matchedNodes, this)
             }
         }
 
@@ -280,13 +271,13 @@ export class SourceTree {
             return this.parseExpression(this.findGroupedExpressionTokens(expressionTokens).groupTokens)
         }
 
-        return undefined
+        return error
     }
 
     parseCommaSeperatedTokens(tokens) {
         tokens = this.duplicateTokens(tokens)
         if (tokens.length == 0) {
-            return undefined
+            return new Error('No tokens')
         }
 
         // Check starting with parenthesis
@@ -298,8 +289,8 @@ export class SourceTree {
 
         if (startParenthesis) {
             const groupedExpressionTokens = this.findGroupedExpressionTokens(tokens)
-            if (groupedExpressionTokens === undefined) {
-                return undefined
+            if (groupedExpressionTokens instanceof Error) {
+                return new Error('Missing end parenthesis', tokens[0])
             }
             innerTokens = groupedExpressionTokens.groupTokens
             listTokens = groupedExpressionTokens.allTokens
@@ -347,32 +338,27 @@ export class SourceTree {
             // Split assignments by comma
             if ((token.type == this.language.tokenType.Comma && parenthesisCount == 0) || i === innerTokens.length - 1) {
 
-                let parameterAssignmentNode = undefined
-                let constantNode = undefined
+                let result = undefined
 
                 // Add parameter assignment
-                try {
-                    parameterAssignmentNode = this.parseParameterAssignmentNode(currentTokens)
-                } catch (error) {
-                }
-                if (parameterAssignmentNode !== undefined) {
+                const parameterAssignmentNode = this.parseParameterAssignmentNode(currentTokens)
+                if (!(parameterAssignmentNode instanceof Error)) {
                     listNodes.push(parameterAssignmentNode)
+                    result = parameterAssignmentNode
                 }
 
                 // Add constant
-                if (parameterAssignmentNode === undefined && currentTokens.length == 1) {
-                    try {
-                        constantNode = new Node.ConstantNode(currentTokens, new Constant(currentTokens[0].token))
-                    } catch {
-                    }
-                    if (constantNode !== undefined) {
+                if (result === undefined && currentTokens.length == 1) {
+                    const constantNode = new Node.ConstantNode(currentTokens, new Constant(currentTokens[0].token))
+                    if (!(constantNode instanceof Error)) {
                         listNodes.push(constantNode)
+                        result = constantNode
                     }
                 }
 
                 // Neither assignment, nor constant
-                if (parameterAssignmentNode === undefined && constantNode === undefined) {
-                    throw {error: 'Unexpected symbol "' + token.token + '". Expected assignment or constant.', token: token}
+                if (result === undefined) {
+                    return new Error('Unexpected symbol "' + token.token + '". Expected assignment or constant.', token)
                 }
 
                 // Reset tokens
@@ -387,18 +373,17 @@ export class SourceTree {
         tokens = this.duplicateTokens(tokens)
 
         // Parse assignment node
-        let assignmentNode = undefined
-        try {
-            assignmentNode = this.parseStatement(tokens)
-        } catch {
+        const assignmentNode = this.parseStatement(tokens)
+        if (assignmentNode instanceof Error) {
+            return assignmentNode
         }
-        if (assignmentNode === undefined || !(assignmentNode instanceof Node.AssignmentNode)) {
-            throw {error: 'Unexpected symbol "' + tokens[0].token + '". Expected parameter assignment.', token: tokens[0], node: assignmentNode}
+        if (!(assignmentNode instanceof Node.AssignmentNode)) {
+            return new Error('Unexpected symbol "' + tokens[0].token + '". Expected parameter assignment.', tokens[0], assignmentNode)
         }
 
         // Convert into parameter assignment node
         if (assignmentNode.variableExpressionNode !== undefined) {
-            throw {error: 'Unexpected symbol "' + node.tokens[0].token + '". Expected parameter assignment.', token: tokens[0], node: assignmentNode}
+            return new Error('Unexpected symbol "' + tokens[0].token + '". Expected parameter name.', tokens[0], assignmentNode)
         }
         return new Node.ParameterAssignmentNode(assignmentNode.tokens.slice(0), assignmentNode.variableName, assignmentNode.assignmentExpressionNode)
     }
@@ -424,9 +409,7 @@ export class SourceTree {
                 continue
             }
             if (parenthesisCount < 0) {
-                console.log('Error parsing expression! Too many end parenthesis found!')
-                console.log(tokens)
-                return undefined
+                return new Error('Unexpected end parenthesis.', tokens[0])
             }
 
             // Skip tokens inside parenthesis group
@@ -442,7 +425,7 @@ export class SourceTree {
         }
 
         if (arithmeticToken === undefined) {
-            return undefined
+            return new Error('Expected arithmetic operation', tokens[0])
         }
 
         // Build subtrees
@@ -468,10 +451,11 @@ export class SourceTree {
                 return {groupTokens: tokens.slice(1, i), allTokens: tokens.slice(0, i + 1)}
             }
         }
-        return undefined
+        return new Error('Expected parenthesis', tokens[0])
     }
 
     matchStatement(statement, tokens) {
+        const firstToken = tokens[0]
         tokens = this.duplicateTokens(tokens)
 
         let position = 0
@@ -484,14 +468,14 @@ export class SourceTree {
 
             // Check if any tokens left
             if (tokens.length <= 0) {
-                return undefined
+                return new Error('Expected statement', firstToken)
             }
 
             // Match entry
             const entry = statement.match[position]
             const node = this.matchEntry(entry, tokens)
-            if (node === undefined) {
-                return undefined
+            if (node instanceof Error) {
+                return node
             }
 
             // Remove tokens
@@ -558,7 +542,7 @@ export class SourceTree {
                 return this.matchSubtreeEntry(entry, tokens)
             }
             default: {
-                throw {error: 'Unexpected symbol "' + tokens[0].token + '"', token: tokens[0]}
+                return new Error('Unexpected symbol "' + tokens[0].token + '"', tokens[0])
             }
         }
     }
@@ -569,24 +553,24 @@ export class SourceTree {
             if (tokens[0].token == entry['token']) {
                 return new Node.TokenNode([tokens[0]], tokens[0])
             } else {
-                throw {error: 'Unexpected symbol "' + tokens[0].token + '". Expected "' + entry.token + '"', token: tokens[0]}
+                return new Error('Unexpected symbol "' + tokens[0].token + '". Expected "' + entry.token + '"', tokens[0])
             }
         }
         if ('code' in entry) {
             if (tokens[0].type == entry['code']) {
                 return new Node.TokenNode([tokens[0]], tokens[0])
             } else {
-                throw {error: 'Unexpected symbol "' + tokens[0].token + '"', token: tokens[0]}
+                return new Error('Unexpected symbol "' + tokens[0].token + '"', tokens[0])
             }
         }
-        throw {error: 'Unexpected symbol "' + tokens[0].token + '"', token: tokens[0]}
+        return new Error('Unexpected symbol "' + tokens[0].token + '"', tokens[0])
     }
 
     matchNameEntry(entry, tokens) {
         tokens = this.duplicateTokens(tokens)
 
         if (tokens[0].type != this.language.tokenType.Name) {
-            throw {error: 'Unexpected symbol "' + tokens[0].token + '". Expected keyword or class name.', token: tokens[0]}
+            return new Error('Unexpected symbol "' + tokens[0].token + '". Expected keyword or class name.', tokens[0])
         }
         return new Node.ConstantNode([tokens[0]], new Constant(tokens[0].token))
     }
@@ -595,13 +579,13 @@ export class SourceTree {
         tokens = this.duplicateTokens(tokens)
 
         if (tokens[0].type != this.language.tokenType.Variable) {
-            throw {error: 'Unexpected symbol "' + tokens[0].token + '". Expected variable.', token: tokens[0]}
+            return new Error('Unexpected symbol "' + tokens[0].token + '". Expected variable.', tokens[0])
         }
         if (this.language.arithmeticTokens.includes(tokens[0].type)) {
-            throw {error: 'Unexpected symbol "' + tokens[0].token + '". Expected variable, but got arithmetic symbol.', token: tokens[0]}
+            return new Error('Unexpected symbol "' + tokens[0].token + '". Expected variable, but got arithmetic symbol.', tokens[0])
         }
         if (tokens[0].token.charAt(0) != tokens[0].token.charAt(0).toLowerCase()) {
-            throw {error: 'Unexpected symbol "' + tokens[0].token + '". Variables must start with lower case character.', token: tokens[0]}
+            return new Error('Unexpected symbol "' + tokens[0].token + '". Variables must start with lower case character.', tokens[0])
         }
         return new Node.ConstantNode([tokens[0]], new Constant(tokens[0].token))
     }
@@ -613,7 +597,7 @@ export class SourceTree {
         if (expressionNode instanceof Node.ExpressionNode) {
             return expressionNode
         }
-        throw {error: 'Expected expression', node: expressionNode}
+        return new Error('Expected expression', expressionNode)
     }
 
     matchStatementEntry(entry, tokens) {
@@ -623,27 +607,27 @@ export class SourceTree {
         if (statementNode instanceof Node.StatementNode) {
             return statementNode
         }
-        throw {error: 'Expected statement', node: statementNode}
+        return new Error('Expected statement', statementNode)
     }
 
     matchParameterListEntry(entry, tokens) {
         tokens = this.duplicateTokens(tokens)
 
         const result = this.parseCommaSeperatedTokens(tokens)
-        if (result !== undefined) {
-            return new Node.ParameterListNode(result.tokens, result.nodes)
+        if (result instanceof Error) {
+            return result
         }
-        throw {error: 'Expected parameters', token: tokens[0]}
+        return new Node.ParameterListNode(result.tokens, result.nodes)
     }
 
     matchParameterDefinitionsEntry(entry, tokens) {
         tokens = this.duplicateTokens(tokens)
 
         const result = this.parseCommaSeperatedTokens(tokens)
-        if (result !== undefined) {
-            return new Node.ParameterDefinitionsNode(result.tokens, result.nodes)
+        if (result instanceof Error) {
+            return result
         }
-        throw {error: 'Expected parameter definition', token: tokens[0]}
+        return new Node.ParameterDefinitionsNode(result.tokens, result.nodes)
     }
 
     matchGroupEntry(entry, tokens) {
@@ -651,13 +635,9 @@ export class SourceTree {
 
         let matchError = undefined
 
-        try {
-            const match = this.matchStatement(entry['group'], tokens)
-            if (match !== undefined) {
-                return match.statement.node(match.matchedTokens, match.matchedNodes)
-            }
-        } catch (error) {
-            matchError = error
+        const statementResult = this.matchStatement(entry['group'], tokens)
+        if (!(statementResult instanceof Error)) {
+            return statementResult.statement.node(statementResult.matchedTokens, statementResult.matchedNodes)
         }
 
         const required = 'required' in entry ? entry['required'] : true
@@ -665,14 +645,14 @@ export class SourceTree {
             return new Node.GroupNode()
         }
 
-        throw matchError || {error: 'Expected statements', token: tokens[0]}
+        return statementResult || new Error('Expected statements', tokens[0])
     }
 
     matchSubtreeEntry(entry, tokens) {
         tokens = this.duplicateTokens(tokens)
 
         const blockNode = this.parseBlock(tokens, entry.end)
-        if (blockNode !== undefined) {
+        if (!(blockNode instanceof Error)) {
             return blockNode
         }
 
@@ -681,7 +661,7 @@ export class SourceTree {
             return new Node.BlockNode()
         }
 
-        throw {error: 'Expected statements', token: tokens[0]}
+        return blockNode
     }
 
     getNodeWithId(nodes, id) {
@@ -699,7 +679,7 @@ export class SourceTree {
                 if (node instanceof Node.ConstantNode && node.constant.type == Constant.Type.Variable) {
                     return node.constant.value()
                 } else {
-                    throw {error: "Expected variable", node: node}
+                    return new Error("Expected variable", node)
                 }
             }
         }
@@ -712,7 +692,7 @@ export class SourceTree {
 
     registerClass(classNode, globalScope, fileScope) {
         if (globalScope.resolveClass(classNode.className) !== undefined) {
-            throw {error: 'Class with name "' + classNode.className + '" already defined', node: classNode}
+            return new Error('Class with name "' + classNode.className + '" already defined', classNode)
         }
         globalScope.setClass(classNode)
 
@@ -735,7 +715,7 @@ export class SourceTree {
 
     registerFunction(node, scope) {
         if (scope.resolveFunction(node.functionName) !== undefined) {
-            throw {error: 'Function with name "' + node.functionName + '" already defined in this context', node: node}
+            return new Error('Function with name "' + node.functionName + '" already defined in this context', node)
         }
         scope.setFunction(node)
     }
@@ -743,7 +723,7 @@ export class SourceTree {
     registerExtendingClass(classNode, globalScope) {
         const extendedClassNode = globalScope.resolveClass(classNode.ofTypeName)
         if (extendedClassNode === undefined) {
-            throw {error: 'Class of type "' + classNode.ofTypeName + '" not found', node: classNode}
+            return new Error('Class of type "' + classNode.ofTypeName + '" not found', classNode)
         }
 
         classNode.scope.parentScope = extendedClassNode.scope

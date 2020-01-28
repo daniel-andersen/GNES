@@ -342,6 +342,17 @@ export default class Language {
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.PropertyNode(tokens, sourceTree.getNodeWithId(nodes, 'properties'))
             },
+            {
+                name: 'LoadSprite',
+                match: [
+                    {type: "expression", id: "variableExpression"},
+                    {type: "token", token: "="},
+                    {type: "token", token: "Load"},
+                    {type: "token", token: "Sprite"},
+                    {type: "parameterList", id: "parameters"}
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.LoadSpriteNode(tokens, sourceTree.getNodeWithId(nodes, 'variableExpression'), sourceTree.getNodeWithId(nodes, 'parameters'))
+            },
         ]
     }
 }

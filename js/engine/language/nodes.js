@@ -1,6 +1,6 @@
 import { Variable, Constant, ObjectInstance } from '../model/variable'
 import { Scope } from '../model/scope'
-import Arithmetics from './arithmetics'
+import Arithmetics from '../interpreter/arithmetics'
 
 class Result {
     constructor(value=undefined, type=Result.Type.Expression, action=Result.Action.None) {
@@ -86,8 +86,11 @@ export class AssignmentNode extends StatementNode {
         let arithmeticNode = this.variableExpressionNode
 
         while (true) {
+            if (arithmeticNode === undefined) {
+                throw {error: 'Unexpected symbol', token: this.tokens[0], node: this}
+            }
             if (!(arithmeticNode instanceof ArithmeticNode)) {
-                throw {error: 'Expected "." on object', node: arithmeticNode}
+                throw {error: 'Unexpected symbol "' + arithmeticNode.tokens[0].token + '"', node: arithmeticNode}
             }
             if (arithmeticNode.rightSideExpressionNode instanceof ConstantNode) {
                 break
@@ -130,6 +133,8 @@ export class AssignmentNode extends StatementNode {
         // Set variable
         const variable = new Variable(this.variableName, assignmentResult.value)
         variableScope.setVariable(variable)
+
+        return new Result(variable, Result.Type.Statement)
     }
 }
 
@@ -693,6 +698,29 @@ export class PropertyNode extends Node {
     constructor(tokens=[], parameterDefinitionsNode) {
         super(tokens)
         this.parameterDefinitionsNode = parameterDefinitionsNode
+    }
+}
+
+export class LoadSpriteNode extends StatementNode {
+    constructor(tokens=[], variableExpressionNode, parameterListNode) {
+        super(tokens)
+        this.variableExpressionNode = variableExpressionNode
+        this.parameterListNode = parameterListNode
+
+        this.newObjectNode = new NewObjectNode(undefined, "Sprite", this.parameterListNode)
+        this.assignmentNode = new AssignmentNode(this.tokens, this.variableExpressionNode, this.newObjectNode)
+        this.loadNode = new FunctionCallNode(this.tokens, "load", this.parameterListNode)
+    }
+
+    *evaluate(scope) {
+
+        // Evaluate assignment
+        const assignmentResult = yield* this.assignmentNode.evaluate(scope)
+
+        // Evaluate load
+        yield* this.loadNode.evaluate(assignmentResult.value.value().scope)
+
+        return assignmentResult
     }
 }
 

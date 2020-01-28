@@ -6,28 +6,28 @@
 
 ## If/then/else
 
-    if <expr> then <expr> [else expr]
+    If <expr> Then <expr> [Else expr]
 
-    if <expr> then
-    [else if <expr> then]
-    [else]
-    end
+    If <expr> Then
+    [Else If <expr> Then]
+    [Else]
+    End
 
 ## Functions
 
-    function <name>([<name>, ...])
-    end
+    Function <name>([<name>, ...])
+    End
 
     <name>([<name>=<expr>, ...])
 
-    return [<expr>]
+    Return [<expr>]
 
 ## Classes
 
-    class <name> [of type <name>]
-        property <name> [= <expr>]
-        behaviour <name> of type <name>
-    end
+    Class <name> [Of Type <name>]
+        Property <name> [= <expr>]
+        Behaviour <name> Of Type <name>
+    End
 
 ## Arrays
 
@@ -39,35 +39,38 @@
 
 ## Loops
 
-    for <name> in <expr> do
-    end
+    For <name> In <expr> Do
+    End
 
-    for <key>, <value> in <expr> do
-    end
+    For <key>, <value> In <expr> Do
+    End
 
-    while <expr> do
-    end
+    For <name> From <expr> To <expr> [Step By <expr>] Do
+    End
 
-    repeat
-    until <expr>
+    While <expr> Do
+    End
 
-    continue
+    Repeat
+    Until <expr>
 
-    break
+    Continue
+
+    Break
 
 ## Coroutines
 
-    start coroutine <function_name> => id
+    Start coroutine <function_name> => id
 
-    stop coroutine with id <id>
-    stop all coroutines
+    Stop Coroutine With Id <id>
+    Stop All Coroutines
 
 ## Logical operators
 
-    and
-    or
-    not
-    is
+    And
+    Or
+    Not
+    Is
     ==
     !=
 
@@ -83,10 +86,10 @@
 
 ## Maps
 
-    load map with [<id> and] filename <filename> => id
+    <name> = Load Map(<filename>)
 
-    show map <id>
-    hide map <id>
+    Show Map <id>
+    Hide Map <id>
 
 ## Layers
 
@@ -102,16 +105,16 @@
 
 ## Sprites
 
-    load sprite with [<id> and] filename <filename> => id
+    <name> = Load Sprite(<filename>)
 
-    add sprite <id> [to layer <id>]
-    remove sprite <id>
+    Add Sprite <expr> [To Layer <expr>]
+    Remove Sprite <expr>
 
-    show sprite <id>
-    hide sprite <id>
+    Show Sprite <expr>
+    Hide Sprite <expr>
 
-    move sprite <id> to front
-    move sprite <id> to back
+    Bring Sprite <expr> To Front
+    Bring Sprite <expr> To Back
 
 
 
