@@ -6,23 +6,34 @@ import { Scope } from '../model/scope'
 import { Error } from '../model/error'
 
 export class SourceTree {
-    constructor(language) {
+    constructor(language, nativeClasses, builtinFiles) {
         this.language = language
+        this.nativeClasses = nativeClasses
+        this.builtinFiles = builtinFiles
+
         this.tokenizer = new Tokenizer(language)
         this.programNode = undefined
     }
 
     async build(files) {
 
+        // All files
+        const allFiles = []
+            .concat(this.builtinFiles)
+            .concat(files)
+
         // Create global scope - will be populated with classes through building of source tree
-        const globalScope = new Scope()
+        const globalScope = new Scope(undefined, Scope.Type.Global)
 
         // Create source tree
         const fileNodes = []
 
-        for (let filename of files) {
+        for (let filename of allFiles) {
             const fileNode = await this.buildFromFile(filename, globalScope)
 
+            if (fileNode instanceof Error) {
+                return fileNode
+            }
             fileNodes.push(fileNode)
         }
 
@@ -36,6 +47,8 @@ export class SourceTree {
 
         // Postprocess source tree
         this.postProcess(this.programNode)
+
+        return undefined
     }
 
     postProcess(programNode) {
@@ -77,7 +90,7 @@ export class SourceTree {
     parseFile(tokens, globalScope) {
         tokens = this.duplicateTokens(tokens)
 
-        const fileScope = new Scope(globalScope)
+        const fileScope = new Scope(globalScope, Scope.Type.File)
         const fileNode = new Node.FileNode(tokens, [], fileScope)
 
         // Parse nodes
@@ -701,7 +714,10 @@ export class SourceTree {
 
         for (let node of classNode.contentNode.nodes) {
             if (node instanceof Node.PropertyNode) {
-                this.registerPropertyNode(classNode, node)
+                this.registerProperty(classNode, node)
+            }
+            if (node instanceof Node.ConstructorNode) {
+                this.registerConstructor(classNode, node)
             }
             if (node instanceof Node.FunctionDefinitionNode) {
                 this.registerFunction(node, classNode.scope)
@@ -709,8 +725,16 @@ export class SourceTree {
         }
     }
 
-    registerPropertyNode(classNode, propertyNode) {
+    registerProperty(classNode, propertyNode) {
         classNode.propertyNodes.push(propertyNode)
+    }
+
+    registerConstructor(classNode, constructorNode) {
+        if (classNode.scope.resolveFunction('_constructor') !== undefined) {
+            return new Error('Constructor already defined in this class', node)
+        }
+        const functionNode = new Node.FunctionDefinitionNode(constructorNode.tokens, '_constructor', new Node.ParameterDefinitionsNode(constructorNode.tokens, []), constructorNode.contentNode)
+        classNode.scope.setFunction(functionNode)
     }
 
     registerFunction(node, scope) {
@@ -727,5 +751,6 @@ export class SourceTree {
         }
 
         classNode.scope.parentScope = extendedClassNode.scope
+        classNode.parentClass = extendedClassNode
     }
 }

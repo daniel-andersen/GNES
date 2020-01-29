@@ -13,7 +13,6 @@ export default class Execution {
     step() {
         const result = this.iterator.next()
         if (result.done) {
-            console.log('Executor done')
             this.stopped = true
         }
     }

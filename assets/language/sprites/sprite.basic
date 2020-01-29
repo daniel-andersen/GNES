@@ -1,9 +1,0 @@
-Class Sprite
-    Property filename
-    Property x = 0
-    Property y = 0
-
-    Function load(filename)
-        Print "Loading sprite: " + filename
-    End
-End

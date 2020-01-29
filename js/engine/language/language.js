@@ -343,6 +343,15 @@ export default class Language {
                 node: (tokens, nodes, sourceTree) => new Node.PropertyNode(tokens, sourceTree.getNodeWithId(nodes, 'properties'))
             },
             {
+                name: 'Constructor',
+                match: [
+                    {type: "token", token: "Constructor"},
+                    {type: "subtree", end: ["End"], id: "content"},
+                    {type: "token", token: "End"}
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.ConstructorNode(tokens, sourceTree.getNodeWithId(nodes, 'content'))
+            },
+            {
                 name: 'LoadSprite',
                 match: [
                     {type: "expression", id: "variableExpression"},
@@ -352,6 +361,24 @@ export default class Language {
                     {type: "parameterList", id: "parameters"}
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.LoadSpriteNode(tokens, sourceTree.getNodeWithId(nodes, 'variableExpression'), sourceTree.getNodeWithId(nodes, 'parameters'))
+            },
+            {
+                name: 'InvokeNativeFunction',
+                match: [
+                    {type: "group", required: false, group: {
+                        match: [
+                            {type: "expression", id: "variableExpression"},
+                            {type: "token", token: "="}
+                        ],
+                        node: (tokens, nodes, sourceTree) => new Node.GroupNode(tokens, nodes)
+                    }},
+                    {type: "token", token: "Invoke"},
+                    {type: "variable", id: 'functionName'},
+                    {type: "parameterList", id: "parameters"},
+                    {type: "token", token: "In"},
+                    {type: "name", id: "className"},
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.InvokeNativeFunctionNode(tokens, sourceTree.getNodeWithId(nodes, 'variableExpression'), sourceTree.getConstantNameWithId(nodes, 'functionName'), sourceTree.getNodeWithId(nodes, 'parameters'), sourceTree.getConstantNameWithId(nodes, 'className'), sourceTree.nativeClasses)
             },
         ]
     }

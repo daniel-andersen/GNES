@@ -3,6 +3,7 @@ import Util from '../util/util'
 export default class Interpreter {
     constructor(sourceTree) {
         this.sourceTree = sourceTree
+
         this.reset()
 
         this.runTimeMillis = 20
@@ -11,7 +12,11 @@ export default class Interpreter {
 
     reset() {
         this.stopped = false
-        this.executions = []
+
+        this.programExecutions = []
+        this.updateExecutions = []
+
+        this.currentExecutions = this.programExecutions
     }
 
     stop() {
@@ -24,14 +29,36 @@ export default class Interpreter {
     }
 
     addExecution(execution) {
-        this.executions.push(execution)
+        this.programExecutions.push(execution)
+    }
+
+    setUpdateExecutions(executions) {
+        if (this.updateExecutions.length > 0) {
+            return
+        }
+        this.updateExecutions = executions
     }
 
     async run() {
         let nextPauseTime = Util.currentTimeMillis() + this.runTimeMillis
 
         while (!this.hasStopped()) {
+
+            // Switch to component update execution, if any
+            if (this.updateExecutions.length > 0) {
+                this.currentExecutions = this.updateExecutions
+            }
+
+            // Switch to program execution, if no update executions left
+            else {
+                this.currentExecutions = this.programExecutions
+            }
+
+            // Step executions
             this.step()
+
+            // Check if all program executors are stopped
+            this.stopped = this.programExecutions.length === 0
 
             // Pause execution a while
             if (Util.currentTimeMillis() > nextPauseTime) {
@@ -44,27 +71,18 @@ export default class Interpreter {
     step() {
 
         // Execute each executor
-        let doneExecutors = []
-        for (let execution of this.executions) {
+        for (let execution of this.currentExecutions.slice()) {
 
             // Execute
             execution.step()
 
-            // Check if stopped
+            // Remove if stopped
             if (execution.hasStopped()) {
-                doneExecutors.push(execution)
+                const index = this.currentExecutions.indexOf(execution)
+                if (index > -1) {
+                  this.currentExecutions.splice(index, 1)
+                }
             }
         }
-
-        // Remove done executors
-        for (let execution of doneExecutors) {
-            const index = this.executions.indexOf(execution)
-            if (index > -1) {
-              this.executions.splice(index, 1)
-            }
-        }
-
-        // Check if all executors are stopped
-        this.stopped = this.executions.length === 0
     }
 }

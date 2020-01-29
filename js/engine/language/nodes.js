@@ -397,7 +397,7 @@ export class PrintNode extends StatementNode {
             }
         }
         text = ("" + text).replace(/\s/g, '&nbsp;')
-        document.body.innerHTML += text + '<br/>'
+        window.game.console.div.innerHTML += text + '<br/>'
     }
 }
 
@@ -437,7 +437,7 @@ export class FunctionCallNode extends ExpressionNode {
     *evaluate(scope) {
 
         // Create new function scope
-        const functionScope = new Scope(scope)
+        const functionScope = new Scope(scope, Scope.Type.Function)
 
         // Evaluate parameters
         yield
@@ -543,27 +543,66 @@ export class NewObjectNode extends ExpressionNode {
         yield
         yield* this.evaluateParameters(scope, object.scope)
 
-        // Evaluate unset properties
-        for (let propertyNode of object.classNode.propertyNodes) {
-            for (let node of propertyNode.parameterDefinitionsNode.nodes) {
-                if (node instanceof ParameterAssignmentNode) {
-                    const currentVariable = object.scope.resolveVariable(node.variableName)
-                    if (currentVariable === undefined || (currentVariable !== undefined && currentVariable.type == Variable.Type.Undefined)) {
-                        yield
-                        const result = yield* node.expressionNode.evaluate(object.scope)
-                        if (result === undefined) {
-                            throw {error: 'Result of expression is undefined', node: node.expressionNode}
+        // Evaluate unset properties in all inherited scopes
+        yield
+        yield* this.evaluateUnsetProperties(object)
+
+        // Call constructor function, if any
+        yield
+        yield* this.evaluateConstructors(object)
+
+        // Register object if component
+        if (classNode.instanceOf('Component')) {
+            const globalScope = object.scope.resolveScope(Scope.Type.Global)
+            globalScope.components[object.uuid] = object
+        }
+
+        return new Result(object, Result.Type.Expression)
+    }
+
+    *evaluateUnsetProperties(object) {
+
+        // Evaluate all inherited scopes
+        for (let objectScope of object.scopes) {
+
+            // Evaluate all properties
+            for (let propertyNode of objectScope.classNode.propertyNodes) {
+
+                // Evaluate all nodes in property
+                for (let node of propertyNode.parameterDefinitionsNode.nodes) {
+
+                    // Evaluate assignment
+                    if (node instanceof ParameterAssignmentNode) {
+                        const currentVariable = object.scope.resolveVariable(node.variableName)
+
+                        // Ensure that is has not already been set
+                        if (currentVariable === undefined || (currentVariable !== undefined && currentVariable.type == Variable.Type.Undefined)) {
+                            yield
+                            const result = yield* node.expressionNode.evaluate(object.scope)
+                            if (result === undefined) {
+                                throw {error: 'Result of expression is undefined', node: node.expressionNode}
+                            }
+                            if (result.type !== Result.Type.Expression) {
+                                throw {error: 'Expected expression', node: node.expressionNode}
+                            }
+                            object.scope.setVariable(new Variable(node.variableName, result.value))
                         }
-                        if (result.type !== Result.Type.Expression) {
-                            throw {error: 'Expected expression', node: node.expressionNode}
-                        }
-                        object.scope.setVariable(new Variable(node.variableName, result.value))
                     }
                 }
             }
         }
+    }
 
-        return new Result(object, Result.Type.Expression)
+    *evaluateConstructors(object) {
+
+        // Evaluate all inherited scopes
+        for (let objectScope of object.scopes) {
+            const constructorFunctionNode = objectScope.resolveFunction('_constructor')
+            if (constructorFunctionNode !== undefined) {
+                yield
+                yield* constructorFunctionNode.contentNode.evaluate(objectScope)
+            }
+        }
     }
 
     *evaluateParameters(scope, classScope) {
@@ -663,6 +702,26 @@ export class ClassNode extends Node {
         this.ofTypeName = ofTypeName
         this.contentNode = contentNode
         this.scope = undefined
+        this.parentClass = undefined
+    }
+
+    classHierarcy() {
+        let classes = []
+        let currentClass = this
+        while (currentClass !== undefined) {
+            classes = [currentClass].concat(classes)
+            currentClass = currentClass.parentClass
+        }
+        return classes
+    }
+
+    instanceOf(name) {
+        for (let currentClass of this.classHierarcy()) {
+            if (currentClass.className == name) {
+                return true
+            }
+        }
+        return false
     }
 }
 
@@ -701,13 +760,20 @@ export class PropertyNode extends Node {
     }
 }
 
+export class ConstructorNode extends Node {
+    constructor(tokens=[], contentNode) {
+        super(tokens)
+        this.contentNode = contentNode
+    }
+}
+
 export class LoadSpriteNode extends StatementNode {
     constructor(tokens=[], variableExpressionNode, parameterListNode) {
         super(tokens)
         this.variableExpressionNode = variableExpressionNode
         this.parameterListNode = parameterListNode
 
-        this.newObjectNode = new NewObjectNode(undefined, "Sprite", this.parameterListNode)
+        this.newObjectNode = new NewObjectNode(undefined, "Sprite", new ParameterListNode(this.tokens, []))
         this.assignmentNode = new AssignmentNode(this.tokens, this.variableExpressionNode, this.newObjectNode)
         this.loadNode = new FunctionCallNode(this.tokens, "load", this.parameterListNode)
     }
@@ -715,12 +781,58 @@ export class LoadSpriteNode extends StatementNode {
     *evaluate(scope) {
 
         // Evaluate assignment
+        yield
         const assignmentResult = yield* this.assignmentNode.evaluate(scope)
 
         // Evaluate load
+        yield
         yield* this.loadNode.evaluate(assignmentResult.value.value().scope)
 
         return assignmentResult
+    }
+}
+
+export class InvokeNativeFunctionNode extends StatementNode {
+    constructor(tokens=[], variableExpressionNode, functionName, parameterListNode, className, nativeClasses) {
+        super(tokens)
+        this.variableExpressionNode = variableExpressionNode
+        this.functionName = functionName
+        this.parameterListNode = parameterListNode
+        this.className = className
+        this.nativeClasses = nativeClasses
+
+        this.functionCallNode = new FunctionCallNode(undefined, "NativeMethod", this.parameterListNode)
+        if (this.variableExpressionNode !== undefined) {
+            this.assignmentNode = new AssignmentNode(this.tokens, this.variableExpressionNode, this.functionCallNode)
+        }
+    }
+
+    *evaluate(scope) {
+
+        // Create new function scope
+        const functionScope = new Scope(scope, Scope.Type.Function)
+
+        // Evaluate parameters
+        yield
+        yield* this.functionCallNode.evaluateParameters(scope, functionScope)
+
+        // Invoke native method
+        yield
+        let result = yield* this.nativeClasses[this.className][this.functionName](functionScope)
+        if (result === undefined) {
+            result = new Constant(undefined)
+        }
+
+        // Evaluate assignment
+        if (this.assignmentNode !== undefined) {
+            this.assignmentNode.assignmentExpressionNode = new ConstantNode(this.tokens, result)
+            yield
+            const assignmentResult = yield* this.assignmentNode.evaluate(scope)
+            return assignmentResult
+        }
+        else {
+            return result
+        }
     }
 }
 

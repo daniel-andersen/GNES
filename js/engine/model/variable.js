@@ -1,5 +1,6 @@
 import { Scope } from './scope'
 import * as Node from '../language/nodes'
+import Util from '../util/util'
 
 export class Variable {
     constructor(name, value) {
@@ -108,21 +109,35 @@ Constant.Type = {
 export class ObjectInstance {
     constructor(classNode) {
         this.classNode = classNode
-        this.scope = new Scope(classNode.scope)
+        this.uuid = Util.uuid()
 
-        this.populateScope()
+        this.scope = undefined
+        this.scopes = []
+
+        for (let inheritedClass of this.classNode.classHierarcy()) {
+            const inheritedClassScope = inheritedClass.scope.clone()
+            inheritedClassScope.type = Scope.Type.Object
+            inheritedClassScope.parentScope = this.scope !== undefined ? this.scope : classNode.scope.resolveScope(Scope.Type.Global)
+            inheritedClassScope.classNode = inheritedClass
+
+            this.populateScope(inheritedClassScope, inheritedClass)
+
+            this.scopes.push(inheritedClassScope)
+
+            this.scope = inheritedClassScope
+        }
     }
 
-    populateScope() {
+    populateScope(scope, classNode) {
 
         // Create variables for properties
-        for (let propertyNode of this.classNode.propertyNodes) {
+        for (let propertyNode of classNode.propertyNodes) {
             for (let node of propertyNode.parameterDefinitionsNode.nodes) {
                 if (node instanceof Node.ConstantNode) {
-                    this.scope.setVariableInOwnScope(new Variable(node.constant.value(), new Constant()))
+                    scope.setVariableInOwnScope(new Variable(node.constant.value(), new Constant()))
                 }
                 if (node instanceof Node.AssignmentNode) {
-                    this.scope.setVariableInOwnScope(new Variable(node.variableName, new Constant()))
+                    scope.setVariableInOwnScope(new Variable(node.variableName, new Constant()))
                 }
             }
         }

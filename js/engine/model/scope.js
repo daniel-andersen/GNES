@@ -1,10 +1,22 @@
 export class Scope {
 
-    constructor(parentScope=undefined) {
+    constructor(parentScope=undefined, type=Scope.Type.Generic) {
         this.parentScope = parentScope
+        this.type = type
+
         this.variables = {}
         this.functions = {}
         this.classes = {}
+        this.components = {}
+    }
+
+    clone() {
+        const scope = new Scope(this.parentScope, this.type)
+        scope.variables = Object.assign({}, this.variables)
+        scope.functions = Object.assign({}, this.functions)
+        scope.classes = Object.assign({}, this.classes)
+        scope.components = Object.assign({}, this.components)
+        return scope
     }
 
     setVariable(variable) {
@@ -116,4 +128,31 @@ export class Scope {
         // Not found
         return undefined
     }
+
+    resolveScope(type) {
+        /*
+        Resolves a (parent) object scope with the given name in the current scope.
+        */
+
+        // Class scope
+        if (this.type == type) {
+            return this
+        }
+
+        // Resolve in parent scope
+        if (this.parentScope !== undefined) {
+            return this.parentScope.resolveScope(type)
+        }
+
+        // Not found
+        return undefined
+    }
+}
+
+Scope.Type = {
+    Generic: 0,
+    Function: 1,
+    Object: 2,
+    File: 3,
+    Global: 4,
 }
