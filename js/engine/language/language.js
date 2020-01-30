@@ -352,6 +352,15 @@ export default class Language {
                 node: (tokens, nodes, sourceTree) => new Node.ConstructorNode(tokens, sourceTree.getNodeWithId(nodes, 'content'))
             },
             {
+                name: 'WaitForUpdate',
+                match: [
+                    {type: "token", token: "Wait"},
+                    {type: "token", token: "For"},
+                    {type: "token", token: "Update"},
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.WaitForUpdateNode(tokens)
+            },
+            {
                 name: 'LoadSprite',
                 match: [
                     {type: "expression", id: "variableExpression"},

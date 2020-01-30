@@ -3,13 +3,15 @@ sprite.x = 100
 sprite.y = 200
 
 While 1 Do
-    sprite.x = sprite.x + 1
-    If sprite.x > 500 Then
+    sprite.x = sprite.x + 5
+    If sprite.x > 400 Then
         sprite.x = 0
     End
 
-    sprite.y = sprite.y + 1
-    If sprite.y > 1000 Then
+    sprite.y = sprite.y + 5
+    If sprite.y > 600 Then
         sprite.y = 0
     End
+
+    Wait For Update
 End

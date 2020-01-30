@@ -72,6 +72,9 @@ export class SourceTree {
                 this.registerExtendingClass(classNode, programNode.scope)
             }
         }
+
+        // Reset misc
+        programNode.scope.onUpdateCallbacks = []
     }
 
     async buildFromFile(filename, globalScope) {

@@ -767,6 +767,26 @@ export class ConstructorNode extends Node {
     }
 }
 
+export class WaitForUpdateNode extends StatementNode {
+    constructor(tokens=[]) {
+        super(tokens)
+    }
+
+    *evaluate(scope) {
+
+        // Register update callback
+        let ready = false
+        scope.resolveScope(Scope.Type.Global).onUpdateCallbacks.push(() => {
+            ready = true
+        })
+
+        // Wait for update callback
+        while (!ready) {
+            yield
+        }
+    }
+}
+
 export class LoadSpriteNode extends StatementNode {
     constructor(tokens=[], variableExpressionNode, parameterListNode) {
         super(tokens)

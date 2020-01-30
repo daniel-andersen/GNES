@@ -7,6 +7,7 @@ import * as Node from './language/nodes'
 import { Scope } from './model/scope'
 import { Variable } from './model/variable'
 import { Error } from './model/error'
+import Util from './util/util'
 import { Sprite } from './builtin/ui/sprites'
 import * as Phaser from 'phaser'
 
@@ -67,8 +68,30 @@ export default class Engine {
             return
         }
 
+        // Log FPS
+        if (this.fpsTime === undefined) {
+            this.fpsTime = Util.currentTimeMillis()
+            this.fpsCount = 0
+        }
+        if (Util.currentTimeMillis() - this.fpsTime > 1000) {
+            console.log('FPS:', Math.round((Util.currentTimeMillis() - this.fpsTime) / this.fpsCount))
+            this.fpsTime += 1000
+            this.fpsCount = 0
+        }
+        this.fpsCount += 1
+
         // Add all components to update cycle
         this.addComponentUpdateExecutions()
+
+        // Notify waiting executions that we're updating
+        this.notifyWaitingExecutions()
+    }
+
+    notifyWaitingExecutions() {
+        for (let callback of this.sourceTree.programNode.scope.onUpdateCallbacks) {
+            callback()
+        }
+        this.sourceTree.programNode.scope.onUpdateCallbacks = []
     }
 
     addComponentUpdateExecutions() {
@@ -141,6 +164,7 @@ export default class Engine {
                     },
                 },
                 parent: 'game',
+                transparent: false,
                 backgroundColor: '#000000',
                 scene: {
                     create: function() {
@@ -167,6 +191,13 @@ export default class Engine {
             enemies: window.game.phaser.scene.add.group(),
             loot: window.game.phaser.scene.add.group(),
         }
+
+        // Add text
+        /*window.game.phaser.text = {
+            group: window.game.phaser.scene.add.text(8, 8, [], { font: '16px Courier', fill: '#ffffff' }),
+            lines: []
+        }
+        window.game.phaser.scene.add.text(8, 8, [], { font: '16px Courier', fill: '#ffffff' }),*/
     }
 
     async setupConsole() {
