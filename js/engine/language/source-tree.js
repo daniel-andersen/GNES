@@ -729,8 +729,11 @@ export class SourceTree {
             else if (node instanceof Node.PropertyNode) {
                 this.registerProperty(classNode, node)
             }
+            else if (node instanceof Node.SharedConstructorNode) {
+                this.registerConstructor(classNode, node, classNode.sharedScope)
+            }
             else if (node instanceof Node.ConstructorNode) {
-                this.registerConstructor(classNode, node)
+                this.registerConstructor(classNode, node, classNode.scope)
             }
             else if (node instanceof Node.SharedFunctionDefinitionNode) {
                 this.registerFunction(node, classNode.sharedScope)
@@ -753,12 +756,12 @@ export class SourceTree {
         classNode.sharedPropertyNodes.push(propertyNode)
     }
 
-    registerConstructor(classNode, constructorNode) {
-        if (classNode.scope.resolveFunction('_constructor') !== undefined) {
+    registerConstructor(classNode, constructorNode, scope) {
+        if (scope.resolveFunction('_constructor') !== undefined) {
             return new Error('Constructor already defined in this class', node)
         }
         const functionNode = new Node.FunctionDefinitionNode(constructorNode.tokens, '_constructor', new Node.ParameterDefinitionsNode(constructorNode.tokens, []), constructorNode.contentNode)
-        classNode.scope.setFunction(functionNode)
+        scope.setFunction(functionNode)
     }
 
     registerFunction(node, scope) {

@@ -808,6 +808,12 @@ export class ConstructorNode extends Node {
     }
 }
 
+export class SharedConstructorNode extends ConstructorNode {
+    constructor(tokens=[], contentNode) {
+        super(tokens, contentNode)
+    }
+}
+
 export class WaitForUpdateNode extends StatementNode {
     constructor(tokens=[]) {
         super(tokens)
@@ -956,9 +962,9 @@ export class ProgramNode extends Node {
 
     *evaluate(scope) {
 
-        // Evaluate shared class properties
         const globalScope = scope.resolveScope(Scope.Type.Global)
 
+        // Evaluate shared class properties
         for (let classNode of Object.values(globalScope.classes)) {
             for (let propertyNode of classNode.sharedPropertyNodes) {
                 for (let node of propertyNode.parameterDefinitionsNode.nodes) {
@@ -983,6 +989,15 @@ export class ProgramNode extends Node {
                         classNode.sharedScope.setVariable(new Variable(node.variableName, result.value))
                     }
                 }
+            }
+        }
+
+        // Run shared constructors
+        for (let classNode of Object.values(globalScope.classes)) {
+            const constructorFunctionNode = classNode.sharedScope.resolveFunction('_constructor')
+            if (constructorFunctionNode !== undefined) {
+                yield
+                yield* constructorFunctionNode.contentNode.evaluate(classNode.sharedScope)
             }
         }
 

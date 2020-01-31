@@ -382,6 +382,16 @@ export default class Language {
                 node: (tokens, nodes, sourceTree) => new Node.ConstructorNode(tokens, sourceTree.getNodeWithId(nodes, 'content'))
             },
             {
+                name: 'SharedConstructor',
+                match: [
+                    {type: "token", token: "Shared"},
+                    {type: "token", token: "Constructor"},
+                    {type: "subtree", end: ["End"], id: "content"},
+                    {type: "token", token: "End"}
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.SharedConstructorNode(tokens, sourceTree.getNodeWithId(nodes, 'content'))
+            },
+            {
                 name: 'WaitForUpdate',
                 match: [
                     {type: "token", token: "Wait"},
