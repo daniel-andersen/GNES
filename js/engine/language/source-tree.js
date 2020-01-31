@@ -717,8 +717,8 @@ export class SourceTree {
         }
         globalScope.setClass(classNode)
 
-        classNode.scope = new Scope(globalScope)
-        classNode.sharedScope = new Scope(globalScope)
+        classNode.scope = new Scope(globalScope, Scope.Type.Class)
+        classNode.sharedScope = new Scope(globalScope, Scope.Type.Class)
         classNode.propertyNodes = []
         classNode.sharedPropertyNodes = []
 

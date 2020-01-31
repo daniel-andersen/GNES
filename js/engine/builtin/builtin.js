@@ -35,6 +35,10 @@ export class Builtin {
         return scope.resolveScope(Scope.Type.Object)
     }
 
+    static resolveClassScope(scope) {
+        return scope.resolveScope(Scope.Type.Class)
+    }
+
     static resolveFileScope(scope) {
         return scope.resolveScope(Scope.Type.File)
     }

@@ -8,12 +8,14 @@ import { Scope } from './model/scope'
 import { Variable } from './model/variable'
 import { Error } from './model/error'
 import Util from './util/util'
+import { Screen } from './builtin/ui/screen'
 import { Sprite } from './builtin/ui/sprites'
 import * as Phaser from 'phaser'
 
 export default class Engine {
     constructor() {
         this.nativeClasses = {
+            Screen: Screen,
             Sprite: Sprite,
         }
         this.builtinFiles = [
@@ -69,18 +71,6 @@ export default class Engine {
             return
         }
 
-        // Log FPS
-        if (this.fpsTime === undefined) {
-            this.fpsTime = Util.currentTimeMillis()
-            this.fpsCount = 0
-        }
-        if (Util.currentTimeMillis() - this.fpsTime > 1000) {
-            console.log('FPS:', Math.round((Util.currentTimeMillis() - this.fpsTime) / this.fpsCount))
-            this.fpsTime += 1000
-            this.fpsCount = 0
-        }
-        this.fpsCount += 1
-
         // Add all components to update cycle
         this.addComponentUpdateExecutions()
 
@@ -98,6 +88,20 @@ export default class Engine {
     addComponentUpdateExecutions() {
         let executions = []
 
+        // Add class update (shared functions)
+        for (let classNode of Object.values(this.sourceTree.programNode.scope.classes)) {
+            if (!classNode.instanceOf('Component')) {
+                continue
+            }
+            for (let functionNode of Object.values(classNode.sharedScope.functions)) {
+                if (functionNode.functionName == 'update') {
+                    const functionCallNode = new Node.FunctionCallNode([], 'update', new Node.ParameterListNode([], []))
+                    executions.push(new Execution(functionCallNode, classNode.sharedScope))
+                }
+            }
+        }
+
+        // Add object update
         for (let object of Object.values(this.sourceTree.programNode.scope.components)) {
             for (let scope of object.scopes) {
                 for (let functionNode of Object.values(scope.functions)) {

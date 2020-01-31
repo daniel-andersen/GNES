@@ -6,20 +6,18 @@ sprite2 = Load Sprite(filename="/assets/sprites/test.png")
 sprite2.x = 100
 sprite2.y = 200
 
-Print Screen.fps
-Screen.fps = 10
-Print Screen.fps
-
 While 1 Do
-    sprite1.x = sprite1.x + 5
-    If sprite1.x > 400 Then
-        sprite1.x = 0
-    End
+    sprite1.x = sprite1.x + Screen.frameSpeed * 2
+    If sprite1.x > 400 Then sprite1.x = 0
 
-    sprite1.y = sprite1.y + 5
-    If sprite1.y > 600 Then
-        sprite1.y = 0
-    End
+    sprite1.y = sprite1.y + Screen.frameSpeed * 3
+    If sprite1.y > 600 Then sprite1.y = 0
+
+    sprite2.x = sprite2.x + Screen.frameSpeed * 5
+    If sprite2.x > 400 Then sprite2.x = 0
+
+    sprite2.y = sprite2.y + Screen.frameSpeed * 4
+    If sprite2.y > 600 Then sprite2.y = 0
 
     Wait For Update
 End

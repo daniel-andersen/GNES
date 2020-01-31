@@ -1,5 +1,6 @@
 Class Screen Of Type Component
     Shared Property fps = 30
+    Shared Property frameSpeed = 1
 
     Shared Function update()
         Invoke update() In Screen

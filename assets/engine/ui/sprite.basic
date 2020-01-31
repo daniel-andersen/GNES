@@ -2,9 +2,6 @@ Class Sprite Of Type Component
     Property x = 0
     Property y = 0
 
-    Constructor
-    End
-
     Function update()
         Invoke update() In Sprite
     End
