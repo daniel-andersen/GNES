@@ -1,16 +1,24 @@
-sprite = Load Sprite(filename="/assets/sprites/test.png")
-sprite.x = 100
-sprite.y = 200
+sprite1 = Load Sprite(filename="/assets/sprites/test.png")
+sprite1.x = 100
+sprite1.y = 200
+
+sprite2 = Load Sprite(filename="/assets/sprites/test.png")
+sprite2.x = 100
+sprite2.y = 200
+
+Print Screen.fps
+Screen.fps = 10
+Print Screen.fps
 
 While 1 Do
-    sprite.x = sprite.x + 5
-    If sprite.x > 400 Then
-        sprite.x = 0
+    sprite1.x = sprite1.x + 5
+    If sprite1.x > 400 Then
+        sprite1.x = 0
     End
 
-    sprite.y = sprite.y + 5
-    If sprite.y > 600 Then
-        sprite.y = 0
+    sprite1.y = sprite1.y + 5
+    If sprite1.y > 600 Then
+        sprite1.y = 0
     End
 
     Wait For Update

@@ -114,29 +114,39 @@ export class ObjectInstance {
         this.scope = undefined
         this.scopes = []
 
+        // Build scope hierarcy
         for (let inheritedClass of this.classNode.classHierarcy()) {
-            const inheritedClassScope = inheritedClass.scope.clone()
-            inheritedClassScope.type = Scope.Type.Object
-            inheritedClassScope.parentScope = this.scope !== undefined ? this.scope : classNode.scope.resolveScope(Scope.Type.Global)
-            inheritedClassScope.classNode = inheritedClass
 
-            this.populateScope(inheritedClassScope, inheritedClass)
+            // Class scope (shared)
+            const parentScope = this.scope !== undefined ? this.scope : classNode.scope.resolveScope(Scope.Type.Global)
+            const classScope = inheritedClass.sharedScope.cloneWithReferences()
+            classScope.type = Scope.Type.Class
+            classScope.parentScope = this.scope !== undefined ? this.scope : classNode.scope.resolveScope(Scope.Type.Global)
+            classScope.classNode = inheritedClass
 
-            this.scopes.push(inheritedClassScope)
+            // Object scope
+            const objectScope = inheritedClass.scope.clone()
+            objectScope.type = Scope.Type.Object
+            objectScope.parentScope = classScope
+            objectScope.classNode = inheritedClass
 
-            this.scope = inheritedClassScope
+            this.populateScope(objectScope, inheritedClass.propertyNodes)
+
+            this.scopes.push(objectScope)
+
+            this.scope = objectScope
         }
     }
 
-    populateScope(scope, classNode) {
+    populateScope(scope, propertyNodes) {
 
         // Create variables for properties
-        for (let propertyNode of classNode.propertyNodes) {
+        for (let propertyNode of propertyNodes) {
             for (let node of propertyNode.parameterDefinitionsNode.nodes) {
                 if (node instanceof Node.ConstantNode) {
                     scope.setVariableInOwnScope(new Variable(node.constant.value(), new Constant()))
                 }
-                if (node instanceof Node.AssignmentNode) {
+                if (node instanceof Node.ParameterAssignmentNode) {
                     scope.setVariableInOwnScope(new Variable(node.variableName, new Constant()))
                 }
             }

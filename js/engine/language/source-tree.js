@@ -40,13 +40,13 @@ export class SourceTree {
         // Create global node
         this.programNode = new Node.ProgramNode(fileNodes, globalScope)
 
+        // Postprocess source tree
+        this.postProcess(this.programNode)
+
         console.log("---------")
         console.log("Result:")
         console.log(this.programNode)
         console.log("---------")
-
-        // Postprocess source tree
-        this.postProcess(this.programNode)
 
         return undefined
     }
@@ -236,13 +236,14 @@ export class SourceTree {
                 }
             }
 
-            // Not expression token
-            if (parenthesisCount == 0 && !this.language.expressionTokens.includes(tokens[0].type)) {
-
-                // Make sure not a "New Class" expression
-                if (expressionTokens.length == 0 || expressionTokens[expressionTokens.length - 1].type != this.language.tokenType.New || tokens[0].type != this.language.tokenType.Name) {
-                    break
-                }
+            // Check if expression token
+            let expressionToken = false
+            expressionToken |= parenthesisCount > 0
+            expressionToken |= this.language.expressionTokens.includes(tokens[0].type)
+            expressionToken |= expressionTokens.length > 0 && expressionTokens[expressionTokens.length - 1].type == this.language.tokenType.New && tokens[0].type == this.language.tokenType.Name
+            expressionToken |= tokens.length >= 2 && tokens[0].type == this.language.tokenType.Name && tokens[1].type == this.language.tokenType.Dot
+            if (!expressionToken) {
+                break
             }
 
             // End of line
@@ -445,9 +446,13 @@ export class SourceTree {
         }
 
         // Build subtrees
-        const leftSideExpressionNode = this.parseExpression(tokens.slice(0, arithmeticTokenPosition))
+        let leftSideExpressionNode = this.parseExpression(tokens.slice(0, arithmeticTokenPosition))
         const rightSideExpressionNode = this.parseExpression(tokens.slice(arithmeticTokenPosition + 1))
 
+        // Left side class, special case - TODO! Hacked!
+        if (leftSideExpressionNode instanceof Error && leftSideExpressionNode.token.type == this.language.tokenType.Name) {
+            leftSideExpressionNode = new Node.ConstantNode(leftSideExpressionNode.tokens, new Constant(leftSideExpressionNode.token.token))
+        }
         return new Node.ArithmeticNode(tokens, leftSideExpressionNode, arithmeticToken, rightSideExpressionNode)
     }
 
@@ -713,23 +718,39 @@ export class SourceTree {
         globalScope.setClass(classNode)
 
         classNode.scope = new Scope(globalScope)
+        classNode.sharedScope = new Scope(globalScope)
         classNode.propertyNodes = []
+        classNode.sharedPropertyNodes = []
 
         for (let node of classNode.contentNode.nodes) {
-            if (node instanceof Node.PropertyNode) {
+            if (node instanceof Node.SharedPropertyNode) {
+                this.registerSharedProperty(classNode, node)
+            }
+            else if (node instanceof Node.PropertyNode) {
                 this.registerProperty(classNode, node)
             }
-            if (node instanceof Node.ConstructorNode) {
+            else if (node instanceof Node.ConstructorNode) {
                 this.registerConstructor(classNode, node)
             }
-            if (node instanceof Node.FunctionDefinitionNode) {
+            else if (node instanceof Node.SharedFunctionDefinitionNode) {
+                this.registerFunction(node, classNode.sharedScope)
+            }
+            else if (node instanceof Node.FunctionDefinitionNode) {
                 this.registerFunction(node, classNode.scope)
             }
         }
     }
 
+    registerSharedProperty(classNode, propertyNode) {
+        classNode.sharedPropertyNodes.push(propertyNode)
+    }
+
     registerProperty(classNode, propertyNode) {
         classNode.propertyNodes.push(propertyNode)
+    }
+
+    registerSharedProperty(classNode, propertyNode) {
+        classNode.sharedPropertyNodes.push(propertyNode)
     }
 
     registerConstructor(classNode, constructorNode) {

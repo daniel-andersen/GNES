@@ -19,6 +19,15 @@ export class Scope {
         return scope
     }
 
+    cloneWithReferences() {
+        const scope = new Scope(this.parentScope, this.type)
+        scope.variables = this.variables
+        scope.functions = this.functions
+        scope.classes = this.classes
+        scope.components = this.components
+        return scope
+    }
+
     setVariable(variable) {
         /*
         Sets the given variable in the appropriate scope.
@@ -152,7 +161,8 @@ export class Scope {
 Scope.Type = {
     Generic: 0,
     Function: 1,
-    Object: 2,
-    File: 3,
-    Global: 4,
+    Class: 2,
+    Object: 3,
+    File: 4,
+    Global: 5,
 }

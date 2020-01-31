@@ -1,9 +1,9 @@
 import { Scope } from '../model/scope'
 
 export default class Execution {
-    constructor(node, scope=new Scope()) {
+    constructor(node, scope=undefined) {
         this.node = node
-        this.scope = scope
+        this.scope = scope || this.node.scope
 
         this.stopped = false
 

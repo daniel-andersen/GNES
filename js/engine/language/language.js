@@ -115,6 +115,15 @@ export default class Language {
                 node: (tokens, nodes, sourceTree) => new Node.FunctionCallNode(tokens, sourceTree.getConstantNameWithId(nodes, 'name'), sourceTree.getNodeWithId(nodes, 'parameters'))
             },
             {
+                name: 'ClassScope',
+                match: [
+                    {type: "name", id: "className"},
+                    {type: "token", token: "."},
+                    {type: "expression", id: "expression"},
+                ],
+                node: (tokens, nodes, sourceTree) => {console.log("HEY!"); return new Node.FunctionCallNode(tokens, sourceTree.getConstantNameWithId(nodes, 'name'), sourceTree.getNodeWithId(nodes, 'parameters'))}
+            },
+            {
                 name: 'ParameterAssignment',
                 match: [
                     {type: "variable", id: "variable"},
@@ -335,12 +344,33 @@ export default class Language {
                 node: (tokens, nodes, sourceTree) => new Node.FunctionDefinitionNode(tokens, sourceTree.getConstantNameWithId(nodes, 'name'), sourceTree.getNodeWithId(nodes, 'parameters'), sourceTree.getNodeWithId(nodes, 'content'))
             },
             {
+                name: 'SharedFunctionDefinition',
+                match: [
+                    {type: "token", token: "Shared"},
+                    {type: "token", token: "Function"},
+                    {type: "variable", id: 'name'},
+                    {type: "parameterDefinitions", id: "parameters"},
+                    {type: "subtree", end: ["End"], id: "content"},
+                    {type: "token", token: "End"}
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.SharedFunctionDefinitionNode(tokens, sourceTree.getConstantNameWithId(nodes, 'name'), sourceTree.getNodeWithId(nodes, 'parameters'), sourceTree.getNodeWithId(nodes, 'content'))
+            },
+            {
                 name: 'Property',
                 match: [
                     {type: "token", token: "Property"},
                     {type: "parameterDefinitions", id: "properties"},
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.PropertyNode(tokens, sourceTree.getNodeWithId(nodes, 'properties'))
+            },
+            {
+                name: 'SharedProperty',
+                match: [
+                    {type: "token", token: "Shared"},
+                    {type: "token", token: "Property"},
+                    {type: "parameterDefinitions", id: "properties"},
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.SharedPropertyNode(tokens, sourceTree.getNodeWithId(nodes, 'properties'))
             },
             {
                 name: 'Constructor',

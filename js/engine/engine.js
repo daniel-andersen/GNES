@@ -18,7 +18,8 @@ export default class Engine {
         }
         this.builtinFiles = [
             "/assets/engine/lifecycle/component.basic",
-            "/assets/engine/sprites/sprite.basic",
+            "/assets/engine/ui/screen.basic",
+            "/assets/engine/ui/sprite.basic",
         ]
     }
 

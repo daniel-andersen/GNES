@@ -115,10 +115,19 @@ export class AssignmentNode extends StatementNode {
 
         if (this.variableExpressionNode !== undefined) {
             const variableResult = yield* this.variableExpressionNode.evaluate(scope)
-            if (variableResult === undefined || variableResult.value === undefined || !(variableResult.value instanceof ObjectInstance)) {
+            if (variableResult === undefined || variableResult.value === undefined) {
                 throw {error: 'Left side expression did not evaluate to an object', node: this.variableExpressionNode}
             }
-            variableScope = variableResult.value.scope
+            variableScope = undefined
+            if (variableResult.value instanceof ObjectInstance) {
+                variableScope = variableResult.value.scope
+            }
+            if (variableResult.value instanceof ClassNode) {
+                variableScope = variableResult.value.sharedScope
+            }
+            if (variableScope === undefined) {
+                throw {error: 'Left side expression did not evaluate to an object', node: this.variableExpressionNode}
+            }
         }
 
         // Evaluate assignment expression
@@ -419,6 +428,10 @@ export class ConstantNode extends ExpressionNode {
             if (variable !== undefined) {
                 return new Result(variable.value(), Result.Type.Expression)
             }
+            const aClass = scope.resolveClass(this.constant.value())
+            if (aClass !== undefined) {
+                return new Result(aClass, Result.Type.Expression)
+            }
             throw {error: 'Variable ' + this.constant.value() + " undefined", node: this}
         }
         else {
@@ -568,26 +581,33 @@ export class NewObjectNode extends ExpressionNode {
             // Evaluate all properties
             for (let propertyNode of objectScope.classNode.propertyNodes) {
 
-                // Evaluate all nodes in property
-                for (let node of propertyNode.parameterDefinitionsNode.nodes) {
+                // Evaluate property node
+                yield
+                yield* this.evaluateUnsetPropertiesInPropertyNode(propertyNode, objectScope)
+            }
+        }
+    }
 
-                    // Evaluate assignment
-                    if (node instanceof ParameterAssignmentNode) {
-                        const currentVariable = object.scope.resolveVariable(node.variableName)
+    *evaluateUnsetPropertiesInPropertyNode(propertyNode, scope) {
 
-                        // Ensure that is has not already been set
-                        if (currentVariable === undefined || (currentVariable !== undefined && currentVariable.type == Variable.Type.Undefined)) {
-                            yield
-                            const result = yield* node.expressionNode.evaluate(object.scope)
-                            if (result === undefined) {
-                                throw {error: 'Result of expression is undefined', node: node.expressionNode}
-                            }
-                            if (result.type !== Result.Type.Expression) {
-                                throw {error: 'Expected expression', node: node.expressionNode}
-                            }
-                            object.scope.setVariable(new Variable(node.variableName, result.value))
-                        }
+        // Evaluate all nodes in property
+        for (let node of propertyNode.parameterDefinitionsNode.nodes) {
+
+            // Evaluate assignment
+            if (node instanceof ParameterAssignmentNode) {
+                const currentVariable = scope.resolveVariable(node.variableName)
+
+                // Ensure that is has not already been set
+                if (currentVariable === undefined || (currentVariable !== undefined && currentVariable.type == Variable.Type.Undefined)) {
+                    yield
+                    const result = yield* node.expressionNode.evaluate(scope)
+                    if (result === undefined) {
+                        throw {error: 'Result of expression is undefined', node: node.expressionNode}
                     }
+                    if (result.type !== Result.Type.Expression) {
+                        throw {error: 'Expected expression', node: node.expressionNode}
+                    }
+                    scope.setVariable(new Variable(node.variableName, result.value))
                 }
             }
         }
@@ -682,14 +702,23 @@ export class ArithmeticNode extends ExpressionNode {
         if (leftSideResult.type !== Result.Type.Expression) {
             throw {error: 'Expected expression', node: this.leftSideExpressionNode}
         }
-        const objectInstance = leftSideResult.value
-        if (!(objectInstance instanceof ObjectInstance)) {
+
+        let objectScope = undefined
+
+        const value = leftSideResult.value
+        if (value instanceof ObjectInstance) {
+            objectScope = value.scope
+        }
+        if (value instanceof ClassNode) {
+            objectScope = value.sharedScope
+        }
+        if (objectScope === undefined) {
             throw {error: 'Left side expression does not evaluate to an object', node: this.leftSideExpressionNode}
         }
 
         // Evaluate right side of expression - in object scope
         yield
-        const rightSideResult = yield* this.rightSideExpressionNode.evaluate(objectInstance.scope)
+        const rightSideResult = yield* this.rightSideExpressionNode.evaluate(objectScope)
 
         return rightSideResult
     }
@@ -734,6 +763,12 @@ export class FunctionDefinitionNode extends Node {
     }
 }
 
+export class SharedFunctionDefinitionNode extends FunctionDefinitionNode {
+    constructor(tokens=[], functionName, parameterDefinitionsNode, contentNode) {
+        super(tokens, functionName, parameterDefinitionsNode, contentNode)
+    }
+}
+
 export class ParameterListNode extends Node {
     constructor(tokens=[], parameterAssignmentNodes) {
         super(tokens)
@@ -757,6 +792,12 @@ export class PropertyNode extends Node {
     constructor(tokens=[], parameterDefinitionsNode) {
         super(tokens)
         this.parameterDefinitionsNode = parameterDefinitionsNode
+    }
+}
+
+export class SharedPropertyNode extends PropertyNode {
+    constructor(tokens=[], parameterDefinitionsNode) {
+        super(tokens, parameterDefinitionsNode)
     }
 }
 
@@ -914,6 +955,38 @@ export class ProgramNode extends Node {
     }
 
     *evaluate(scope) {
+
+        // Evaluate shared class properties
+        const globalScope = scope.resolveScope(Scope.Type.Global)
+
+        for (let classNode of Object.values(globalScope.classes)) {
+            for (let propertyNode of classNode.sharedPropertyNodes) {
+                for (let node of propertyNode.parameterDefinitionsNode.nodes) {
+
+                    // Constant
+                    if (node instanceof ConstantNode) {
+                        classNode.sharedScope.setVariableInOwnScope(new Variable(node.constant.value(), new Constant()))
+                    }
+
+                    // Evaluate assignment
+                    if (node instanceof ParameterAssignmentNode) {
+                        const currentVariable = classNode.sharedScope.resolveVariable(node.variableName)
+
+                        yield
+                        const result = yield* node.expressionNode.evaluate(scope)
+                        if (result === undefined) {
+                            throw {error: 'Result of expression is undefined', node: node.expressionNode}
+                        }
+                        if (result.type !== Result.Type.Expression) {
+                            throw {error: 'Expected expression', node: node.expressionNode}
+                        }
+                        classNode.sharedScope.setVariable(new Variable(node.variableName, result.value))
+                    }
+                }
+            }
+        }
+
+        // Run program
         for (let node of this.fileNodes) {
             yield
             const result = yield* node.evaluate(this.scope)  // Evaluate in its own scope
