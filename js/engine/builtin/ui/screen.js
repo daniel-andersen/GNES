@@ -4,7 +4,6 @@ import { Constant, Variable } from '../../model/variable'
 import Util from '../../util/util'
 
 export class Screen {
-
     static *initialize(scope) {
         const classScope = Builtin.resolveClassScope(scope)
 

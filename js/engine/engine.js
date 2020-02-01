@@ -10,6 +10,7 @@ import { Error } from './model/error'
 import Util from './util/util'
 import { Screen } from './builtin/ui/screen'
 import { Sprite } from './builtin/ui/sprites'
+import { Joystick } from './builtin/controls/joystick'
 import * as Phaser from 'phaser'
 
 export default class Engine {
@@ -17,11 +18,13 @@ export default class Engine {
         this.nativeClasses = {
             Screen: Screen,
             Sprite: Sprite,
+            Joystick: Joystick,
         }
         this.builtinFiles = [
             "/assets/engine/lifecycle/component.basic",
             "/assets/engine/ui/screen.basic",
             "/assets/engine/ui/sprite.basic",
+            "/assets/engine/controls/joystick.basic",
         ]
     }
 

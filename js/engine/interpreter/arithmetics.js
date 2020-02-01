@@ -33,6 +33,12 @@ export default class Arithmetics {
             case '>=': {
                 return Arithmetics.greaterThanOrEqual(leftSideResult, rightSideResult)
             }
+            case 'And': {
+                return Arithmetics.and(leftSideResult, rightSideResult)
+            }
+            case 'Or': {
+                return Arithmetics.or(leftSideResult, rightSideResult)
+            }
             default: {
                 throw 'Unknown arithmetic operation:', arithmeticToken.token
             }
@@ -106,6 +112,20 @@ export default class Arithmetics {
     static greaterThanOrEqual(leftSideResult, rightSideResult) {
         if (leftSideResult.type == Constant.Type.Number && rightSideResult.type == Constant.Type.Number) {
             return new Constant(leftSideResult.value() >= rightSideResult.value())
+        }
+        throw 'Cannot compare expression'
+    }
+
+    static and(leftSideResult, rightSideResult) {
+        if (leftSideResult.type == Constant.Type.Boolean && rightSideResult.type == Constant.Type.Boolean) {
+            return new Constant(leftSideResult.value() && rightSideResult.value())
+        }
+        throw 'Cannot compare expression'
+    }
+
+    static or(leftSideResult, rightSideResult) {
+        if (leftSideResult.type == Constant.Type.Boolean && rightSideResult.type == Constant.Type.Boolean) {
+            return new Constant(leftSideResult.value() || rightSideResult.value())
         }
         throw 'Cannot compare expression'
     }

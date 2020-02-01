@@ -1,10 +1,12 @@
-Class Hero Of Type Sprite
+Class Monster Of Type Sprite
     Property directionX = 1
     Property directionY = 1
-    Property speed = 4.0
+    Property speed = 2.0
 
     Constructor
-        load(filename="/assets/sprites/test.png")
+        load(filename="/assets/sprites/monster.png")
+        x = 300
+        y = 300
     End
 
     Function update()
@@ -18,9 +20,35 @@ Class Hero Of Type Sprite
     End
 End
 
-hero1 = New Hero(speed=4.0)
-hero2 = New Hero(speed=7.0)
+Class Hero Of Type Sprite
+    Property speed = 5.0
 
-While 1 Do
+    Constructor
+        load(filename="/assets/sprites/hero.png")
+        x = 200
+        y = 200
+    End
+
+    Function update()
+        If Joystick.left And x > 0 Then
+            x = x - Screen.frameSpeed * speed
+        End
+        If Joystick.right And x < Screen.width Then
+            x = x + Screen.frameSpeed * speed
+        End
+        If Joystick.up And y > 0 Then
+            y = y - Screen.frameSpeed * speed
+        End
+        If Joystick.down And x < Screen.height Then
+            y = y + Screen.frameSpeed * speed
+        End
+    End
+End
+
+monster1 = New Monster(speed=2.0)
+monster2 = New Monster(speed=3.0)
+hero3 = New Hero()
+
+While True Do
     Wait For Update
 End

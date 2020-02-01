@@ -25,15 +25,17 @@ export default class Language {
             'Minus': 16,
             'Multiply': 17,
             'Divide': 18,
-            'Assignment': 19,
-            'ParenthesisStart': 20,
-            'ParenthesisEnd': 21,
-            'StringDelimiter': 22,
-            'StringConstant': 23,
-            'Colon': 24,
-            'Comma': 25,
-            'Dot': 26,
-            'New': 27,
+            'True': 19,
+            'False': 20,
+            'Assignment': 21,
+            'ParenthesisStart': 22,
+            'ParenthesisEnd': 23,
+            'StringDelimiter': 24,
+            'StringConstant': 25,
+            'Colon': 26,
+            'Comma': 27,
+            'Dot': 28,
+            'New': 29,
         }
 
         this.tokenTypes = {
@@ -53,6 +55,8 @@ export default class Language {
             '-': this.tokenType.Minus,
             '*': this.tokenType.Multiply,
             '/': this.tokenType.Divide,
+            'True': this.tokenType.True,
+            'False': this.tokenType.False,
             '=': this.tokenType.Assignment,
             '(': this.tokenType.ParenthesisStart,
             ')': this.tokenType.ParenthesisEnd,
@@ -103,6 +107,8 @@ export default class Language {
             this.tokenType.Comma,
             this.tokenType.Dot,
             this.tokenType.New,
+            this.tokenType.True,
+            this.tokenType.False,
         ])
 
         this.expressions = [

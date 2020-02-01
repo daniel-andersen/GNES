@@ -1,0 +1,14 @@
+Class Joystick Of Type Component
+    Shared Property left = False
+    Shared Property right = False
+    Shared Property up = False
+    Shared Property down = False
+
+    Shared Constructor
+        Invoke initialize() In Joystick
+    End
+
+    Shared Function update()
+        Invoke update() In Joystick
+    End
+End

@@ -69,6 +69,14 @@ export class Constant {
         else if (typeof(this.rawValue) == 'string' && this.rawValue.length > 0 && this.rawValue.charAt(0) == '"') {
             this.type = Constant.Type.String
         }
+        else if (this.rawValue == 'True') {
+            this.type = Constant.Type.Boolean
+            this.rawValue = true
+        }
+        else if (this.rawValue == 'False') {
+            this.type = Constant.Type.Boolean
+            this.rawValue = false
+        }
         else {
             this.type = Constant.Type.Variable
         }
