@@ -14,7 +14,7 @@ export class Sprite {
         const filename = filenameConstant.value()
 
         // Resolve object scope
-        const objectScope = Builtin.resolveObjectScope(scope)
+        const objectScope = Builtin.resolveObjectScope(scope, 'Sprite')
         if (objectScope === undefined) {
             throw new Error('Native "Sprite.Load" can only be called from Sprite class.')
         }
@@ -53,7 +53,7 @@ export class Sprite {
     }
 
     static *update(scope) {
-        const objectScope = Builtin.resolveObjectScope(scope)
+        const objectScope = Builtin.resolveObjectScope(scope, 'Sprite')
 
         const sprite = objectScope.sprite
         if (sprite === undefined) {

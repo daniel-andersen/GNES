@@ -143,7 +143,7 @@ export class Scope {
         Resolves a (parent) object scope with the given name in the current scope.
         */
 
-        // Class scope
+        // Check scope type
         if (this.type == type) {
             return this
         }
@@ -151,6 +151,25 @@ export class Scope {
         // Resolve in parent scope
         if (this.parentScope !== undefined) {
             return this.parentScope.resolveScope(type)
+        }
+
+        // Not found
+        return undefined
+    }
+
+    resolveObjectScopeWithClassName(className) {
+        /*
+        Resolves a (parent) object scope with the given name in the current scope.
+        */
+
+        // Check scope type
+        if (this.type == Scope.Type.Object && this.classNode.className == className) {
+            return this
+        }
+
+        // Resolve in parent scope
+        if (this.parentScope !== undefined) {
+            return this.parentScope.resolveObjectScopeWithClassName(className)
         }
 
         // Not found

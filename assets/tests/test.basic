@@ -1,34 +1,26 @@
-sprite1 = Load Sprite(filename="/assets/sprites/test.png")
-sprite1.x = 100
-sprite1.y = 100
-sprite1.speed = 4
-sprite1.directionX = 1
-sprite1.directionY = 1
+Class Hero Of Type Sprite
+    Property directionX = 1
+    Property directionY = 1
+    Property speed = 4.0
 
-sprite2 = Load Sprite(filename="/assets/sprites/test.png")
-sprite2.x = 200
-sprite2.y = 50
-sprite2.speed = 7
-sprite2.directionX = -1
-sprite2.velocityY = 0
+    Constructor
+        load(filename="/assets/sprites/test.png")
+    End
+
+    Function update()
+        x = x + Screen.frameSpeed * directionX * speed
+        If x < 0 Then directionX = 1
+        If x > Screen.width Then directionX = -1
+
+        y = y + Screen.frameSpeed * directionY * speed
+        If y < 0 Then directionY = 1
+        If y > Screen.height Then directionY = -1
+    End
+End
+
+hero1 = New Hero(speed=4.0)
+hero2 = New Hero(speed=7.0)
 
 While 1 Do
-    sprite1.x = sprite1.x + Screen.frameSpeed * sprite1.directionX * sprite1.speed
-    If sprite1.x < 0 Then sprite1.directionX = 1
-    If sprite1.x > Screen.width Then sprite1.directionX = -1
-
-    sprite1.y = sprite1.y + Screen.frameSpeed * sprite1.directionY * sprite1.speed
-    If sprite1.y < 0 Then sprite1.directionY = 1
-    If sprite1.y > Screen.height Then sprite1.directionY = -1
-
-    sprite2.x = sprite2.x + Screen.frameSpeed * sprite2.directionX * sprite2.speed
-    If sprite2.x < 0 Then sprite2.directionX = 1
-    If sprite2.x > Screen.width Then sprite2.directionX = -1
-
-    sprite2.y = sprite2.y + Screen.frameSpeed * sprite2.velocityY * sprite2.speed
-    If sprite2.y < 0 Then sprite2.directionY = 1
-    If sprite2.y > Screen.height Then sprite2.velocityY = -1.5
-    sprite2.velocityY = sprite2.velocityY + 0.02
-
     Wait For Update
 End

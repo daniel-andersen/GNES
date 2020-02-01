@@ -31,8 +31,13 @@ export class Builtin {
         return scope.resolveScope(Scope.Type.Function)
     }
 
-    static resolveObjectScope(scope) {
-        return scope.resolveScope(Scope.Type.Object)
+    static resolveObjectScope(scope, className=undefined) {
+        if (className !== undefined) {
+            return scope.resolveObjectScopeWithClassName(className)
+        }
+        else {
+            return scope.resolveScope(Scope.Type.Object)
+        }
     }
 
     static resolveClassScope(scope) {

@@ -6,8 +6,8 @@ export default class Interpreter {
 
         this.reset()
 
-        this.runTimeMillis = 20
-        this.pauseTimeMillis = 5
+        this.runTimeMillis = 5
+        this.pauseTimeMillis = 1
     }
 
     reset() {
@@ -60,8 +60,8 @@ export default class Interpreter {
             // Check if all program executors are stopped
             this.stopped = this.programExecutions.length === 0
 
-            // Pause execution a while
-            if (Util.currentTimeMillis() > nextPauseTime) {
+            // Pause execution a while (if not in component update mode)
+            if (Util.currentTimeMillis() > nextPauseTime && this.updateExecutions.length == 0) {
                 await Util.sleep(this.pauseTimeMillis)
                 nextPauseTime = Util.currentTimeMillis() + this.runTimeMillis
             }

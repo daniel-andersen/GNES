@@ -373,6 +373,14 @@ export default class Language {
                 node: (tokens, nodes, sourceTree) => new Node.SharedPropertyNode(tokens, sourceTree.getNodeWithId(nodes, 'properties'))
             },
             {
+                name: 'Component',
+                match: [
+                    {type: "token", token: "Component"},
+                    {type: "name", id: "className"},
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.ComponentNode(tokens, sourceTree.getNodeWithId(nodes, 'className'))
+            },
+            {
                 name: 'Constructor',
                 match: [
                     {type: "token", token: "Constructor"},
