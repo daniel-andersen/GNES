@@ -1,6 +1,7 @@
 Class Sprite Of Type Component
     Property x = 0
     Property y = 0
+    Property visible = False
 
     Function update()
         Invoke update() In Sprite
@@ -8,5 +9,13 @@ Class Sprite Of Type Component
 
     Function load(filename)
         Invoke load(filename=filename) In Sprite
+    End
+
+    Function show()
+        Invoke show() In Sprite
+    End
+
+    Function hide()
+        Invoke hide() In Sprite
     End
 End

@@ -859,6 +859,52 @@ export class LoadSpriteNode extends StatementNode {
     }
 }
 
+export class ShowSpriteNode extends StatementNode {
+    constructor(tokens=[], expressionNode) {
+        super(tokens)
+        this.expressionNode = expressionNode
+
+        this.showNode = new FunctionCallNode(this.tokens, "show", new ParameterListNode(this.tokens, []))
+    }
+
+    *evaluate(scope) {
+
+        // Evaluate expression
+        yield
+        const result = yield* this.expressionNode.evaluate(scope)
+        if (!(result.value instanceof ObjectInstance)) {
+            throw {error: 'Expected object', node: this.expressionNode}
+        }
+
+        // Evaluate function call to sprite.show()
+        yield
+        yield* this.showNode.evaluate(result.value.scope)
+    }
+}
+
+export class HideSpriteNode extends StatementNode {
+    constructor(tokens=[], expressionNode) {
+        super(tokens)
+        this.expressionNode = expressionNode
+
+        this.hideNode = new FunctionCallNode(this.tokens, "hide", new ParameterListNode(this.tokens, []))
+    }
+
+    *evaluate(scope) {
+
+        // Evaluate expression
+        yield
+        const result = yield* this.expressionNode.evaluate(scope)
+        if (!(result.value instanceof ObjectInstance)) {
+            throw {error: 'Expected object', node: this.expressionNode}
+        }
+
+        // Evaluate function call to sprite.show()
+        yield
+        yield* this.hideNode.evaluate(result.value.scope)
+    }
+}
+
 export class InvokeNativeFunctionNode extends StatementNode {
     constructor(tokens=[], variableExpressionNode, functionName, parameterListNode, className, nativeClasses) {
         super(tokens)

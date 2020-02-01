@@ -426,6 +426,24 @@ export default class Language {
                 node: (tokens, nodes, sourceTree) => new Node.LoadSpriteNode(tokens, sourceTree.getNodeWithId(nodes, 'variableExpression'), sourceTree.getNodeWithId(nodes, 'parameters'))
             },
             {
+                name: 'ShowSprite',
+                match: [
+                    {type: "token", token: "Show"},
+                    {type: "token", token: "Sprite"},
+                    {type: "expression", id: "expression"}
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.ShowSpriteNode(tokens, sourceTree.getNodeWithId(nodes, 'expression'))
+            },
+            {
+                name: 'HideSprite',
+                match: [
+                    {type: "token", token: "Hide"},
+                    {type: "token", token: "Sprite"},
+                    {type: "expression", id: "expression"}
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.HideSpriteNode(tokens, sourceTree.getNodeWithId(nodes, 'expression'))
+            },
+            {
                 name: 'InvokeNativeFunction',
                 match: [
                     {type: "group", required: false, group: {

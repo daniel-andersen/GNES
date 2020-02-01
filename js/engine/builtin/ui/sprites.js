@@ -1,9 +1,22 @@
 import { Builtin } from '../builtin'
 import { Error } from '../../model/error'
-import { Constant } from '../../model/variable'
+import { Constant, Variable } from '../../model/variable'
 import Util from '../../util/util'
 
 export class Sprite {
+    static *update(scope) {
+        const objectScope = Builtin.resolveObjectScope(scope, 'Sprite')
+
+        const sprite = objectScope.sprite
+        if (sprite === undefined) {
+            return
+        }
+
+        sprite.x = scope.resolveVariable('x').value().value()
+        sprite.y = scope.resolveVariable('y').value().value()
+        sprite.visible = scope.resolveVariable('visible').value().value()
+    }
+
     static *load(scope) {
 
         // Resolve filename
@@ -47,12 +60,13 @@ export class Sprite {
 
         // Add sprite
         objectScope.sprite = Builtin.scene().add.sprite(100, 100, imageName)
+        objectScope.sprite.visible = false
 
         // Add to default group
         Builtin.group(Builtin.Group.default).add(objectScope.sprite)
     }
 
-    static *update(scope) {
+    static *show(scope) {
         const objectScope = Builtin.resolveObjectScope(scope, 'Sprite')
 
         const sprite = objectScope.sprite
@@ -60,7 +74,17 @@ export class Sprite {
             return
         }
 
-        sprite.x = scope.resolveVariable('x').value().value()
-        sprite.y = scope.resolveVariable('y').value().value()
+        scope.setVariable(new Variable('visible', new Constant(true)))
+    }
+
+    static *hide(scope) {
+        const objectScope = Builtin.resolveObjectScope(scope, 'Sprite')
+
+        const sprite = objectScope.sprite
+        if (sprite === undefined) {
+            return
+        }
+
+        scope.setVariable(new Variable('visible', new Constant(false)))
     }
 }

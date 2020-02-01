@@ -5,6 +5,7 @@ Class Monster Of Type Sprite
 
     Constructor
         load(filename="/assets/sprites/monster.png")
+        show()
         x = 300
         y = 300
     End
@@ -25,6 +26,7 @@ Class Hero Of Type Sprite
 
     Constructor
         load(filename="/assets/sprites/hero.png")
+        show()
         x = 200
         y = 200
     End
