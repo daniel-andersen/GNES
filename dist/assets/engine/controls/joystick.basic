@@ -1,0 +1,19 @@
+Class Joystick
+    Shared Property left = False
+    Shared Property right = False
+    Shared Property up = False
+    Shared Property down = False
+
+    Shared Constructor
+        Invoke initialize() In Joystick
+    End
+
+    Shared Update
+        Invoke update() In Joystick
+    End
+End
+
+Behaviour Joystick
+    Update
+    End
+End

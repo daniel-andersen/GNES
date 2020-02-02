@@ -1,0 +1,9 @@
+Behaviour Gravity
+    Property velocity = 0
+    Property drag = 0.5
+
+    Update
+        y = y + (velocity * Screen.frameSpeed)
+        velocity = velocity + (drag * Screen.frameSpeed)
+    End
+End
