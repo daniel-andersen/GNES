@@ -21,10 +21,10 @@ export default class Engine {
             Joystick: Joystick,
         }
         this.builtinFiles = [
-            "/assets/engine/ui/screen.basic",
-            "/assets/engine/ui/sprite.basic",
-            "/assets/engine/controls/joystick.basic",
-            "/assets/engine/physics/gravity.basic",
+            "./assets/engine/ui/screen.basic",
+            "./assets/engine/ui/sprite.basic",
+            "./assets/engine/controls/joystick.basic",
+            "./assets/engine/physics/gravity.basic",
         ]
     }
 

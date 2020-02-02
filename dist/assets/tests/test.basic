@@ -4,7 +4,7 @@ Class Monster Of Type Sprite
     Property speed = 2.0
 
     Constructor
-        load(filename="/assets/sprites/monster.png")
+        load(filename="./assets/sprites/monster.png")
         show()
         x = 300
         y = 300
@@ -27,7 +27,7 @@ Class Hero Of Type Sprite
     Behaviour gravity Of Type Gravity
 
     Constructor
-        load(filename="/assets/sprites/hero.png")
+        load(filename="./assets/sprites/hero.png")
         show()
         x = 200
         y = Screen.height - 100
