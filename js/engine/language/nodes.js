@@ -560,15 +560,16 @@ export class NewObjectNode extends ExpressionNode {
         yield
         yield* this.evaluateUnsetProperties(object)
 
+        // Evaluate behaviours
+        yield
+        yield* this.evaluateBehaviours(object)
+
         // Call constructor function, if any
         yield
         yield* this.evaluateConstructors(object)
 
-        // Register object if component
-        if (classNode.instanceOf('Component')) {
-            const globalScope = object.scope.resolveScope(Scope.Type.Global)
-            globalScope.components[object.uuid] = object
-        }
+        // Register as updatable object, if applicable
+        this.registerUpdatableObject(object)
 
         return new Result(object, Result.Type.Expression)
     }
@@ -613,11 +614,30 @@ export class NewObjectNode extends ExpressionNode {
         }
     }
 
+    *evaluateBehaviours(object) {
+
+        // Evaluate all inherited scopes
+        for (let objectScope of object.scopes) {
+
+            // Evaluate all behaviours
+            for (let behaviourNode of objectScope.classNode.behaviourNodes) {
+
+                // Evaluate behaviour node
+                yield
+                const result = yield* behaviourNode.evaluate(objectScope)
+
+                // Add to object behaviours
+                const behaviourObject = result.value
+                objectScope.behaviourObjects.push(behaviourObject)
+            }
+        }
+    }
+
     *evaluateConstructors(object) {
 
         // Evaluate all inherited scopes
         for (let objectScope of object.scopes) {
-            const constructorFunctionNode = objectScope.resolveFunction('_constructor')
+            const constructorFunctionNode = objectScope.resolveFunctionInOwnScope('_constructor')
             if (constructorFunctionNode !== undefined) {
                 yield
                 yield* constructorFunctionNode.contentNode.evaluate(objectScope)
@@ -641,6 +661,24 @@ export class NewObjectNode extends ExpressionNode {
             // Assign variable in new scope
             const variable = new Variable(node.variableName, result.value)
             classScope.setVariableInOwnScope(variable)
+        }
+    }
+
+    registerUpdatableObject(object) {
+        let updatable = false
+
+        // Check update function
+        updatable |= object.scope.resolveFunction('_update') !== undefined
+
+        // Check behaviour
+        for (let objectScope of object.scopes) {
+            updatable |= objectScope.classNode.behaviourNodes.length > 0
+        }
+
+        // Mark as updatable
+        if (updatable) {
+            const globalScope = object.scope.resolveScope(Scope.Type.Global)
+            globalScope.updateObjects[object.uuid] = object
         }
     }
 }
@@ -754,6 +792,89 @@ export class ClassNode extends Node {
     }
 }
 
+export class BehaviourDefinitionNode extends ClassNode {
+    constructor(tokens=[], className, contentNode) {
+        super(tokens, className, undefined, contentNode)
+    }
+}
+
+export class BehaviourNode extends Node {
+    constructor(tokens=[], variableName, className) {
+        super(tokens)
+        this.variableName = variableName
+        this.className = className
+        this.newObjectNode = new NewObjectNode(this.tokens, className, new ParameterListNode([], []))
+        this.assignmentNode = new AssignmentNode(this.tokens, new ConstantNode([], new Constant(variableName)), this.newObjectNode)
+    }
+
+    *evaluate(scope) {
+
+        // Resolve class
+        const classNode = scope.resolveBehaviourDefinition(this.className)
+        if (classNode === undefined) {
+            throw {error: 'Behaviour "' + this.className + '" not found', node: this}
+        }
+
+        // Create instance of class
+        const object = new ObjectInstance(classNode, scope)
+
+        // Evaluate properties
+        yield
+        yield *this.evaluateProperties(object)
+
+        // Call constructor function, if any
+        yield
+        yield* this.evaluateConstructors(object)
+
+        // Set variable
+        scope.setVariable(new Variable(this.variableName, object))
+
+        return new Result(object, Result.Type.Expression)
+    }
+
+    *evaluateProperties(object) {
+
+        // Evaluate all inherited scopes
+        for (let objectScope of object.scopes) {
+
+            // Evaluate all properties
+            for (let propertyNode of objectScope.classNode.propertyNodes) {
+
+                // Evaluate all nodes in property
+                for (let node of propertyNode.parameterDefinitionsNode.nodes) {
+
+                    // Evaluate assignment
+                    if (node instanceof ParameterAssignmentNode) {
+
+                        // Evaluation property
+                        yield
+                        const result = yield* node.expressionNode.evaluate(objectScope)
+                        if (result === undefined) {
+                            throw {error: 'Result of expression is undefined', node: node.expressionNode}
+                        }
+                        if (result.type !== Result.Type.Expression) {
+                            throw {error: 'Expected expression', node: node.expressionNode}
+                        }
+                        objectScope.setVariable(new Variable(node.variableName, result.value))
+                    }
+                }
+            }
+        }
+    }
+
+    *evaluateConstructors(object) {
+
+        // Evaluate all inherited constructors, but in new object's own scope
+        for (let objectScope of object.scopes) {
+            const constructorFunctionNode = objectScope.resolveFunctionInOwnScope('_constructor')
+            if (constructorFunctionNode !== undefined) {
+                yield
+                yield* constructorFunctionNode.contentNode.evaluate(object.scope)
+            }
+        }
+    }
+}
+
 export class FunctionDefinitionNode extends Node {
     constructor(tokens=[], functionName, parameterDefinitionsNode, contentNode) {
         super(tokens)
@@ -766,6 +887,18 @@ export class FunctionDefinitionNode extends Node {
 export class SharedFunctionDefinitionNode extends FunctionDefinitionNode {
     constructor(tokens=[], functionName, parameterDefinitionsNode, contentNode) {
         super(tokens, functionName, parameterDefinitionsNode, contentNode)
+    }
+}
+
+export class UpdateFunctionDefinitionNode extends FunctionDefinitionNode {
+    constructor(tokens=[], contentNode) {
+        super(tokens, '_update', new ParameterDefinitionsNode([], []), contentNode)
+    }
+}
+
+export class SharedUpdateFunctionDefinitionNode extends SharedFunctionDefinitionNode {
+    constructor(tokens=[], contentNode) {
+        super(tokens, '_update', new ParameterDefinitionsNode([], []), contentNode)
     }
 }
 

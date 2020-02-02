@@ -1,4 +1,4 @@
-Class Screen Of Type Component
+Class Screen
     Shared Property fps = 30
     Shared Property frameSpeed = 1
 
@@ -9,7 +9,7 @@ Class Screen Of Type Component
         Invoke initialize() In Screen
     End
 
-    Shared Function update()
+    Shared Update
         Invoke update() In Screen
     End
 End

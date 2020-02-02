@@ -21,10 +21,10 @@ export default class Engine {
             Joystick: Joystick,
         }
         this.builtinFiles = [
-            "/assets/engine/lifecycle/component.basic",
             "/assets/engine/ui/screen.basic",
             "/assets/engine/ui/sprite.basic",
             "/assets/engine/controls/joystick.basic",
+            "/assets/engine/physics/gravity.basic",
         ]
     }
 
@@ -74,8 +74,8 @@ export default class Engine {
             return
         }
 
-        // Add all components to update cycle
-        this.addComponentUpdateExecutions()
+        // Add all objects with Update method to update cycle
+        this.addUpdateExecutions()
 
         // Notify waiting executions that we're updating
         this.notifyWaitingExecutions()
@@ -88,28 +88,29 @@ export default class Engine {
         this.sourceTree.programNode.scope.onUpdateCallbacks = []
     }
 
-    addComponentUpdateExecutions() {
+    addUpdateExecutions() {
         let executions = []
 
-        // Add class update (shared functions)
-        for (let classNode of Object.values(this.sourceTree.programNode.scope.classes)) {
-            if (!classNode.instanceOf('Component')) {
-                continue
-            }
-            for (let functionNode of Object.values(classNode.sharedScope.functions)) {
-                if (functionNode.functionName == 'update') {
-                    const functionCallNode = new Node.FunctionCallNode([], 'update', new Node.ParameterListNode([], []))
-                    executions.push(new Execution(functionCallNode, classNode.sharedScope))
-                }
-            }
+        // Add class update (shared update functions)
+        for (let classNode of this.sourceTree.programNode.scope.updateClasses) {
+            const functionCallNode = new Node.FunctionCallNode([], '_update', new Node.ParameterListNode([], []))
+            executions.push(new Execution(functionCallNode, classNode.sharedScope))
         }
 
         // Add object update
-        for (let object of Object.values(this.sourceTree.programNode.scope.components)) {
+        for (let object of Object.values(this.sourceTree.programNode.scope.updateObjects)) {
             for (let scope of object.scopes) {
+
+                // Add behaviours
+                for (let behaviourObject of scope.behaviourObjects) {
+                    const functionCallNode = new Node.FunctionCallNode([], '_update', new Node.ParameterListNode([], []))
+                    executions.push(new Execution(functionCallNode, behaviourObject.scope))
+                }
+
+                // Add Update function
                 for (let functionNode of Object.values(scope.functions)) {
-                    if (functionNode.functionName == 'update') {
-                        const functionCallNode = new Node.FunctionCallNode([], 'update', new Node.ParameterListNode([], []))
+                    if (functionNode.functionName == '_update') {
+                        const functionCallNode = new Node.FunctionCallNode([], '_update', new Node.ParameterListNode([], []))
                         executions.push(new Execution(functionCallNode, scope))
                     }
                 }

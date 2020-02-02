@@ -115,21 +115,24 @@ Constant.Type = {
 }
 
 export class ObjectInstance {
-    constructor(classNode) {
+    constructor(classNode, topScope=undefined) {
         this.classNode = classNode
         this.uuid = Util.uuid()
 
         this.scope = undefined
         this.scopes = []
 
+        this.behaviourNodes = []
+
+        topScope = topScope || classNode.scope.resolveScope(Scope.Type.Global)
+
         // Build scope hierarcy
         for (let inheritedClass of this.classNode.classHierarcy()) {
 
             // Class scope (shared)
-            const parentScope = this.scope !== undefined ? this.scope : classNode.scope.resolveScope(Scope.Type.Global)
             const classScope = inheritedClass.sharedScope.cloneWithReferences()
             classScope.type = Scope.Type.Class
-            classScope.parentScope = this.scope !== undefined ? this.scope : classNode.scope.resolveScope(Scope.Type.Global)
+            classScope.parentScope = this.scope || topScope
             classScope.classNode = inheritedClass
 
             // Object scope

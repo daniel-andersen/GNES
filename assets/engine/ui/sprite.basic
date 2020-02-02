@@ -1,9 +1,9 @@
-Class Sprite Of Type Component
+Class Sprite
     Property x = 0
     Property y = 0
     Property visible = False
 
-    Function update()
+    Update
         Invoke update() In Sprite
     End
 

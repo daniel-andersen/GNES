@@ -44,7 +44,7 @@ export default class Interpreter {
 
         while (!this.hasStopped()) {
 
-            // Switch to component update execution, if any
+            // Switch to update execution, if any
             if (this.updateExecutions.length > 0) {
                 this.currentExecutions = this.updateExecutions
             }
@@ -60,7 +60,7 @@ export default class Interpreter {
             // Check if all program executors are stopped
             this.stopped = this.programExecutions.length === 0
 
-            // Pause execution a while (if not in component update mode)
+            // Pause execution a while (if not in update mode)
             if (Util.currentTimeMillis() > nextPauseTime && this.updateExecutions.length == 0) {
                 await Util.sleep(this.pauseTimeMillis)
                 nextPauseTime = Util.currentTimeMillis() + this.runTimeMillis

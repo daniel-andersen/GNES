@@ -712,15 +712,24 @@ export class SourceTree {
     }
 
     registerClass(classNode, globalScope, fileScope) {
-        if (globalScope.resolveClass(classNode.className) !== undefined) {
-            return new Error('Class with name "' + classNode.className + '" already defined', classNode)
+        if (classNode instanceof Node.BehaviourDefinitionNode) {
+            if (globalScope.resolveBehaviourDefinition(classNode.className) !== undefined) {
+                return new Error('Behaviour with name "' + classNode.className + '" already defined', classNode)
+            }
+            globalScope.setBehaviourDefinition(classNode)
         }
-        globalScope.setClass(classNode)
+        else {
+            if (globalScope.resolveClass(classNode.className) !== undefined) {
+                return new Error('Class with name "' + classNode.className + '" already defined', classNode)
+            }
+            globalScope.setClass(classNode)
+        }
 
         classNode.scope = new Scope(globalScope, Scope.Type.Class)
         classNode.sharedScope = new Scope(globalScope, Scope.Type.Class)
         classNode.propertyNodes = []
         classNode.sharedPropertyNodes = []
+        classNode.behaviourNodes = []
 
         for (let node of classNode.contentNode.nodes) {
             if (node instanceof Node.SharedPropertyNode) {
@@ -732,14 +741,17 @@ export class SourceTree {
             else if (node instanceof Node.SharedConstructorNode) {
                 this.registerConstructor(classNode, node, classNode.sharedScope)
             }
+            else if (node instanceof Node.BehaviourNode) {
+                this.registerBehaviour(classNode, node)
+            }
             else if (node instanceof Node.ConstructorNode) {
                 this.registerConstructor(classNode, node, classNode.scope)
             }
             else if (node instanceof Node.SharedFunctionDefinitionNode) {
-                this.registerFunction(node, classNode.sharedScope)
+                this.registerSharedFunction(node, classNode, globalScope)
             }
             else if (node instanceof Node.FunctionDefinitionNode) {
-                this.registerFunction(node, classNode.scope)
+                this.registerFunction(node, classNode)
             }
         }
     }
@@ -756,6 +768,10 @@ export class SourceTree {
         classNode.sharedPropertyNodes.push(propertyNode)
     }
 
+    registerBehaviour(classNode, behaviourNode) {
+        classNode.behaviourNodes.push(behaviourNode)
+    }
+
     registerConstructor(classNode, constructorNode, scope) {
         if (scope.resolveFunction('_constructor') !== undefined) {
             return new Error('Constructor already defined in this class', node)
@@ -764,11 +780,22 @@ export class SourceTree {
         scope.setFunction(functionNode)
     }
 
-    registerFunction(node, scope) {
-        if (scope.resolveFunction(node.functionName) !== undefined) {
+    registerFunction(node, classNode) {
+        if (classNode.scope.resolveFunction(node.functionName) !== undefined) {
             return new Error('Function with name "' + node.functionName + '" already defined in this context', node)
         }
-        scope.setFunction(node)
+        classNode.scope.setFunction(node)
+    }
+
+    registerSharedFunction(node, classNode, globalScope) {
+        if (classNode.sharedScope.resolveFunction(node.functionName) !== undefined) {
+            return new Error('Function with name "' + node.functionName + '" already defined in this context', node)
+        }
+        classNode.sharedScope.setFunction(node)
+
+        if (node.functionName == '_update') {
+            globalScope.updateClasses.push(classNode)
+        }
     }
 
     registerExtendingClass(classNode, globalScope) {

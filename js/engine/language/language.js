@@ -339,6 +339,17 @@ export default class Language {
                 node: (tokens, nodes, sourceTree) => new Node.ClassNode(tokens, sourceTree.getConstantNameWithId(nodes, 'className'), sourceTree.getConstantNameWithId(nodes, 'ofTypeName'), sourceTree.getNodeWithId(nodes, 'content'))
             },
             {
+                name: 'BehaviourDefinition',
+                match: [
+                    {type: "token", token: "Behaviour"},
+                    {type: "name", id: "className"},
+                    {type: "token", code: this.tokenType.EOL},
+                    {type: "subtree", end: ["End"], id: "content"},
+                    {type: "token", token: "End"}
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.BehaviourDefinitionNode(tokens, sourceTree.getConstantNameWithId(nodes, 'className'), sourceTree.getNodeWithId(nodes, 'content'))
+            },
+            {
                 name: 'FunctionDefinition',
                 match: [
                     {type: "token", token: "Function"},
@@ -362,6 +373,25 @@ export default class Language {
                 node: (tokens, nodes, sourceTree) => new Node.SharedFunctionDefinitionNode(tokens, sourceTree.getConstantNameWithId(nodes, 'name'), sourceTree.getNodeWithId(nodes, 'parameters'), sourceTree.getNodeWithId(nodes, 'content'))
             },
             {
+                name: 'UpdateFunctionDefinition',
+                match: [
+                    {type: "token", token: "Update"},
+                    {type: "subtree", end: ["End"], id: "content"},
+                    {type: "token", token: "End"}
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.UpdateFunctionDefinitionNode(tokens, sourceTree.getNodeWithId(nodes, 'content'))
+            },
+            {
+                name: 'SharedUpdateFunctionDefinition',
+                match: [
+                    {type: "token", token: "Shared"},
+                    {type: "token", token: "Update"},
+                    {type: "subtree", end: ["End"], id: "content"},
+                    {type: "token", token: "End"}
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.SharedUpdateFunctionDefinitionNode(tokens, sourceTree.getNodeWithId(nodes, 'content'))
+            },
+            {
                 name: 'Property',
                 match: [
                     {type: "token", token: "Property"},
@@ -379,12 +409,15 @@ export default class Language {
                 node: (tokens, nodes, sourceTree) => new Node.SharedPropertyNode(tokens, sourceTree.getNodeWithId(nodes, 'properties'))
             },
             {
-                name: 'Component',
+                name: 'Behaviour',
                 match: [
-                    {type: "token", token: "Component"},
+                    {type: "token", token: "Behaviour"},
+                    {type: "variable", id: 'name'},
+                    {type: "token", token: "Of"},
+                    {type: "token", token: "Type"},
                     {type: "name", id: "className"},
                 ],
-                node: (tokens, nodes, sourceTree) => new Node.ComponentNode(tokens, sourceTree.getNodeWithId(nodes, 'className'))
+                node: (tokens, nodes, sourceTree) => new Node.BehaviourNode(tokens, sourceTree.getConstantNameWithId(nodes, 'name'), sourceTree.getConstantNameWithId(nodes, 'className'))
             },
             {
                 name: 'Constructor',

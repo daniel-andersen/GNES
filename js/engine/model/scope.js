@@ -7,7 +7,11 @@ export class Scope {
         this.variables = {}
         this.functions = {}
         this.classes = {}
-        this.components = {}
+        this.behaviourDefinitions = {}
+
+        this.updateObjects = {}
+        this.updateClasses = []
+        this.behaviourObjects = []
     }
 
     clone() {
@@ -15,7 +19,10 @@ export class Scope {
         scope.variables = Object.assign({}, this.variables)
         scope.functions = Object.assign({}, this.functions)
         scope.classes = Object.assign({}, this.classes)
-        scope.components = Object.assign({}, this.components)
+        scope.behaviourDefinitions = Object.assign({}, this.behaviourDefinitions)
+        scope.updateObjects = Object.assign({}, this.updateObjects)
+        scope.updateClasses = this.updateClasses.slice(0)
+        scope.behaviourObjects = this.behaviourObjects.slice(0)
         return scope
     }
 
@@ -24,7 +31,10 @@ export class Scope {
         scope.variables = this.variables
         scope.functions = this.functions
         scope.classes = this.classes
-        scope.components = this.components
+        scope.behaviourDefinitions = this.behaviourDefinitions
+        scope.updateObjects = this.updateObjects
+        scope.updateClasses = this.updateClasses
+        scope.behaviourObjects = this.behaviourObjects
         return scope
     }
 
@@ -115,6 +125,20 @@ export class Scope {
         return undefined
     }
 
+    resolveFunctionInOwnScope(name) {
+        /*
+        Resolves a function with the given name in the current scope only.
+        */
+
+        // Function set in this scope
+        if (name in this.functions) {
+            return this.functions[name]
+        }
+
+        // Not found
+        return undefined
+    }
+
     setClass(classNode) {
         this.classes[classNode.className] = classNode
     }
@@ -132,6 +156,29 @@ export class Scope {
         // Resolve in parent scope
         if (this.parentScope !== undefined) {
             return this.parentScope.resolveClass(name)
+        }
+
+        // Not found
+        return undefined
+    }
+
+    setBehaviourDefinition(classNode) {
+        this.behaviourDefinitions[classNode.className] = classNode
+    }
+
+    resolveBehaviourDefinition(name) {
+        /*
+        Resolves a behaviour definition with the given name in the current scope.
+        */
+
+        // Class set in this scope
+        if (name in this.behaviourDefinitions) {
+            return this.behaviourDefinitions[name]
+        }
+
+        // Resolve in parent scope
+        if (this.parentScope !== undefined) {
+            return this.parentScope.resolveBehaviourDefinition(name)
         }
 
         // Not found

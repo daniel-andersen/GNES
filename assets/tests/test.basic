@@ -10,7 +10,7 @@ Class Monster Of Type Sprite
         y = 300
     End
 
-    Function update()
+    Update
         x = x + Screen.frameSpeed * directionX * speed
         If x < 0 Then directionX = 1
         If x > Screen.width Then directionX = -1
@@ -23,26 +23,30 @@ End
 
 Class Hero Of Type Sprite
     Property speed = 5.0
+    Behaviour joystick Of Type Joystick
+    Behaviour gravity Of Type Gravity
 
     Constructor
         load(filename="/assets/sprites/hero.png")
         show()
         x = 200
-        y = 200
+        y = Screen.height - 100
     End
 
-    Function update()
+    Update
+        If y > Screen.height - 100 Then
+            y = Screen.height - 100
+            gravity.velocity = 0
+        End
+
         If Joystick.left And x > 0 Then
             x = x - Screen.frameSpeed * speed
         End
         If Joystick.right And x < Screen.width Then
             x = x + Screen.frameSpeed * speed
         End
-        If Joystick.up And y > 0 Then
-            y = y - Screen.frameSpeed * speed
-        End
-        If Joystick.down And x < Screen.height Then
-            y = y + Screen.frameSpeed * speed
+        If Joystick.up And y == Screen.height - 100 Then
+            gravity.velocity = -20.0
         End
     End
 End
