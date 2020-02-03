@@ -38,15 +38,15 @@ Class Hero Of Type Sprite
             y = Screen.height - 100
             gravity.velocity = 0
         End
+        If Joystick.up And y == Screen.height - 100 Then
+            gravity.velocity = -20.0
+        End
 
         If Joystick.left And x > 0 Then
             x = x - Screen.frameSpeed * speed
         End
         If Joystick.right And x < Screen.width Then
             x = x + Screen.frameSpeed * speed
-        End
-        If Joystick.up And y == Screen.height - 100 Then
-            gravity.velocity = -20.0
         End
     End
 End

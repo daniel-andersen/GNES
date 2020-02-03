@@ -70,17 +70,32 @@ export default class Interpreter {
 
     step() {
 
-        // Execute each executor
-        for (let execution of this.currentExecutions.slice()) {
+        // Excecute first update execution
+        if (this.updateExecutions.length > 0) {
+            const execution = this.currentExecutions[0]
 
             // Execute
             execution.step()
 
             // Remove if stopped
             if (execution.hasStopped()) {
-                const index = this.currentExecutions.indexOf(execution)
-                if (index > -1) {
-                  this.currentExecutions.splice(index, 1)
+                this.currentExecutions.splice(0, 1)
+            }
+        }
+
+        // Execute all other executors simultaniously
+        else {
+            for (let execution of this.currentExecutions.slice()) {
+
+                // Execute
+                execution.step()
+
+                // Remove if stopped
+                if (execution.hasStopped()) {
+                    const index = this.currentExecutions.indexOf(execution)
+                    if (index > -1) {
+                        this.currentExecutions.splice(index, 1)
+                    }
                 }
             }
         }

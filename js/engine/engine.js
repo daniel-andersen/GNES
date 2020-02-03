@@ -99,15 +99,19 @@ export default class Engine {
 
         // Add object update
         for (let object of Object.values(this.sourceTree.programNode.scope.updateObjects)) {
-            for (let scope of object.scopes) {
 
-                // Add behaviours
+            // Add behaviours
+            for (let i = object.scopes.length - 1; i >= 0; i--) {
+                let scope = object.scopes[i]
                 for (let behaviourObject of scope.behaviourObjects) {
                     const functionCallNode = new Node.FunctionCallNode([], '_update', new Node.ParameterListNode([], []))
                     executions.push(new Execution(functionCallNode, behaviourObject.scope))
                 }
+            }
 
-                // Add Update function
+            // Add Update function
+            for (let i = object.scopes.length - 1; i >= 0; i--) {
+                let scope = object.scopes[i]
                 for (let functionNode of Object.values(scope.functions)) {
                     if (functionNode.functionName == '_update') {
                         const functionCallNode = new Node.FunctionCallNode([], '_update', new Node.ParameterListNode([], []))
