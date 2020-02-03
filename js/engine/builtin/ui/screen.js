@@ -7,9 +7,14 @@ export class Screen {
     static *initialize(scope) {
         const classScope = Builtin.resolveClassScope(scope)
 
+        classScope.screen = {
+            width: document.getElementById('gnes').offsetWidth,
+            height: document.getElementById('gnes').offsetHeight,
+        }
+
         // Set width and height
-        scope.setVariable(new Variable('width', new Constant(window.innerWidth)))
-        scope.setVariable(new Variable('height', new Constant(window.innerHeight)))
+        scope.setVariable(new Variable('width', new Constant(classScope.screen.width)))
+        scope.setVariable(new Variable('height', new Constant(classScope.screen.height)))
     }
 
     static *update(scope) {
@@ -19,17 +24,17 @@ export class Screen {
     }
 
     static updateFps(scope, classScope) {
-        if (classScope.fpsStartTime === undefined) {
-            classScope.fpsStartTime = Util.currentTimeMillis()
-            classScope.fpsCount = 0
+        if (classScope.screen.fpsStartTime === undefined) {
+            classScope.screen.fpsStartTime = Util.currentTimeMillis()
+            classScope.screen.fpsCount = 0
         }
 
         const time = Util.currentTimeMillis()
 
-        if (time - classScope.fpsStartTime >= 1000) {
+        if (time - classScope.screen.fpsStartTime >= 1000) {
 
             // Set fps
-            const fps = (time - classScope.fpsStartTime) / Math.max(1.0, classScope.fpsCount)
+            const fps = (time - classScope.screen.fpsStartTime) / Math.max(1.0, classScope.screen.fpsCount)
             scope.setVariable(new Variable('fps', new Constant(fps)))
 
             // Set frameSpeed
@@ -40,11 +45,11 @@ export class Screen {
             console.log('FPS:', fps, 'frameSpeed:', frameSpeed)
 
             // Reset fps
-            classScope.fpsStartTime += 1000
-            classScope.fpsCount = 0
+            classScope.screen.fpsStartTime += 1000
+            classScope.screen.fpsCount = 0
         }
 
         // Increase fps counter
-        classScope.fpsCount += 1
+        classScope.screen.fpsCount += 1
     }
 }

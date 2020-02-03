@@ -11,7 +11,8 @@ export default class Interpreter {
     }
 
     reset() {
-        this.stopped = false
+        this.stopped = true
+        this.paused = false
 
         this.programExecutions = []
         this.updateExecutions = []
@@ -24,8 +25,24 @@ export default class Interpreter {
         this.stopped = true
     }
 
+    pause() {
+        this.paused = true
+    }
+
+    resume() {
+        this.paused = false
+    }
+
+    isRunning() {
+        return !this.hasStopped()
+    }
+
     hasStopped() {
         return this.stopped
+    }
+
+    isPaused() {
+        return this.paused
     }
 
     addExecution(execution) {
@@ -42,7 +59,15 @@ export default class Interpreter {
     async run() {
         let nextPauseTime = Util.currentTimeMillis() + this.runTimeMillis
 
+        this.stopped = false
+
         while (!this.hasStopped()) {
+
+            // Paused
+            if (this.paused) {
+                await Util.sleep(this.pauseTimeMillis)
+                continue
+            }
 
             // Switch to update execution, if any
             if (this.updateExecutions.length > 0) {

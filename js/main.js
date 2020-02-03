@@ -1,6 +1,8 @@
 import Engine from './engine/engine'
+import Editor from './editor/editor'
 
 document.addEventListener('DOMContentLoaded', () => {
     const engine = new Engine()
-    engine.run(["./assets/tests/test.basic"])
+
+    const editor = new Editor(engine)
 })

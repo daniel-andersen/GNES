@@ -32,7 +32,15 @@ module.exports = {
             {
                 test: /\.-worker.js$/,
                 use: [{ loader: 'worker-loader' }]
-            }
+            },
+            {
+                test: /\.css$/,
+                use: [
+                    'style-loader',
+                    { loader: 'css-loader', options: { importLoaders: 1 } },
+                    'postcss-loader'
+                ]
+            },
         ]
     },
     mode: 'production',

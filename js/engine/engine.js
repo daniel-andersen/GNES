@@ -28,7 +28,7 @@ export default class Engine {
         ]
     }
 
-    async run(filenames) {
+    async run(filenames=[], texts=[]) {
 
         // Setup
         await this.setup()
@@ -37,7 +37,7 @@ export default class Engine {
         this.language = new Language()
         this.sourceTree = new SourceTree(this.language, this.nativeClasses, this.builtinFiles)
 
-        const result = await this.sourceTree.build(filenames)
+        const result = await this.sourceTree.build(filenames, texts)
         if (result instanceof Error) {
             throw result
         }
@@ -50,10 +50,7 @@ export default class Engine {
 
         document.addEventListener('keydown', event => {
             if (!event.isComposing && event.keyCode === 27) {
-                this.interpreter.stop()
-            }
-            if (event.keyCode === 32) {
-                this.destroy()
+                this.stop()
             }
         })
 
@@ -63,10 +60,37 @@ export default class Engine {
         await this.interpreter.run()
 
         console.log('Done!')
+    }
 
-        setTimeout(() => {
-            this.destroy()
-        }, 2000)
+    start() {
+        this.stop()
+        this.interpreter.start()
+    }
+
+    stop() {
+        this.interpreter.stop()
+        this.destroy()
+    }
+
+    pause() {
+        this.interpreter.pause()
+    }
+
+    resume() {
+        this.interpreter.resume()
+    }
+
+    isRunning() {
+
+        return this.interpreter !== undefined && this.interpreter.isRunning()
+    }
+
+    hasStopped() {
+        return this.interpreter === undefined || this.interpreter.hasStopped()
+    }
+
+    isPaused() {
+        return this.interpreter !== undefined && this.interpreter.isPaused()
     }
 
     update() {
@@ -127,7 +151,7 @@ export default class Engine {
     async setup() {
 
         // Destroy existing game, if any
-        this.destroy()
+        this.destroy(true)
 
         // Setup new game
         window.game = {}
@@ -136,7 +160,7 @@ export default class Engine {
         await this.setupConsole()
     }
 
-    destroy() {
+    destroy(removeElements=false) {
         if (window.game === undefined) {
             return
         }
@@ -154,8 +178,16 @@ export default class Engine {
 
         // Destroy console
         if (window.game.console !== undefined) {
-            //document.body.removeChild(window.game.console.div)
+            document.getElementById('gnes').removeChild(window.game.console.div)
             window.game.console = undefined
+        }
+
+        // Remove elements
+        if (removeElements) {
+            const node = document.getElementById('gnes')
+            while (node.hasChildNodes()) {
+                node.removeChild(node.lastChild);
+            }
         }
     }
 
@@ -166,17 +198,15 @@ export default class Engine {
             const gameConfig = {
                 title: 'GNES',
                 type: Phaser.AUTO,
-                scale: {
-                    width: window.innerWidth,
-                    height: window.innerHeight,
-                },
+                width: '100%',
+                height: '100%',
                 physics: {
                     default: 'arcade',
                     arcade: {
                         debug: true,
                     },
                 },
-                parent: 'game',
+                parent: 'gnes',
                 transparent: false,
                 backgroundColor: '#000000',
                 scene: {
@@ -221,7 +251,7 @@ export default class Engine {
         div.style.width = '100vw'
         div.style.height = '100vh'
         div.style.color = 'white'
-        document.body.appendChild(div)
+        document.getElementById('gnes').appendChild(div)
 
         window.game.console = {
             div: div

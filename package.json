@@ -21,7 +21,14 @@
         "@babel/preset-env": "^7.6.3",
         "@babel/runtime": "^7.7.7",
         "babel-loader": "^8.0.6",
+        "codemirror": "^5.51.0",
         "phaser": "^3.22.0",
+        "postcss": "^7.0.26",
         "worker-loader": "^2.0.0"
+    },
+    "postcss": {
+        "plugins": {
+            "postcss-plugin": {}
+        }
     }
 }
