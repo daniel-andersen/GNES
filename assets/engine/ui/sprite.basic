@@ -1,7 +1,10 @@
 Class Sprite
+    Property visible = False
+
     Property x = 0
     Property y = 0
-    Property visible = False
+    Property width = 0
+    Property height = 0
 
     Update
         Invoke update() In Sprite

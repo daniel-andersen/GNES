@@ -9,7 +9,7 @@ import { Variable } from './model/variable'
 import { Error } from './model/error'
 import Util from './util/util'
 import { Screen } from './builtin/ui/screen'
-import { Sprite } from './builtin/ui/sprites'
+import { Sprite } from './builtin/ui/sprite'
 import { Joystick } from './builtin/controls/joystick'
 import * as Phaser from 'phaser'
 

@@ -12,9 +12,10 @@ export class Sprite {
             return
         }
 
+        // Update sprite according to variables
+        sprite.visible = scope.resolveVariable('visible').value().value()
         sprite.x = scope.resolveVariable('x').value().value()
         sprite.y = scope.resolveVariable('y').value().value()
-        sprite.visible = scope.resolveVariable('visible').value().value()
     }
 
     static *load(scope) {
@@ -59,11 +60,15 @@ export class Sprite {
         }
 
         // Add sprite
-        objectScope.sprite = Builtin.scene().add.sprite(100, 100, imageName)
+        objectScope.sprite = Builtin.scene().add.sprite(0, 0, imageName)
         objectScope.sprite.visible = false
 
         // Add to default group
         Builtin.group(Builtin.Group.default).add(objectScope.sprite)
+
+        // Update size
+        objectScope.setVariable(new Variable('width', new Constant(objectScope.sprite.width)))
+        objectScope.setVariable(new Variable('height', new Constant(objectScope.sprite.height)))
     }
 
     static *show(scope) {

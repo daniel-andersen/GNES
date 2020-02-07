@@ -969,14 +969,14 @@ export class WaitForUpdateNode extends StatementNode {
 }
 
 export class LoadSpriteNode extends StatementNode {
-    constructor(tokens=[], variableExpressionNode, parameterListNode) {
+    constructor(tokens=[], variableExpressionNode, expressionNode) {
         super(tokens)
         this.variableExpressionNode = variableExpressionNode
-        this.parameterListNode = parameterListNode
+        this.expressionNode = expressionNode
 
         this.newObjectNode = new NewObjectNode(undefined, "Sprite", new ParameterListNode(this.tokens, []))
-        this.assignmentNode = new AssignmentNode(this.tokens, this.variableExpressionNode, this.newObjectNode)
-        this.loadNode = new FunctionCallNode(this.tokens, "load", this.parameterListNode)
+        this.assignmentNode = new AssignmentNode(this.variableExpressionNode.tokens, this.variableExpressionNode, this.newObjectNode)
+        this.loadNode = new FunctionCallNode(this.tokens, "load", new ParameterListNode(this.tokens, [new ParameterAssignmentNode(expressionNode.tokens, "filename", this.expressionNode)]))
     }
 
     *evaluate(scope) {

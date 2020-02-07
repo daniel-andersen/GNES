@@ -93,6 +93,10 @@ export default class Language {
             [`${this.tokenType.Minus}`]: 3,
             [`${this.tokenType.Equal}`]: 2,
             [`${this.tokenType.NotEqual}`]: 2,
+            [`${this.tokenType.GreaterThan}`]: 2,
+            [`${this.tokenType.GreaterThanOrEqual}`]: 2,
+            [`${this.tokenType.LessThan}`]: 2,
+            [`${this.tokenType.LessThanOrEqual}`]: 2,
             [`${this.tokenType.And}`]: 1,
             [`${this.tokenType.Or}`]: 0,
         }
@@ -462,9 +466,9 @@ export default class Language {
                     {type: "token", token: "="},
                     {type: "token", token: "Load"},
                     {type: "token", token: "Sprite"},
-                    {type: "parameterList", id: "parameters"}
+                    {type: "expression", id: "expression"}
                 ],
-                node: (tokens, nodes, sourceTree) => new Node.LoadSpriteNode(tokens, sourceTree.getNodeWithId(nodes, 'variableExpression'), sourceTree.getNodeWithId(nodes, 'parameters'))
+                node: (tokens, nodes, sourceTree) => new Node.LoadSpriteNode(tokens, sourceTree.getNodeWithId(nodes, 'variableExpression'), sourceTree.getNodeWithId(nodes, 'expression'))
             },
             {
                 name: 'ShowSprite',
