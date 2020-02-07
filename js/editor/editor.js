@@ -11,10 +11,12 @@ export default class Editor {
         this.playButton = document.getElementById('editor-play')
         this.stopButton = document.getElementById('editor-stop')
         this.pauseButton = document.getElementById('editor-pause')
+        this.resumeButton = document.getElementById('editor-resume')
 
         this.playButton.addEventListener('click', () => { this.play() }, false)
         this.stopButton.addEventListener('click', () => { this.stop() }, false)
         this.pauseButton.addEventListener('click', () => { this.pause() }, false)
+        this.resumeButton.addEventListener('click', () => { this.resume() }, false)
 
         this.updatePlayButtons()
 
@@ -32,6 +34,12 @@ export default class Editor {
 
         this.codeMirror = CodeMirror.fromTextArea(this.textArea, this.config)
         this.codeMirror.setSize('100vw', '50vh')
+
+        // Setup engine callbacks
+        this.engine.runCallback = () => { this.updatePlayButtons() }
+        this.engine.stopCallback = () => { this.updatePlayButtons() }
+        this.engine.pauseCallback = () => { this.updatePlayButtons() }
+        this.engine.resumeCallback = () => { this.updatePlayButtons() }
     }
 
     async load(files) {
@@ -42,44 +50,36 @@ export default class Editor {
     }
 
     play() {
-        setTimeout(() => {
-            if (this.engine.hasStopped()) {
-                this.engine.run([], [this.codeMirror.getValue()])
-            }
-            else if (this.engine.isPaused()) {
-                this.engine.resume()
-            }
-        }, 10)
-        setTimeout(() => {
-            this.updatePlayButtons()
-        }, 100)
+        if (this.engine.hasStopped()) {
+            this.engine.run([], [this.codeMirror.getValue()])
+        }
+        else if (this.engine.isPaused()) {
+            this.engine.resume()
+        }
     }
 
     stop() {
-        setTimeout(() => {
-            if (this.engine.isRunning()) {
-                this.engine.stop()
-            }
-        }, 10)
-        setTimeout(() => {
-            this.updatePlayButtons()
-        }, 100)
+        if (this.engine.isRunning()) {
+            this.engine.stop()
+        }
     }
 
     pause() {
-        setTimeout(() => {
-            if (this.engine.isRunning()) {
-                this.engine.pause()
-            }
-        }, 10)
-        setTimeout(() => {
-            this.updatePlayButtons()
-        }, 100)
+        if (this.engine.isRunning()) {
+            this.engine.pause()
+        }
+    }
+
+    resume() {
+        if (this.engine.isPaused()) {
+            this.engine.resume()
+        }
     }
 
     updatePlayButtons() {
         this.playButton.style.visibility = this.engine.hasStopped() ? 'visible' : 'hidden'
         this.stopButton.style.visibility = this.engine.isRunning() ? 'visible' : 'hidden'
-        //this.pauseButton.style.display = this.engine.isRunning() ? 'visible' : 'hidden'
+        this.pauseButton.style.visibility = this.engine.isRunning() ? 'visible' : 'hidden'
+        this.resumeButton.style.visibility = this.engine.isPaused() ? 'visible' : 'hidden'
     }
 }

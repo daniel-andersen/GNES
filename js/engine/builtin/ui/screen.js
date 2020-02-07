@@ -32,8 +32,16 @@ export class Screen {
         // Increase fps counter
         classScope.screen.fpsCount += 1
 
-        // Check if a second has ellapsed
+        // Get current time
         const time = Util.currentTimeMillis()
+
+        // If more than a second and a epsilon has ellapsed, things have been paused, so reset
+        if (time - classScope.screen.fpsStartTime >= 1100) {
+            classScope.screen.fpsStartTime = Util.currentTimeMillis()
+            classScope.screen.fpsCount = 0
+        }
+
+        // Check if a second has ellapsed
         if (time - classScope.screen.fpsStartTime >= 1000) {
 
             // Set fps

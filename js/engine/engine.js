@@ -21,11 +21,17 @@ export default class Engine {
             Joystick: Joystick,
         }
         this.builtinFiles = [
+            "./assets/engine/ui/position.basic",
             "./assets/engine/ui/screen.basic",
             "./assets/engine/ui/sprite.basic",
             "./assets/engine/controls/joystick.basic",
             "./assets/engine/physics/gravity.basic",
         ]
+
+        this.runCallback = undefined
+        this.stopCallback = undefined
+        this.pauseCallback = undefined
+        this.resumeCallback = undefined
     }
 
     async run(filenames=[], texts=[]) {
@@ -46,6 +52,7 @@ export default class Engine {
         const execution = new Execution(this.sourceTree.programNode)
 
         this.interpreter = new Interpreter(this.sourceTree)
+        this.interpreter.stopCallback = this.stopCallback
         this.interpreter.addExecution(execution)
 
         document.addEventListener('keydown', event => {
@@ -57,31 +64,42 @@ export default class Engine {
         // Run program
         console.log('Running...')
 
-        await this.interpreter.run()
-
-        console.log('Done!')
+        this.start()
     }
 
     start() {
-        this.stop()
-        this.interpreter.start()
+        if (this.isRunning() || this.isPaused()) {
+            this.stop()
+        }
+        this.interpreter.run()
+        if (this.runCallback !== undefined) {
+            this.runCallback()
+        }
     }
 
     stop() {
         this.interpreter.stop()
         this.destroy()
+        if (this.stopCallback !== undefined) {
+            this.stopCallback()
+        }
     }
 
     pause() {
         this.interpreter.pause()
+        if (this.pauseCallback !== undefined) {
+            this.pauseCallback()
+        }
     }
 
     resume() {
         this.interpreter.resume()
+        if (this.resumeCallback !== undefined) {
+            this.resumeCallback()
+        }
     }
 
     isRunning() {
-
         return this.interpreter !== undefined && this.interpreter.isRunning()
     }
 

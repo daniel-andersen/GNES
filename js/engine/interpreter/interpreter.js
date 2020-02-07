@@ -8,6 +8,8 @@ export default class Interpreter {
 
         this.runTimeMillis = 5
         this.pauseTimeMillis = 1
+
+        this.stopCallback = undefined
     }
 
     reset() {
@@ -90,6 +92,11 @@ export default class Interpreter {
                 await Util.sleep(this.pauseTimeMillis)
                 nextPauseTime = Util.currentTimeMillis() + this.runTimeMillis
             }
+        }
+
+        // Stop callback
+        if (this.stopCallback !== undefined) {
+            this.stopCallback()
         }
     }
 
