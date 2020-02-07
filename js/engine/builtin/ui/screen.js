@@ -29,16 +29,19 @@ export class Screen {
             classScope.screen.fpsCount = 0
         }
 
-        const time = Util.currentTimeMillis()
+        // Increase fps counter
+        classScope.screen.fpsCount += 1
 
+        // Check if a second has ellapsed
+        const time = Util.currentTimeMillis()
         if (time - classScope.screen.fpsStartTime >= 1000) {
 
             // Set fps
-            const fps = (time - classScope.screen.fpsStartTime) / Math.max(1.0, classScope.screen.fpsCount)
+            const fps = Math.max(1, classScope.screen.fpsCount)
             scope.setVariable(new Variable('fps', new Constant(fps)))
 
             // Set frameSpeed
-            const frameSpeed = 30.0 / fps
+            const frameSpeed = 60.0 / fps
             scope.setVariable(new Variable('frameSpeed', new Constant(frameSpeed)))
 
             // Log fps
@@ -48,8 +51,5 @@ export class Screen {
             classScope.screen.fpsStartTime += 1000
             classScope.screen.fpsCount = 0
         }
-
-        // Increase fps counter
-        classScope.screen.fpsCount += 1
     }
 }
