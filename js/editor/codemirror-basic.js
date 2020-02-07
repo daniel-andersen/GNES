@@ -20,8 +20,8 @@ export default class CodeMirrorBasicMode {
                 {regex: /(?:Class|Function|Behaviour|While|Do|Repeat|If|Then|Else|For|Constructor|Update)\b/, token: "keyword", indent: true},
                 {regex: /(?:End|Until)\b/, token: "keyword", dedent: true},
 
-                {regex: /(?:Of|Type|End|Property|Return|New|Print|Break|Continue|From|To|Step|By|Load|Sprite|Invoke|In|Shared|Wait|And|Or)\b/, token: "keyword"},
-                {regex: /True|False|Undefined/, token: "atom"},
+                {regex: /(?:Of|Type|End|Property|Return|New|Print|Break|Continue|From|To|Step|By|Load|Sprite|Invoke|In|Shared|Wait|And|Or|Show|Hide|Run)\b/, token: "keyword"},
+                {regex: /True|False|Undefined/, token: "number"},
                 {regex: /0x[a-f\d]+|[-+]?(?:\.\d+|\d+\.?\d*)(?:e[-+]?\d+)?/i, token: "number"},
                 {regex: /\/\/.*/, token: "comment"},
                 {regex: /\/(?:[^\\]|\\.)*?\//, token: "variable-3"},

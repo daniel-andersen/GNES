@@ -66,8 +66,14 @@ export class SourceTree {
                 if (node instanceof Node.ClassNode) {
                     this.registerClass(node, programNode.scope, fileNode.scope)
                 }
-                if (node instanceof Node.FunctionDefinitionNode) {
+                else if (node instanceof Node.SharedFunctionDefinitionNode) {
+                    throw {error: 'Shared Functions can only be defined in a class', node: node}
+                }
+                else if (node instanceof Node.FunctionDefinitionNode) {
                     this.registerFunction(node, fileNode.scope)
+                }
+                else if (node instanceof Node.UpdateFunctionDefinitionNode || node instanceof Node.SharedUpdateFunctionDefinitionNode) {
+                    throw {error: 'Update functions can only be defined in a class', node: node}
                 }
             }
         }
@@ -729,13 +735,13 @@ export class SourceTree {
     registerClass(classNode, globalScope, fileScope) {
         if (classNode instanceof Node.BehaviourDefinitionNode) {
             if (globalScope.resolveBehaviourDefinition(classNode.className) !== undefined) {
-                return new Error('Behaviour with name "' + classNode.className + '" already defined', classNode)
+                throw {error: 'Behaviour with name "' + classNode.className + '" already defined', node: classNode}
             }
             globalScope.setBehaviourDefinition(classNode)
         }
         else {
             if (globalScope.resolveClass(classNode.className) !== undefined) {
-                return new Error('Class with name "' + classNode.className + '" already defined', classNode)
+                throw {error: 'Class with name "' + classNode.className + '" already defined', node: classNode}
             }
             globalScope.setClass(classNode)
         }
@@ -766,7 +772,7 @@ export class SourceTree {
                 this.registerSharedFunction(node, classNode, globalScope)
             }
             else if (node instanceof Node.FunctionDefinitionNode) {
-                this.registerFunction(node, classNode)
+                this.registerFunction(node, classNode.scope)
             }
         }
     }
@@ -789,22 +795,22 @@ export class SourceTree {
 
     registerConstructor(classNode, constructorNode, scope) {
         if (scope.resolveFunction('_constructor') !== undefined) {
-            return new Error('Constructor already defined in this class', node)
+            throw {error: 'Constructor already defined in this class', node: node}
         }
         const functionNode = new Node.FunctionDefinitionNode(constructorNode.tokens, '_constructor', new Node.ParameterDefinitionsNode(constructorNode.tokens, []), constructorNode.contentNode)
         scope.setFunction(functionNode)
     }
 
-    registerFunction(node, classNode) {
-        if (classNode.scope.resolveFunction(node.functionName) !== undefined) {
-            return new Error('Function with name "' + node.functionName + '" already defined in this context', node)
+    registerFunction(node, scope) {
+        if (scope.resolveFunction(node.functionName) !== undefined) {
+            throw {error: 'Function with name "' + node.functionName + '" already defined in this context', node: node}
         }
-        classNode.scope.setFunction(node)
+        scope.setFunction(node)
     }
 
     registerSharedFunction(node, classNode, globalScope) {
         if (classNode.sharedScope.resolveFunction(node.functionName) !== undefined) {
-            return new Error('Function with name "' + node.functionName + '" already defined in this context', node)
+            throw {error: 'Function with name "' + node.functionName + '" already defined in this context', node: node}
         }
         classNode.sharedScope.setFunction(node)
 
@@ -816,7 +822,7 @@ export class SourceTree {
     registerExtendingClass(classNode, globalScope) {
         const extendedClassNode = globalScope.resolveClass(classNode.ofTypeName)
         if (extendedClassNode === undefined) {
-            return new Error('Class of type "' + classNode.ofTypeName + '" not found', classNode)
+            throw {error: 'Class of type "' + classNode.ofTypeName + '" not found', node: classNode}
         }
 
         classNode.scope.parentScope = extendedClassNode.scope

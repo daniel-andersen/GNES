@@ -392,6 +392,14 @@ export default class Language {
                 node: (tokens, nodes, sourceTree) => new Node.SharedUpdateFunctionDefinitionNode(tokens, sourceTree.getNodeWithId(nodes, 'content'))
             },
             {
+                name: 'RunFunction',
+                match: [
+                    {type: "token", token: "Run"},
+                    {type: "expression", id: "expression"}
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.RunFunctionNode(tokens, sourceTree.getNodeWithId(nodes, 'expression'))
+            },
+            {
                 name: 'Property',
                 match: [
                     {type: "token", token: "Property"},

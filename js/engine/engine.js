@@ -112,6 +112,10 @@ export default class Engine {
         this.sourceTree.programNode.scope.onUpdateCallbacks = []
     }
 
+    addExecution(execution) {
+        this.interpreter.addExecution(execution)
+    }
+
     addUpdateExecutions() {
         let executions = []
 

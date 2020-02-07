@@ -1,6 +1,7 @@
 import { Variable, Constant, ObjectInstance } from '../model/variable'
 import { Scope } from '../model/scope'
 import Arithmetics from '../interpreter/arithmetics'
+import Execution from '../interpreter/execution'
 
 class Result {
     constructor(value=undefined, type=Result.Type.Expression, action=Result.Action.None) {
@@ -1079,6 +1080,76 @@ export class InvokeNativeFunctionNode extends StatementNode {
         else {
             return result
         }
+    }
+}
+
+export class RunFunctionNode extends StatementNode {
+    constructor(tokens=[], expressionNode) {
+        super(tokens)
+        this.expressionNode = expressionNode
+
+        this.arithmeticNode = undefined
+        this.functionCallNode = undefined
+
+        this.prepareVariableExpression()
+    }
+
+    prepareVariableExpression() {
+        if (this.expressionNode instanceof FunctionCallNode) {
+            this.functionCallNode = this.expressionNode
+            return
+        }
+
+        let parentNode = undefined
+        let arithmeticNode = this.expressionNode
+
+        while (true) {
+            if (arithmeticNode === undefined) {
+                throw {error: 'Unexpected symbol', token: this.tokens[0], node: this}
+            }
+            if (!(arithmeticNode instanceof ArithmeticNode)) {
+                throw {error: 'Unexpected symbol "' + arithmeticNode.tokens[0].token + '"', node: arithmeticNode}
+            }
+            if (arithmeticNode.rightSideExpressionNode instanceof FunctionNode) {
+                break
+            }
+            parentNode = arithmeticNode
+            arithmeticNode = arithmeticNode.rightSideExpressionNode
+        }
+
+        if (parentNode === undefined) {
+            this.arithmeticNode = arithmeticNode.leftSideExpressionNode
+        }
+        else {
+            parentNode.rightSideExpressionNode = arithmeticNode.leftSideExpressionNode
+        }
+        this.functionCallNode = arithmeticNode.rightSideExpressionNode
+    }
+
+    *evaluate(scope) {
+
+        // Evaluate arithmetic expression
+        let arithmeticScope = scope
+
+        if (this.arithmeticNode !== undefined) {
+            const arithmeticResult = yield* this.arithmeticNode.evaluate(scope)
+            if (arithmeticResult === undefined || arithmeticResult.value === undefined) {
+                throw {error: 'Left side expression did not evaluate to an object', node: this.arithmeticNode}
+            }
+            variableScope = undefined
+            if (arithmeticResult.value instanceof ObjectInstance) {
+                arithmeticScope = arithmeticResult.value.scope
+            }
+            if (arithmeticResult.value instanceof ClassNode) {
+                arithmeticScope = arithmeticResult.value.sharedScope
+            }
+            if (arithmeticScope === undefined) {
+                throw {error: 'Left side expression did not evaluate to an object', node: this.arithmeticNode}
+            }
+        }
+
+        // Create new execution
+        window.engine.addExecution(new Execution(this.functionCallNode, arithmeticScope))
     }
 }
 

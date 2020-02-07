@@ -1,3 +1,18 @@
+Function test()
+    speed = 10.0
+    hero = Load Sprite(filename="./assets/sprites/monster.png")
+    hero.y = Screen.height / 2
+    Show Sprite hero
+    While True Do
+        If Joystick.left Then hero.x = hero.x - Screen.frameSpeed * speed
+        If Joystick.right Then hero.x = hero.x + Screen.frameSpeed * speed
+        Wait For Update
+    End
+End
+
+Run test()
+
+
 Class Monster Of Type Sprite
     Property directionX = 1
     Property directionY = 1
