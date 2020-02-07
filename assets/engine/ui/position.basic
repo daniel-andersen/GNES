@@ -1,0 +1,20 @@
+Class Position
+    Property x
+    Property y
+End
+
+Class Size
+    Property width
+    Property height
+End
+
+Class Vector2D
+    Property x
+    Property y
+End
+
+Class Vector3D
+    Property x
+    Property y
+    Property z
+End

@@ -1,6 +1,5 @@
 Class Monster Of Type Sprite
-    Property directionX = 1
-    Property directionY = 1
+    Property direction = New Vector2D(x=1, y=1)
     Property speed = 4.0
 
     Constructor
@@ -11,13 +10,13 @@ Class Monster Of Type Sprite
     End
 
     Update
-        x = x + Screen.frameSpeed * directionX * speed
-        If x < 0 Then directionX = 1
-        If x > Screen.width Then directionX = -1
+        x = x + Screen.frameSpeed * direction.x * speed
+        If x < 0 Then direction.x = 1
+        If x > Screen.width Then direction.x = -1
 
-        y = y + Screen.frameSpeed * directionY * speed
-        If y < 0 Then directionY = 1
-        If y > Screen.height Then directionY = -1
+        y = y + Screen.frameSpeed * direction.y * speed
+        If y < 0 Then direction.y = 1
+        If y > Screen.height Then direction.y = -1
     End
 End
 
