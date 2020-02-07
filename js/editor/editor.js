@@ -1,5 +1,6 @@
 import * as CodeMirror from 'codemirror'
 import CodeMirrorBasicMode from './codemirror-basic'
+import Util from '../engine/util/util'
 
 export default class Editor {
     constructor(engine) {
@@ -31,6 +32,13 @@ export default class Editor {
 
         this.codeMirror = CodeMirror.fromTextArea(this.textArea, this.config)
         this.codeMirror.setSize('100vw', '50vh')
+    }
+
+    async load(files) {
+        for (let filename of files) {
+            const text = await Util.readTextFile(filename)
+            this.codeMirror.setValue(text)
+        }
     }
 
     play() {

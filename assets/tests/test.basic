@@ -1,7 +1,7 @@
 Class Monster Of Type Sprite
     Property directionX = 1
     Property directionY = 1
-    Property speed = 2.0
+    Property speed = 4.0
 
     Constructor
         load(filename="./assets/sprites/monster.png")
@@ -22,7 +22,7 @@ Class Monster Of Type Sprite
 End
 
 Class Hero Of Type Sprite
-    Property speed = 5.0
+    Property speed = 8.0
     Behaviour joystick Of Type Joystick
     Behaviour gravity Of Type Gravity
 
@@ -51,8 +51,8 @@ Class Hero Of Type Sprite
     End
 End
 
-monster1 = New Monster(speed=2.0)
-monster2 = New Monster(speed=3.0)
+monster1 = New Monster(speed=4.0)
+monster2 = New Monster(speed=6.0)
 hero3 = New Hero()
 
 While True Do

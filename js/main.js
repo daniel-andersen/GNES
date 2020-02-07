@@ -5,4 +5,5 @@ document.addEventListener('DOMContentLoaded', () => {
     const engine = new Engine()
 
     const editor = new Editor(engine)
+    editor.load(['./assets/tests/test.basic'])
 })
