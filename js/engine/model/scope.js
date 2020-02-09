@@ -12,6 +12,7 @@ export class Scope {
         this.updateObjects = {}
         this.updateClasses = []
         this.behaviourObjects = []
+        this.behaviourObjectsMapping = {}
     }
 
     clone() {
@@ -23,6 +24,7 @@ export class Scope {
         scope.updateObjects = Object.assign({}, this.updateObjects)
         scope.updateClasses = this.updateClasses.slice(0)
         scope.behaviourObjects = this.behaviourObjects.slice(0)
+        scope.behaviourObjectsMapping = Object.assign({}, this.behaviourObjectsMapping)
         return scope
     }
 
@@ -35,6 +37,7 @@ export class Scope {
         scope.updateObjects = this.updateObjects
         scope.updateClasses = this.updateClasses
         scope.behaviourObjects = this.behaviourObjects
+        scope.behaviourObjectsMapping = this.behaviourObjectsMapping
         return scope
     }
 
@@ -162,6 +165,41 @@ export class Scope {
         return undefined
     }
 
+    setBehaviour(behaviourObject) {
+        /*
+        Sets the given behaviour object in the appropriate scope.
+        */
+
+        // Get existing variable (in any scope)
+        let currentBehaviour = this.resolveBehaviour(behaviourObject.classNode.className)
+        if (currentBehaviour !== undefined) {
+            throw {error: 'Behaviour of type ' + behaviourObject.classNode.className + ' already defined in class'}
+        }
+
+        // Create new behaviour object in current scope
+        this.behaviourObjects.push(behaviourObject)
+        this.behaviourObjectsMapping[behaviourObject.classNode.className] = behaviourObject
+    }
+
+    resolveBehaviour(className) {
+        /*
+        Resolves a behaviour with the given class name in the current scope.
+        */
+
+        // Behaviour set in this scope
+        if (className in this.behaviourObjectsMapping) {
+            return this.behaviourObjectsMapping[className]
+        }
+
+        // Resolve in parent scope
+        if (this.parentScope !== undefined) {
+            return this.parentScope.resolveBehaviour(className)
+        }
+
+        // Not found
+        return undefined
+    }
+
     setBehaviourDefinition(classNode) {
         this.behaviourDefinitions[classNode.className] = classNode
     }
@@ -171,7 +209,7 @@ export class Scope {
         Resolves a behaviour definition with the given name in the current scope.
         */
 
-        // Class set in this scope
+        // Behaviour definition set in this scope
         if (name in this.behaviourDefinitions) {
             return this.behaviourDefinitions[name]
         }

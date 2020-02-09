@@ -11,14 +11,11 @@ export class Variable {
     setValue(value) {
         this.rawValue = value
 
-        if (value === undefined || (this.rawValue instanceof Constant && this.rawValue.type == Constant.Type.Undefined)) {
-            this.type = Variable.Type.Undefined
+        if (value === undefined || (this.rawValue instanceof Constant && this.rawValue.type == Constant.Type.None)) {
+            this.type = Variable.Type.None
         }
         else if (this.rawValue instanceof Constant) {
             this.type = Variable.Type.Constant
-        }
-        else if (this.rawValue instanceof ObjectInstance) {
-            this.type = Variable.Type.ObjectInstance
         }
         else {
             throw 'Unknown variable type "' + value + '"'
@@ -48,7 +45,7 @@ Variable.Type = {
     Unknown: -1,
     Constant: 0,
     ObjectInstance: 1,
-    Undefined: 2
+    None: 2
 }
 
 
@@ -57,7 +54,10 @@ export class Constant {
         this.rawValue = value
 
         if (value === undefined) {
-            this.type = Constant.Type.Undefined
+            this.type = Constant.Type.None
+        }
+        else if (value instanceof ObjectInstance) {
+            this.type = Constant.Type.ObjectInstance
         }
         else if (typeof(this.rawValue) == typeof(true)) {
             this.type = Constant.Type.Boolean
@@ -76,6 +76,10 @@ export class Constant {
         else if (this.rawValue == 'False') {
             this.type = Constant.Type.Boolean
             this.rawValue = false
+        }
+        else if (this.rawValue == 'None') {
+            this.type = Constant.Type.None
+            this.rawValue = undefined
         }
         else {
             this.type = Constant.Type.Variable
@@ -111,7 +115,8 @@ Constant.Type = {
     Number: 1,
     String: 2,
     Variable: 3,
-    Undefined: 4
+    ObjectInstance: 4,
+    None: 5
 }
 
 export class ObjectInstance {

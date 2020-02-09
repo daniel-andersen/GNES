@@ -36,6 +36,7 @@ export default class Language {
             'Comma': 27,
             'Dot': 28,
             'New': 29,
+            'None': 30,
         }
 
         this.tokenTypes = {
@@ -65,6 +66,7 @@ export default class Language {
             ',': this.tokenType.Comma,
             '.': this.tokenType.Dot,
             'New': this.tokenType.New,
+            'None': this.tokenType.None,
         }
 
         this.arithmeticTokens = [
@@ -82,6 +84,7 @@ export default class Language {
             this.tokenType.LessThan,
             this.tokenType.LessThanOrEqual,
             this.tokenType.Dot,
+            this.tokenType.None,
         ]
 
         this.arithmeticOperationPriority = {
@@ -113,6 +116,7 @@ export default class Language {
             this.tokenType.New,
             this.tokenType.True,
             this.tokenType.False,
+            this.tokenType.None,
         ])
 
         this.expressions = [
@@ -275,15 +279,6 @@ export default class Language {
                 node: (tokens, nodes, sourceTree) => new Node.ForFromToNode(tokens, sourceTree.getConstantNameWithId(nodes, 'variable'), sourceTree.getNodeWithId(nodes, 'fromExpression'), sourceTree.getNodeWithId(nodes, 'toExpression'), sourceTree.getNodeWithId(nodes, 'stepExpression'), sourceTree.getNodeWithId(nodes, 'do'))
             },
             {
-                name: 'Assignment',
-                match: [
-                    {type: "expression", id: "variableExpression"},
-                    {type: "token", token: "="},
-                    {type: "expression", id: "assignmentExpression"}
-                ],
-                node: (tokens, nodes, sourceTree) => new Node.AssignmentNode(tokens, sourceTree.getNodeWithId(nodes, 'variableExpression'), sourceTree.getNodeWithId(nodes, 'assignmentExpression'))
-            },
-            {
                 name: 'Continue',
                 match: [
                     {type: "token", token: "Continue"}
@@ -432,6 +427,22 @@ export default class Language {
                 node: (tokens, nodes, sourceTree) => new Node.BehaviourNode(tokens, sourceTree.getConstantNameWithId(nodes, 'name'), sourceTree.getConstantNameWithId(nodes, 'className'))
             },
             {
+                name: 'GetBehaviour',
+                match: [
+                    {type: "group", required: false, group: {
+                        match: [
+                            {type: "expression", id: "variableExpression"},
+                            {type: "token", token: "="},
+                        ],
+                        node: (tokens, nodes, sourceTree) => new Node.GroupNode(tokens, nodes)
+                    }},
+                    {type: "token", token: "Get"},
+                    {type: "token", token: "Behaviour"},
+                    {type: "name", id: "className"},
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.GetBehaviourNode(tokens, sourceTree.getNodeWithId(nodes, 'variableExpression'), sourceTree.getConstantNameWithId(nodes, 'className'))
+            },
+            {
                 name: 'Constructor',
                 match: [
                     {type: "token", token: "Constructor"},
@@ -510,6 +521,15 @@ export default class Language {
                     {type: "name", id: "className"},
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.InvokeNativeFunctionNode(tokens, sourceTree.getNodeWithId(nodes, 'variableExpression'), sourceTree.getConstantNameWithId(nodes, 'functionName'), sourceTree.getNodeWithId(nodes, 'parameters'), sourceTree.getConstantNameWithId(nodes, 'className'), sourceTree.nativeClasses)
+            },
+            {
+                name: 'Assignment',
+                match: [
+                    {type: "expression", id: "variableExpression"},
+                    {type: "token", token: "="},
+                    {type: "expression", id: "assignmentExpression"}
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.AssignmentNode(tokens, sourceTree.getNodeWithId(nodes, 'variableExpression'), sourceTree.getNodeWithId(nodes, 'assignmentExpression'))
             },
         ]
     }
