@@ -462,8 +462,13 @@ export default class Language {
             {
                 name: 'LoadSprite',
                 match: [
-                    {type: "expression", id: "variableExpression"},
-                    {type: "token", token: "="},
+                    {type: "group", required: false, group: {
+                        match: [
+                            {type: "expression", id: "variableExpression"},
+                            {type: "token", token: "="},
+                        ],
+                        node: (tokens, nodes, sourceTree) => new Node.GroupNode(tokens, nodes)
+                    }},
                     {type: "token", token: "Load"},
                     {type: "token", token: "Sprite"},
                     {type: "expression", id: "expression"}

@@ -975,7 +975,10 @@ export class LoadSpriteNode extends StatementNode {
         this.expressionNode = expressionNode
 
         this.newObjectNode = new NewObjectNode(undefined, "Sprite", new ParameterListNode(this.tokens, []))
-        this.assignmentNode = new AssignmentNode(this.variableExpressionNode.tokens, this.variableExpressionNode, this.newObjectNode)
+        this.assignmentNode = undefined
+        if (this.variableExpressionNode !== undefined) {
+            this.assignmentNode = new AssignmentNode(this.variableExpressionNode.tokens, this.variableExpressionNode, this.newObjectNode)
+        }
         this.loadNode = new FunctionCallNode(this.tokens, "load", new ParameterListNode(this.tokens, [new ParameterAssignmentNode(expressionNode.tokens, "filename", this.expressionNode)]))
     }
 
@@ -983,13 +986,17 @@ export class LoadSpriteNode extends StatementNode {
 
         // Evaluate assignment
         yield
-        const assignmentResult = yield* this.assignmentNode.evaluate(scope)
+        const node = this.assignmentNode || this.newObjectNode
+        const result = yield* node.evaluate(scope)
+
+        // Get object scope
+        let objectScope = result.value instanceof Variable ? result.value.value().scope : result.value.scope
 
         // Evaluate load
         yield
-        yield* this.loadNode.evaluate(assignmentResult.value.value().scope)
+        yield* this.loadNode.evaluate(objectScope)
 
-        return assignmentResult
+        return result
     }
 }
 
