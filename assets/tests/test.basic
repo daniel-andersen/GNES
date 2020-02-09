@@ -17,7 +17,7 @@ Class Hero Of Type Sprite
 End
 
 Class Monster Of Type Sprite
-    Property direction = New Vector2D(x=1, y=1)
+    Property direction = New Direction(x=1, y=1)
     Property speed = 4.0
 
     Constructor

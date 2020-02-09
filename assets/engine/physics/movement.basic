@@ -2,7 +2,7 @@ Behaviour Movement
     Property speed = 10
     Property jumpVelocity = 20
 
-    Property velocity = New Vector2D()
+    Property velocity = New Vector()
 
     Function moveLeft()
         velocity.x = -speed
