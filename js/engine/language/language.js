@@ -1,4 +1,5 @@
 import * as Node from './nodes'
+import { Constant } from '../model/variable'
 
 export default class Language {
     constructor() {
@@ -84,7 +85,6 @@ export default class Language {
             this.tokenType.LessThan,
             this.tokenType.LessThanOrEqual,
             this.tokenType.Dot,
-            this.tokenType.None,
         ]
 
         this.arithmeticOperationPriority = {
@@ -104,22 +104,46 @@ export default class Language {
             [`${this.tokenType.Or}`]: 0,
         }
 
-        this.expressionTokens = this.arithmeticTokens.concat([
-            this.tokenType.Variable,
-            this.tokenType.Number,
-            this.tokenType.ParenthesisStart,
-            this.tokenType.ParenthesisEnd,
-            this.tokenType.StringConstant,
-            this.tokenType.Colon,
-            this.tokenType.Comma,
-            this.tokenType.Dot,
-            this.tokenType.New,
-            this.tokenType.True,
-            this.tokenType.False,
-            this.tokenType.None,
-        ])
-
         this.expressions = [
+            {
+                name: 'True',
+                match: [
+                    {type: "token", token: "True"},
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.ConstantNode(tokens, new Constant(true))
+            },
+            {
+                name: 'False',
+                match: [
+                    {type: "token", token: "False"},
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.ConstantNode(tokens, new Constant(false))
+            },
+            {
+                name: 'None',
+                match: [
+                    {type: "token", token: "None"},
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.ConstantNode(tokens, new Constant(undefined))
+            },
+            {
+                name: 'GetBehaviour',
+                match: [
+                    {type: "token", token: "Get"},
+                    {type: "token", token: "Behaviour"},
+                    {type: "name", id: "className"},
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.GetBehaviourNode(tokens, sourceTree.getConstantNameWithId(nodes, 'className'))
+            },
+            {
+                name: 'LoadSprite',
+                match: [
+                    {type: "token", token: "Load"},
+                    {type: "token", token: "Sprite"},
+                    {type: "expression", id: "expression"}
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.LoadSpriteNode(tokens, sourceTree.getNodeWithId(nodes, 'expression'))
+            },
             {
                 name: 'FunctionCall',
                 match: [
@@ -135,14 +159,14 @@ export default class Language {
                     {type: "token", token: "."},
                     {type: "expression", id: "expression"},
                 ],
-                node: (tokens, nodes, sourceTree) => {console.log("HEY!"); return new Node.FunctionCallNode(tokens, sourceTree.getConstantNameWithId(nodes, 'name'), sourceTree.getNodeWithId(nodes, 'parameters'))}
+                node: (tokens, nodes, sourceTree) => new Node.FunctionCallNode(tokens, sourceTree.getConstantNameWithId(nodes, 'name'), sourceTree.getNodeWithId(nodes, 'parameters'))
             },
             {
                 name: 'ParameterAssignment',
                 match: [
                     {type: "variable", id: "variable"},
                     {type: "token", token: "="},
-                    {type: "expression", id: "expression"}
+                    {type: "expression", id: "expression", endTokens: [',', ')', ']', '}']}
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.ParameterAssignmentNode(tokens, sourceTree.getConstantNameWithId(nodes, 'variable'), sourceTree.getNodeWithId(nodes, 'expression'))
             },
@@ -162,7 +186,7 @@ export default class Language {
                 name: 'SingleLineIf',
                 match: [
                     {type: "token", token: "If"},
-                    {type: "expression", id: "expression"},
+                    {type: "expression", id: "expression", endTokens: ['Then']},
                     {type: "token", token: "Then"},
                     {type: "statement", id: "then"},
                     {type: "group", required: false, group: {
@@ -180,15 +204,15 @@ export default class Language {
                 name: 'MultiLineIf',
                 match: [
                     {type: "token", token: "If"},
-                    {type: "expression", id: "expression"},
+                    {type: "expression", id: "expression", endTokens: ['Then']},
                     {type: "token", token: "Then"},
                     {type: "token", code: this.tokenType.EOL},
-                    {type: "subtree", end: ["Else", "End"], id: "then"},
+                    {type: "subtree", endTokens: ["Else", "End"], id: "then"},
                     {type: "group", required: false, group: {
                         match: [
                             {type: "token", token: "Else"},
                             {type: "token", code: this.tokenType.EOL},
-                            {type: "subtree", end: ["End"], id: "else"}
+                            {type: "subtree", endTokens: ["End"], id: "else"}
                         ],
                         node: (tokens, nodes, sourceTree) => new Node.GroupNode(tokens, nodes)
                     }},
@@ -200,7 +224,7 @@ export default class Language {
                 name: 'SingleLineWhile',
                 match: [
                     {type: "token", token: "While"},
-                    {type: "expression", id: "expression"},
+                    {type: "expression", id: "expression", endTokens: ['Do']},
                     {type: "token", token: "Do"},
                     {type: "statement", id: "content"},
                     {type: "token", code: this.tokenType.EOL}
@@ -211,10 +235,10 @@ export default class Language {
                 name: 'MultiLineWhile',
                 match: [
                     {type: "token", token: "While"},
-                    {type: "expression", id: "expression"},
+                    {type: "expression", id: "expression", endTokens: ['Do']},
                     {type: "token", token: "Do"},
                     {type: "token", code: this.tokenType.EOL},
-                    {type: "subtree", end: ["End"], id: "content"},
+                    {type: "subtree", endTokens: ["End"], id: "content"},
                     {type: "token", token: "End"}
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.WhileNode(tokens, sourceTree.getNodeWithId(nodes, 'expression'), sourceTree.getNodeWithId(nodes, 'content'))
@@ -235,7 +259,7 @@ export default class Language {
                 match: [
                     {type: "token", token: "Repeat"},
                     {type: "token", code: this.tokenType.EOL},
-                    {type: "subtree", end: ["Until"], id: "content"},
+                    {type: "subtree", endTokens: ["Until"], id: "content"},
                     {type: "token", token: "Until"},
                     {type: "expression", id: "expression"},
                     {type: "token", code: this.tokenType.EOL},
@@ -248,9 +272,9 @@ export default class Language {
                     {type: "token", token: "For"},
                     {type: "variable", id: "variable"},
                     {type: "token", token: "In"},
-                    {type: "expression", id: "expression"},
+                    {type: "expression", id: "expression", endTokens: ['Do']},
                     {type: "token", token: "Do"},
-                    {type: "subtree", end: ["End"], id: "do"},
+                    {type: "subtree", endTokens: ["End"], id: "do"},
                     {type: "token", token: "End"}
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.ForInNode(tokens, sourceTree.getConstantNameWithId(nodes, 'variable'), sourceTree.getNodeWithId(nodes, 'expression'), sourceTree.getNodeWithId(nodes, 'do'))
@@ -261,19 +285,19 @@ export default class Language {
                     {type: "token", token: "For"},
                     {type: "variable", id: "variable"},
                     {type: "token", token: "From"},
-                    {type: "expression", id: "fromExpression"},
+                    {type: "expression", id: "fromExpression", endTokens: ['To']},
                     {type: "token", token: "To"},
-                    {type: "expression", id: "toExpression"},
+                    {type: "expression", id: "toExpression", endTokens: ['Do', 'Step']},
                     {type: "group", required: false, group: {
                         match: [
                             {type: "token", token: "Step"},
                             {type: "token", token: "By"},
-                            {type: "expression", id: "stepExpression"}
+                            {type: "expression", id: "stepExpression", endTokens: ['Do']}
                         ],
                         node: (tokens, nodes, sourceTree) => new Node.GroupNode(tokens, nodes)
                     }},
                     {type: "token", token: "Do"},
-                    {type: "subtree", end: ["End"], id: "do"},
+                    {type: "subtree", endTokens: ["End"], id: "do"},
                     {type: "token", token: "End"}
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.ForFromToNode(tokens, sourceTree.getConstantNameWithId(nodes, 'variable'), sourceTree.getNodeWithId(nodes, 'fromExpression'), sourceTree.getNodeWithId(nodes, 'toExpression'), sourceTree.getNodeWithId(nodes, 'stepExpression'), sourceTree.getNodeWithId(nodes, 'do'))
@@ -332,7 +356,7 @@ export default class Language {
                         node: (tokens, nodes, sourceTree) => new Node.GroupNode(tokens, nodes)
                     }},
                     {type: "token", code: this.tokenType.EOL},
-                    {type: "subtree", end: ["End"], id: "content"},
+                    {type: "subtree", endTokens: ["End"], id: "content"},
                     {type: "token", token: "End"}
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.ClassNode(tokens, sourceTree.getConstantNameWithId(nodes, 'className'), sourceTree.getConstantNameWithId(nodes, 'ofTypeName'), sourceTree.getNodeWithId(nodes, 'content'))
@@ -343,7 +367,7 @@ export default class Language {
                     {type: "token", token: "Behaviour"},
                     {type: "name", id: "className"},
                     {type: "token", code: this.tokenType.EOL},
-                    {type: "subtree", end: ["End"], id: "content"},
+                    {type: "subtree", endTokens: ["End"], id: "content"},
                     {type: "token", token: "End"}
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.BehaviourDefinitionNode(tokens, sourceTree.getConstantNameWithId(nodes, 'className'), sourceTree.getNodeWithId(nodes, 'content'))
@@ -354,7 +378,7 @@ export default class Language {
                     {type: "token", token: "Function"},
                     {type: "variable", id: 'name'},
                     {type: "parameterDefinitions", id: "parameters"},
-                    {type: "subtree", end: ["End"], id: "content"},
+                    {type: "subtree", endTokens: ["End"], id: "content"},
                     {type: "token", token: "End"}
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.FunctionDefinitionNode(tokens, sourceTree.getConstantNameWithId(nodes, 'name'), sourceTree.getNodeWithId(nodes, 'parameters'), sourceTree.getNodeWithId(nodes, 'content'))
@@ -366,7 +390,7 @@ export default class Language {
                     {type: "token", token: "Function"},
                     {type: "variable", id: 'name'},
                     {type: "parameterDefinitions", id: "parameters"},
-                    {type: "subtree", end: ["End"], id: "content"},
+                    {type: "subtree", endTokens: ["End"], id: "content"},
                     {type: "token", token: "End"}
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.SharedFunctionDefinitionNode(tokens, sourceTree.getConstantNameWithId(nodes, 'name'), sourceTree.getNodeWithId(nodes, 'parameters'), sourceTree.getNodeWithId(nodes, 'content'))
@@ -375,7 +399,7 @@ export default class Language {
                 name: 'UpdateFunctionDefinition',
                 match: [
                     {type: "token", token: "Update"},
-                    {type: "subtree", end: ["End"], id: "content"},
+                    {type: "subtree", endTokens: ["End"], id: "content"},
                     {type: "token", token: "End"}
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.UpdateFunctionDefinitionNode(tokens, sourceTree.getNodeWithId(nodes, 'content'))
@@ -385,7 +409,7 @@ export default class Language {
                 match: [
                     {type: "token", token: "Shared"},
                     {type: "token", token: "Update"},
-                    {type: "subtree", end: ["End"], id: "content"},
+                    {type: "subtree", endTokens: ["End"], id: "content"},
                     {type: "token", token: "End"}
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.SharedUpdateFunctionDefinitionNode(tokens, sourceTree.getNodeWithId(nodes, 'content'))
@@ -427,26 +451,10 @@ export default class Language {
                 node: (tokens, nodes, sourceTree) => new Node.BehaviourNode(tokens, sourceTree.getConstantNameWithId(nodes, 'name'), sourceTree.getConstantNameWithId(nodes, 'className'))
             },
             {
-                name: 'GetBehaviour',
-                match: [
-                    {type: "group", required: false, group: {
-                        match: [
-                            {type: "expression", id: "variableExpression"},
-                            {type: "token", token: "="},
-                        ],
-                        node: (tokens, nodes, sourceTree) => new Node.GroupNode(tokens, nodes)
-                    }},
-                    {type: "token", token: "Get"},
-                    {type: "token", token: "Behaviour"},
-                    {type: "name", id: "className"},
-                ],
-                node: (tokens, nodes, sourceTree) => new Node.GetBehaviourNode(tokens, sourceTree.getNodeWithId(nodes, 'variableExpression'), sourceTree.getConstantNameWithId(nodes, 'className'))
-            },
-            {
                 name: 'Constructor',
                 match: [
                     {type: "token", token: "Constructor"},
-                    {type: "subtree", end: ["End"], id: "content"},
+                    {type: "subtree", endTokens: ["End"], id: "content"},
                     {type: "token", token: "End"}
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.ConstructorNode(tokens, sourceTree.getNodeWithId(nodes, 'content'))
@@ -456,7 +464,7 @@ export default class Language {
                 match: [
                     {type: "token", token: "Shared"},
                     {type: "token", token: "Constructor"},
-                    {type: "subtree", end: ["End"], id: "content"},
+                    {type: "subtree", endTokens: ["End"], id: "content"},
                     {type: "token", token: "End"}
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.SharedConstructorNode(tokens, sourceTree.getNodeWithId(nodes, 'content'))
@@ -469,22 +477,6 @@ export default class Language {
                     {type: "token", token: "Update"},
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.WaitForUpdateNode(tokens)
-            },
-            {
-                name: 'LoadSprite',
-                match: [
-                    {type: "group", required: false, group: {
-                        match: [
-                            {type: "expression", id: "variableExpression"},
-                            {type: "token", token: "="},
-                        ],
-                        node: (tokens, nodes, sourceTree) => new Node.GroupNode(tokens, nodes)
-                    }},
-                    {type: "token", token: "Load"},
-                    {type: "token", token: "Sprite"},
-                    {type: "expression", id: "expression"}
-                ],
-                node: (tokens, nodes, sourceTree) => new Node.LoadSpriteNode(tokens, sourceTree.getNodeWithId(nodes, 'variableExpression'), sourceTree.getNodeWithId(nodes, 'expression'))
             },
             {
                 name: 'ShowSprite',
@@ -509,7 +501,7 @@ export default class Language {
                 match: [
                     {type: "group", required: false, group: {
                         match: [
-                            {type: "expression", id: "variableExpression"},
+                            {type: "expression", id: "variableExpression", endTokens: ['=']},
                             {type: "token", token: "="}
                         ],
                         node: (tokens, nodes, sourceTree) => new Node.GroupNode(tokens, nodes)
@@ -525,7 +517,7 @@ export default class Language {
             {
                 name: 'Assignment',
                 match: [
-                    {type: "expression", id: "variableExpression"},
+                    {type: "expression", id: "variableExpression", endTokens: ['=']},
                     {type: "token", token: "="},
                     {type: "expression", id: "assignmentExpression"}
                 ],

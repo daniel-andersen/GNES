@@ -1,9 +1,10 @@
 Behaviour Gravity
-    Property velocity = 0
     Property drag = 9.806
 
     Update
-        y = y + (velocity * Screen.frameSpeed)
-        velocity = velocity + (drag * Screen.frameSpeed / 10.0)
+        movement = Get Behaviour Movement
+        If movement != None Then
+            movement.velocity.y = movement.velocity.y + (drag * Screen.frameSpeed / 10.0)
+        End
     End
 End

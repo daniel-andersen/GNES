@@ -15,5 +15,23 @@ End
 
 Behaviour Joystick
     Update
+        #Invoke updateBehaviour() In Joystick
+
+        movement = Get Behaviour Movement
+        If movement == None Then Return
+
+        If Joystick.left Then
+            movement.moveLeft()
+        End
+        If Joystick.right Then
+            movement.moveRight()
+        End
+
+        If Joystick.up Then
+            movement.moveUp()
+        End
+        If Joystick.down Then
+            movement.moveDown()
+        End
     End
 End

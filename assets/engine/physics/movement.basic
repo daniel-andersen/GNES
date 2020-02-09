@@ -1,0 +1,42 @@
+Behaviour Movement
+    Property speed = 10
+    Property jumpVelocity = 20
+
+    Property velocity = New Vector2D()
+
+    Function moveLeft()
+        velocity.x = -speed
+    End
+
+    Function moveRight()
+        velocity.x = speed
+    End
+
+    Function moveUp()
+        gravity = Get Behaviour Gravity
+        If gravity != None Then
+            If velocity.y == 0 Then
+                velocity.y = -jumpVelocity
+            End
+        Else
+            velocity.y = -speed
+        End
+    End
+
+    Function moveDown()
+        gravity = Get Behaviour Gravity
+        If gravity == None Then
+            velocity.y = speed
+        End
+    End
+
+    Update
+        x = x + velocity.x
+        y = y + velocity.y
+
+        velocity.x = 0
+        If Get Behaviour Gravity == None Then
+            velocity.y = 0
+        End
+    End
+End

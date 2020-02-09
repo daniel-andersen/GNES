@@ -232,7 +232,7 @@ export class SourceTree {
         return bestError || new Error('Unexpected symbol "' + tokens[0].token + '".', tokens[0])
     }
 
-    parseExpression(tokens) {
+    parseExpression(tokens, endTokens=[]) {
         tokens = this.duplicateTokens(tokens)
 
         // Find end of expression (= any statement token)
@@ -240,11 +240,6 @@ export class SourceTree {
         let parenthesisCount = 0
 
         while (tokens.length > 0) {
-
-            // End of file
-            if (tokens[0].type == this.language.tokenType.EOF) {
-                break
-            }
 
             // Account for parenthesis
             if (tokens[0].type == this.language.tokenType.ParenthesisStart) {
@@ -257,18 +252,14 @@ export class SourceTree {
                 }
             }
 
-            // Check if expression token
-            let expressionToken = false
-            expressionToken |= parenthesisCount > 0
-            expressionToken |= this.language.expressionTokens.includes(tokens[0].type)
-            expressionToken |= expressionTokens.length > 0 && expressionTokens[expressionTokens.length - 1].type == this.language.tokenType.New && tokens[0].type == this.language.tokenType.Name
-            expressionToken |= tokens.length >= 2 && tokens[0].type == this.language.tokenType.Name && tokens[1].type == this.language.tokenType.Dot
-            if (!expressionToken) {
-                break
-            }
+            // Check if end reached
+            let endReached = false
+            endReached |= tokens[0].type == this.language.tokenType.EOL
+            endReached |= tokens[0].type == this.language.tokenType.EOF
+            endReached |= endTokens.includes(tokens[0].token)
+            endReached &= parenthesisCount == 0
 
-            // End of line
-            if (parenthesisCount == 0 && tokens[0].type == this.language.tokenType.EOL) {
+            if (endReached) {
                 break
             }
 
@@ -281,15 +272,12 @@ export class SourceTree {
             return new Error('Expression expected', tokens[0])
         }
 
-        // Constant
-        if (expressionTokens.length == 1) {
-            return new Node.ConstantNode(expressionTokens, new Constant(expressionTokens[0].token))
-        }
-
         // Build arithmetic tree
-        const arithmeticNode = this.parseArithmeticNode(expressionTokens)
-        if (!(arithmeticNode instanceof Error)) {
-            return arithmeticNode
+        if (expressionTokens.length > 1) {
+            const arithmeticNode = this.parseArithmeticNode(expressionTokens)
+            if (!(arithmeticNode instanceof Error)) {
+                return arithmeticNode
+            }
         }
 
         // Match all expressions
@@ -307,6 +295,11 @@ export class SourceTree {
         // Grouped expression
         if (expressionTokens[0].type == this.language.tokenType.ParenthesisStart) {
             return this.parseExpression(this.findGroupedExpressionTokens(expressionTokens).groupTokens)
+        }
+
+        // Constant
+        if (expressionTokens.length == 1) {
+            return new Node.ConstantNode(expressionTokens, new Constant(expressionTokens[0].token))
         }
 
         return error
@@ -467,7 +460,7 @@ export class SourceTree {
         }
 
         // Build subtrees
-        let leftSideExpressionNode = this.parseExpression(tokens.slice(0, arithmeticTokenPosition))
+        let leftSideExpressionNode = arithmeticTokenPosition > 0 ? this.parseExpression(tokens.slice(0, arithmeticTokenPosition)) : undefined
         const rightSideExpressionNode = this.parseExpression(tokens.slice(arithmeticTokenPosition + 1))
 
         // Left side class, special case - TODO! Hacked!
@@ -635,7 +628,7 @@ export class SourceTree {
     matchExpressionEntry(entry, tokens) {
         tokens = this.duplicateTokens(tokens)
 
-        const expressionNode = this.parseExpression(tokens)
+        const expressionNode = this.parseExpression(tokens, entry.endTokens)
         if (expressionNode instanceof Node.ExpressionNode) {
             return expressionNode
         }
@@ -693,7 +686,7 @@ export class SourceTree {
     matchSubtreeEntry(entry, tokens) {
         tokens = this.duplicateTokens(tokens)
 
-        const blockNode = this.parseBlock(tokens, entry.end)
+        const blockNode = this.parseBlock(tokens, entry.endTokens)
         if (!(blockNode instanceof Error)) {
             return blockNode
         }

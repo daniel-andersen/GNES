@@ -11,6 +11,8 @@ import Util from './util/util'
 import { Screen } from './builtin/ui/screen'
 import { Sprite } from './builtin/ui/sprite'
 import { Joystick } from './builtin/controls/joystick'
+import { Gravity } from './builtin/physics/gravity'
+import { Movement } from './builtin/physics/movement'
 import * as Phaser from 'phaser'
 
 export default class Engine {
@@ -26,6 +28,7 @@ export default class Engine {
             "./assets/engine/ui/sprite.basic",
             "./assets/engine/controls/joystick.basic",
             "./assets/engine/physics/gravity.basic",
+            "./assets/engine/physics/movement.basic",
         ]
 
         this.runCallback = undefined
@@ -192,15 +195,16 @@ export default class Engine {
         // Destroy phaser game
         if (window.game.phaser !== undefined) {
             if (window.game.phaser.game !== undefined) {
-                window.game.phaser.game.destroy()
-                //window.game.phaser.game.destroy(true)
+                window.game.phaser.game.destroy(removeElements)
                 window.game.phaser.game = undefined
             }
         }
 
         // Destroy console
-        if (window.game.console !== undefined) {
-            document.getElementById('gnes').removeChild(window.game.console.div)
+        if (removeElements) {
+            if (window.game.console !== undefined) {
+                document.getElementById('gnes').removeChild(window.game.console.div)
+            }
             window.game.console = undefined
         }
 

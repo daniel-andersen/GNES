@@ -1,3 +1,23 @@
+Class Hero Of Type Sprite
+    Behaviour joystick Of Type Joystick
+    Behaviour gravity Of Type Gravity
+    Behaviour movement Of Type Movement
+
+    Property speed = 8.0
+
+    Constructor
+        load(filename="./assets/sprites/hero.png")
+        show()
+    End
+
+    Update
+        If y > Screen.height - 100 Then
+            y = Screen.height - 100
+            movement.velocity.y = 0
+        End
+    End
+End
+
 Class Monster Of Type Sprite
     Property direction = New Vector2D(x=1, y=1)
     Property speed = 4.0
@@ -20,46 +40,17 @@ Class Monster Of Type Sprite
     End
 End
 
-Class Hero Of Type Sprite
-    Property speed = 8.0
-    Behaviour joystick Of Type Joystick
-    Behaviour gravity Of Type Gravity
-
-    Constructor
-        load(filename="./assets/sprites/hero.png")
-        show()
-        x = 200
-        y = Screen.height - 100
-    End
-
-    Update
-        If y > Screen.height - 100 Then
-            y = Screen.height - 100
-            gravity.velocity = 0
-        End
-        If Joystick.up And y == Screen.height - 100 Then
-            gravity.velocity = -20.0
-        End
-
-        If Joystick.left And x > 0 Then
-            x = x - Screen.frameSpeed * speed
-        End
-        If Joystick.right And x < Screen.width Then
-            x = x + Screen.frameSpeed * speed
-        End
-    End
-End
-
 monster1 = New Monster(speed=4.0)
 monster2 = New Monster(speed=6.0)
-hero = New Hero()
+hero = New Hero(x=200, y=0)
 
 Function followHero()
     speed = 3.0
     monster = Load Sprite "./assets/sprites/monster.png"
     monster.x = Screen.width / 2
-    monster.y = hero.y
+    monster.y = Screen.height - 100
     Show Sprite monster
+
     While True Do
         If monster.x < hero.x Then monster.x = monster.x + Screen.frameSpeed * speed
         If monster.x > hero.x Then monster.x = monster.x - Screen.frameSpeed * speed

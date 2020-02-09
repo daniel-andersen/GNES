@@ -176,7 +176,7 @@ export class IfNode extends StatementNode {
             return result
         }
 
-        // Perform "true" block
+        // Perform "false" block
         else if (this.elseExpressionNode !== undefined) {
             yield
             const result = yield* this.elseExpressionNode.evaluate(scope)
@@ -375,6 +375,7 @@ export class ReturnNode extends StatementNode {
             }
             return new Result(result.value, Result.Type.Expression, Result.Action.Return)
         }
+        return new Result(new Constant(undefined), Result.Type.Expression, Result.Action.Return)
     }
 }
 
@@ -402,7 +403,7 @@ export class PrintNode extends StatementNode {
         if (result !== undefined) {
             if (result.value instanceof Constant) {
                 if (result.value.type === Constant.Type.ObjectInstance) {
-                    text = result.value.classNode.className
+                    text = result.value.value().classNode.className
                 }
                 else if (result.value.type === Constant.Type.None) {
                     text = 'None'
@@ -581,6 +582,25 @@ export class NewObjectNode extends ExpressionNode {
         return new Result(new Constant(object), Result.Type.Expression)
     }
 
+    *evaluateParameters(scope, classScope) {
+        for (let node of this.parameterListNode.parameterAssignmentNodes) {
+
+            // Evaluate expression in original scope
+            yield
+            const result = yield* node.expressionNode.evaluate(scope)
+            if (result === undefined) {
+                throw {error: 'Result of expression is undefined', node: node.expressionNode}
+            }
+            if (result.type !== Result.Type.Expression) {
+                throw {error: 'Expected expression', node: node.expressionNode}
+            }
+
+            // Assign variable in new scope
+            const variable = new Variable(node.variableName, result.value)
+            classScope.setVariable(variable)
+        }
+    }
+
     *evaluateUnsetProperties(object) {
 
         // Evaluate all inherited scopes
@@ -652,25 +672,6 @@ export class NewObjectNode extends ExpressionNode {
         }
     }
 
-    *evaluateParameters(scope, classScope) {
-        for (let node of this.parameterListNode.parameterAssignmentNodes) {
-
-            // Evaluate expression in original scope
-            yield
-            const result = yield* node.expressionNode.evaluate(scope)
-            if (result === undefined) {
-                throw {error: 'Result of expression is undefined', node: node.expressionNode}
-            }
-            if (result.type !== Result.Type.Expression) {
-                throw {error: 'Expected expression', node: node.expressionNode}
-            }
-
-            // Assign variable in new scope
-            const variable = new Variable(node.variableName, result.value)
-            classScope.setVariableInOwnScope(variable)
-        }
-    }
-
     registerUpdatableObject(object) {
         let updatable = false
 
@@ -697,7 +698,7 @@ export class ArithmeticNode extends ExpressionNode {
         this.arithmeticToken = arithmeticToken
         this.rightSideExpressionNode = rightSideExpressionNode
 
-        if (this.leftSideExpressionNode === undefined || this.rightSideExpressionNode === undefined) {
+        if (this.rightSideExpressionNode === undefined) {
             throw {error: 'Expected expression', node: this}
         }
     }
@@ -712,13 +713,17 @@ export class ArithmeticNode extends ExpressionNode {
         }
 
         // Evaluate left side of expression
-        yield
-        const leftSideResult = yield* this.leftSideExpressionNode.evaluate(scope)
-        if (leftSideResult === undefined) {
-            throw {error: 'Result of left side expression is undefined', node: this.leftSideExpressionNode}
-        }
-        if (leftSideResult.type !== Result.Type.Expression) {
-            throw {error: 'Expected expression', node: this.leftSideExpressionNode}
+        let leftSideResult = undefined
+
+        if (this.leftSideExpressionNode !== undefined) {
+            yield
+            leftSideResult = yield* this.leftSideExpressionNode.evaluate(scope)
+            if (leftSideResult === undefined) {
+                throw {error: 'Result of left side expression is undefined', node: this.leftSideExpressionNode}
+            }
+            if (leftSideResult.type !== Result.Type.Expression) {
+                throw {error: 'Expected expression', node: this.leftSideExpressionNode}
+            }
         }
 
         // Evaluate right side of expression
@@ -732,8 +737,14 @@ export class ArithmeticNode extends ExpressionNode {
         }
 
         // Perform arithmetic operation
-        const arithmeticsResult = Arithmetics.performOperation(this.arithmeticToken, leftSideResult.value, rightSideResult.value)
-        return new Result(arithmeticsResult, Result.Type.Expression)
+        try {
+            const arithmeticsResult = Arithmetics.performOperation(this.arithmeticToken, leftSideResult !== undefined ? leftSideResult.value : undefined, rightSideResult.value)
+            return new Result(arithmeticsResult, Result.Type.Expression)
+        } catch (e) {
+            e.node = this
+            e.token = this.tokens[0]
+            throw e
+        }
     }
 
     *performObjectOperation(scope) {
@@ -882,10 +893,9 @@ export class BehaviourNode extends Node {
     }
 }
 
-export class GetBehaviourNode extends StatementNode {
-    constructor(tokens=[], variableExpressionNode, className) {
+export class GetBehaviourNode extends ExpressionNode {
+    constructor(tokens=[], className) {
         super(tokens)
-        this.variableExpressionNode = variableExpressionNode
         this.className = className
     }
 
@@ -894,17 +904,7 @@ export class GetBehaviourNode extends StatementNode {
         // Find behaviour
         const behaviourObject = scope.resolveBehaviour(this.className)
 
-        const result = new Result(new Constant(behaviourObject), Result.Type.Expression)
-
-        // Evaluate assignment
-        if (this.variableExpressionNode !== undefined) {
-            this.assignmentNode = new AssignmentNode(this.variableExpressionNode.tokens, this.variableExpressionNode, new ConstantNode(this.tokens, result.value))
-
-            yield
-            yield* this.assignmentNode.evaluate(scope)
-        }
-
-        return result
+        return new Result(new Constant(behaviourObject), Result.Type.Expression)
     }
 }
 
@@ -1000,39 +1000,27 @@ export class WaitForUpdateNode extends StatementNode {
     }
 }
 
-export class LoadSpriteNode extends StatementNode {
-    constructor(tokens=[], variableExpressionNode, expressionNode) {
+export class LoadSpriteNode extends ExpressionNode {
+    constructor(tokens=[], expressionNode) {
         super(tokens)
-        this.variableExpressionNode = variableExpressionNode
         this.expressionNode = expressionNode
 
         this.newObjectNode = new NewObjectNode(undefined, "Sprite", new ParameterListNode(this.tokens, []))
-        this.assignmentNode = undefined
-        if (this.variableExpressionNode !== undefined) {
-            this.assignmentNode = new AssignmentNode(this.variableExpressionNode.tokens, this.variableExpressionNode, this.newObjectNode)
-        }
         this.loadNode = new FunctionCallNode(this.tokens, "load", new ParameterListNode(this.tokens, [new ParameterAssignmentNode(expressionNode.tokens, "filename", this.expressionNode)]))
     }
 
     *evaluate(scope) {
 
-        // Evaluate assignment
+        // Evaluate new object node
         yield
-        const node = this.assignmentNode || this.newObjectNode
-        const result = yield* node.evaluate(scope)
+        const result = yield* this.newObjectNode.evaluate(scope)
+
+        if (!(result.value instanceof Constant) || result.value.type !== Constant.Type.ObjectInstance) {
+            throw {error: 'Expected object', node: this.newObjectNode}
+        }
 
         // Get object scope
-        let objectScope = undefined
-
-        if (result.value instanceof Variable && result.value.value() instanceof Constant && result.value.value().type === Constant.Type.ObjectInstance) {
-            objectScope = result.value.value().value().scope
-        }
-        if (result.value instanceof Constant && result.value.value().type === Constant.Type.ObjectInstance) {
-            objectScope = result.value.value().scope
-        }
-        if (objectScope === undefined) {
-            throw {error: 'Expected object', node: node}
-        }
+        const objectScope = result.value.value().scope
 
         // Evaluate load
         yield

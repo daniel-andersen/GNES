@@ -1,20 +1,20 @@
 Class Position
-    Property x
-    Property y
+    Property x = 0
+    Property y = 0
 End
 
 Class Size
-    Property width
-    Property height
+    Property width = 0
+    Property height = 0
 End
 
 Class Vector2D
-    Property x
-    Property y
+    Property x = 0
+    Property y = 0
 End
 
 Class Vector3D
-    Property x
-    Property y
-    Property z
+    Property x = 0
+    Property y = 0
+    Property z = 0
 End
