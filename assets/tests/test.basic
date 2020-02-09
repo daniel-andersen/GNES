@@ -3,8 +3,6 @@ Class Hero Of Type Sprite
     Behaviour gravity Of Type Gravity
     Behaviour movement Of Type Movement
 
-    Property speed = 8.0
-
     Constructor
         load(filename="./assets/sprites/hero.png")
         show()
