@@ -560,6 +560,9 @@ export class NewObjectNode extends ExpressionNode {
         // Create instance of class
         const object = new ObjectInstance(classNode)
 
+        // Define all properties
+        this.defineProperties(object)
+
         // Evaluate parameters to constructor
         yield
         yield* this.evaluateParameters(scope, object.scope)
@@ -580,6 +583,19 @@ export class NewObjectNode extends ExpressionNode {
         this.registerUpdatableObject(object)
 
         return new Result(new Constant(object), Result.Type.Expression)
+    }
+
+    defineProperties(object) {
+        for (let objectScope of object.scopes) {
+            for (let propertyNode of objectScope.classNode.propertyNodes) {
+                for (let node of propertyNode.parameterDefinitionsNode.nodes) {
+
+                    // Assign variable in own scope
+                    const variable = new Variable(node.variableName, new Constant(undefined))
+                    objectScope.setVariable(variable)
+                }
+            }
+        }
     }
 
     *evaluateParameters(scope, classScope) {
@@ -656,6 +672,21 @@ export class NewObjectNode extends ExpressionNode {
                 // Add to object behaviours
                 const behaviourObject = result.value.value()
                 objectScope.setBehaviour(behaviourObject)
+            }
+        }
+
+        // Evaluate referenced behaviours in behaviours
+        for (let objectScope of object.scopes) {
+
+            // Evaluate all behaviours
+            for (let behaviourNode of objectScope.classNode.behaviourNodes) {
+
+                // Get behaviour object
+                const behaviourObject = objectScope.resolveBehaviour(behaviourNode.className)
+
+                // Evaluate referenced behaviours in this object
+                yield
+                yield* behaviourNode.evaluateReferencedBehaviours(behaviourObject)
             }
         }
     }
@@ -880,6 +911,21 @@ export class BehaviourNode extends Node {
         }
     }
 
+    *evaluateReferencedBehaviours(object) {
+
+        // Evaluate all inherited scopes
+        for (let objectScope of object.scopes) {
+
+            // Evaluate all referenced behaviours
+            for (let behaviourNode of objectScope.classNode.referencedBehaviourNodes) {
+
+                // Evaluate referenced behaviour
+                yield
+                yield* behaviourNode.evaluate(objectScope)
+            }
+        }
+    }
+
     *evaluateConstructors(object) {
 
         // Evaluate all inherited constructors, but in new object's own scope
@@ -893,6 +939,35 @@ export class BehaviourNode extends Node {
     }
 }
 
+export class ReferencedBehaviourNode extends Node {
+    constructor(tokens=[], variableName, className, required) {
+        super(tokens)
+        this.variableName = variableName
+        this.className = className
+        this.getBehaviourNode = new GetBehaviourNode(this.tokens, className)
+        this.assignmentNode = new AssignmentNode(this.tokens, new ConstantNode([], new Constant(variableName)), this.getBehaviourNode)
+        this.required = required
+    }
+
+    *evaluate(scope) {
+
+        // Define variable
+        scope.setVariableInOwnScope(new Variable(this.variableName, new Constant(undefined)))
+
+        // Evaluate assignment node
+        yield
+        yield *this.assignmentNode.evaluate(scope)
+
+        // Make sure it has been set if required
+        if (this.required) {
+            const variable = scope.resolveVariableInOwnScope(this.variableName)
+            if (variable === undefined || variable.value().type === Constant.Type.None) {
+                throw {error: 'Required behaviour ' + this.className + ' not found in object', node: this}
+            }
+        }
+    }
+}
+
 export class GetBehaviourNode extends ExpressionNode {
     constructor(tokens=[], className) {
         super(tokens)
@@ -900,8 +975,6 @@ export class GetBehaviourNode extends ExpressionNode {
     }
 
     *evaluate(scope) {
-
-        // Find behaviour
         const behaviourObject = scope.resolveBehaviour(this.className)
 
         return new Result(new Constant(behaviourObject), Result.Type.Expression)

@@ -26,8 +26,6 @@ export default class Language {
             'Minus': 16,
             'Multiply': 17,
             'Divide': 18,
-            'True': 19,
-            'False': 20,
             'Assignment': 21,
             'ParenthesisStart': 22,
             'ParenthesisEnd': 23,
@@ -37,7 +35,6 @@ export default class Language {
             'Comma': 27,
             'Dot': 28,
             'New': 29,
-            'None': 30,
         }
 
         this.tokenTypes = {
@@ -57,8 +54,6 @@ export default class Language {
             '-': this.tokenType.Minus,
             '*': this.tokenType.Multiply,
             '/': this.tokenType.Divide,
-            'True': this.tokenType.True,
-            'False': this.tokenType.False,
             '=': this.tokenType.Assignment,
             '(': this.tokenType.ParenthesisStart,
             ')': this.tokenType.ParenthesisEnd,
@@ -67,7 +62,6 @@ export default class Language {
             ',': this.tokenType.Comma,
             '.': this.tokenType.Dot,
             'New': this.tokenType.New,
-            'None': this.tokenType.None,
         }
 
         this.arithmeticTokens = [
@@ -449,6 +443,30 @@ export default class Language {
                     {type: "name", id: "className"},
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.BehaviourNode(tokens, sourceTree.getConstantNameWithId(nodes, 'name'), sourceTree.getConstantNameWithId(nodes, 'className'))
+            },
+            {
+                name: 'RequiredBehaviour',
+                match: [
+                    {type: "token", token: "Required"},
+                    {type: "token", token: "Behaviour"},
+                    {type: "variable", id: 'name'},
+                    {type: "token", token: "Of"},
+                    {type: "token", token: "Type"},
+                    {type: "name", id: "className"},
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.ReferencedBehaviourNode(tokens, sourceTree.getConstantNameWithId(nodes, 'name'), sourceTree.getConstantNameWithId(nodes, 'className'), true)
+            },
+            {
+                name: 'OptionalBehaviour',
+                match: [
+                    {type: "token", token: "Optional"},
+                    {type: "token", token: "Behaviour"},
+                    {type: "variable", id: 'name'},
+                    {type: "token", token: "Of"},
+                    {type: "token", token: "Type"},
+                    {type: "name", id: "className"},
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.ReferencedBehaviourNode(tokens, sourceTree.getConstantNameWithId(nodes, 'name'), sourceTree.getConstantNameWithId(nodes, 'className'), false)
             },
             {
                 name: 'Constructor',

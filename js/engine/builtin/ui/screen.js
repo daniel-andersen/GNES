@@ -7,7 +7,6 @@ export class Screen {
     static *initialize(scope) {
         const classScope = Builtin.resolveClassScope(scope)
 
-        console.log(Builtin.config().size)
         classScope.screen = {
             width: Builtin.config().size.width,
             height: Builtin.config().size.height,

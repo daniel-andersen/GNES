@@ -744,7 +744,9 @@ export class SourceTree {
         classNode.propertyNodes = []
         classNode.sharedPropertyNodes = []
         classNode.behaviourNodes = []
+        classNode.referencedBehaviourNodes = []
 
+        // First pass
         for (let node of classNode.contentNode.nodes) {
             if (node instanceof Node.SharedPropertyNode) {
                 this.registerSharedProperty(classNode, node)
@@ -757,6 +759,9 @@ export class SourceTree {
             }
             else if (node instanceof Node.BehaviourNode) {
                 this.registerBehaviour(classNode, node)
+            }
+            else if (node instanceof Node.ReferencedBehaviourNode) {
+                this.registerReferencedBehaviour(classNode, node)
             }
             else if (node instanceof Node.ConstructorNode) {
                 this.registerConstructor(classNode, node, classNode.scope)
@@ -783,7 +788,17 @@ export class SourceTree {
     }
 
     registerBehaviour(classNode, behaviourNode) {
+        if (classNode instanceof Node.BehaviourDefinitionNode) {
+            throw {error: 'Behaviours can only be used in classes', node: behaviourNode}
+        }
         classNode.behaviourNodes.push(behaviourNode)
+    }
+
+    registerReferencedBehaviour(classNode, behaviourNode) {
+        if (!(classNode instanceof Node.BehaviourDefinitionNode)) {
+            throw {error: 'Referenced behaviours can only be used in Behaviour classes', node: behaviourNode}
+        }
+        classNode.referencedBehaviourNodes.push(behaviourNode)
     }
 
     registerConstructor(classNode, constructorNode, scope) {

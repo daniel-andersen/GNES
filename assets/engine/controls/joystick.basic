@@ -14,10 +14,11 @@ Class Joystick
 End
 
 Behaviour Joystick
+    Optional Behaviour movement Of Type Movement
+
     Update
         #Invoke updateBehaviour() In Joystick
 
-        movement = Get Behaviour Movement
         If movement == None Then Return
 
         If Joystick.left Then

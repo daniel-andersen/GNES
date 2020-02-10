@@ -1,4 +1,6 @@
 Behaviour Movement
+    Optional Behaviour gravity Of Type Gravity
+
     Property speed = 10
     Property jumpVelocity = 20
 
@@ -13,7 +15,6 @@ Behaviour Movement
     End
 
     Function moveUp()
-        gravity = Get Behaviour Gravity
         If gravity != None Then
             If velocity.y == 0 Then
                 velocity.y = -jumpVelocity
@@ -24,7 +25,6 @@ Behaviour Movement
     End
 
     Function moveDown()
-        gravity = Get Behaviour Gravity
         If gravity == None Then
             velocity.y = speed
         End
@@ -35,7 +35,7 @@ Behaviour Movement
         y = y + velocity.y
 
         velocity.x = 0
-        If Get Behaviour Gravity == None Then
+        If gravity == None Then
             velocity.y = 0
         End
     End
