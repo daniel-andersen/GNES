@@ -1,0 +1,30 @@
+Behaviour TileMovement Of Type Moveable
+    Incompatible Behaviour Gravity
+
+    Property step = New Vector(x=64, y=64)
+    Property delay = 0.25
+
+    Constructor
+        Invoke initialize() In TileMovement
+    End
+
+    Function moveLeft()
+        Invoke moveLeft() In TileMovement
+    End
+
+    Function moveRight()
+        Invoke moveRight() In TileMovement
+    End
+
+    Function moveUp()
+        Invoke moveUp() In TileMovement
+    End
+
+    Function moveDown()
+        Invoke moveDown() In TileMovement
+    End
+
+    Update
+        Invoke update() In TileMovement
+    End
+End

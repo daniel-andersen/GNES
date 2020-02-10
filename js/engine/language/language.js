@@ -360,11 +360,19 @@ export default class Language {
                 match: [
                     {type: "token", token: "Behaviour"},
                     {type: "name", id: "className"},
+                    {type: "group", required: false, group: {
+                        match: [
+                            {type: "token", token: "Of"},
+                            {type: "token", token: "Type"},
+                            {type: "name", id: "ofTypeName"}
+                        ],
+                        node: (tokens, nodes, sourceTree) => new Node.GroupNode(tokens, nodes)
+                    }},
                     {type: "token", code: this.tokenType.EOL},
                     {type: "subtree", endTokens: ["End"], id: "content"},
                     {type: "token", token: "End"}
                 ],
-                node: (tokens, nodes, sourceTree) => new Node.BehaviourDefinitionNode(tokens, sourceTree.getConstantNameWithId(nodes, 'className'), sourceTree.getNodeWithId(nodes, 'content'))
+                node: (tokens, nodes, sourceTree) => new Node.BehaviourDefinitionNode(tokens, sourceTree.getConstantNameWithId(nodes, 'className'), sourceTree.getConstantNameWithId(nodes, 'ofTypeName'), sourceTree.getNodeWithId(nodes, 'content'))
             },
             {
                 name: 'FunctionDefinition',
@@ -437,7 +445,12 @@ export default class Language {
                 name: 'Behaviour',
                 match: [
                     {type: "token", token: "Behaviour"},
-                    {type: "variable", id: 'name'},
+                    {type: "group", required: false, group: {
+                        match: [
+                            {type: "variable", id: 'name'},
+                        ],
+                        node: (tokens, nodes, sourceTree) => new Node.GroupNode(tokens, nodes)
+                    }},
                     {type: "token", token: "Of"},
                     {type: "token", token: "Type"},
                     {type: "name", id: "className"},
@@ -449,9 +462,14 @@ export default class Language {
                 match: [
                     {type: "token", token: "Required"},
                     {type: "token", token: "Behaviour"},
-                    {type: "variable", id: 'name'},
-                    {type: "token", token: "Of"},
-                    {type: "token", token: "Type"},
+                    {type: "group", required: false, group: {
+                        match: [
+                            {type: "variable", id: 'name'},
+                            {type: "token", token: "Of"},
+                            {type: "token", token: "Type"},
+                        ],
+                        node: (tokens, nodes, sourceTree) => new Node.GroupNode(tokens, nodes)
+                    }},
                     {type: "name", id: "className"},
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.ReferencedBehaviourNode(tokens, sourceTree.getConstantNameWithId(nodes, 'name'), sourceTree.getConstantNameWithId(nodes, 'className'), true)
@@ -461,12 +479,26 @@ export default class Language {
                 match: [
                     {type: "token", token: "Optional"},
                     {type: "token", token: "Behaviour"},
-                    {type: "variable", id: 'name'},
-                    {type: "token", token: "Of"},
-                    {type: "token", token: "Type"},
+                    {type: "group", required: false, group: {
+                        match: [
+                            {type: "variable", id: 'name'},
+                            {type: "token", token: "Of"},
+                            {type: "token", token: "Type"},
+                        ],
+                        node: (tokens, nodes, sourceTree) => new Node.GroupNode(tokens, nodes)
+                    }},
                     {type: "name", id: "className"},
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.ReferencedBehaviourNode(tokens, sourceTree.getConstantNameWithId(nodes, 'name'), sourceTree.getConstantNameWithId(nodes, 'className'), false)
+            },
+            {
+                name: 'IncompatibleBehaviour',
+                match: [
+                    {type: "token", token: "Incompatible"},
+                    {type: "token", token: "Behaviour"},
+                    {type: "name", id: "className"},
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.IncompatibleBehaviourNode(tokens, sourceTree.getConstantNameWithId(nodes, 'className'))
             },
             {
                 name: 'Constructor',

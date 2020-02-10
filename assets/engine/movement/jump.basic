@@ -1,0 +1,6 @@
+Behaviour Jump
+    Required Behaviour Moveable
+    Required Behaviour Gravity
+
+    Property velocity = 25
+End

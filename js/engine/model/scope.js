@@ -12,7 +12,6 @@ export class Scope {
         this.updateObjects = {}
         this.updateClasses = []
         this.behaviourObjects = []
-        this.behaviourObjectsMapping = {}
     }
 
     clone() {
@@ -24,7 +23,6 @@ export class Scope {
         scope.updateObjects = Object.assign({}, this.updateObjects)
         scope.updateClasses = this.updateClasses.slice(0)
         scope.behaviourObjects = this.behaviourObjects.slice(0)
-        scope.behaviourObjectsMapping = Object.assign({}, this.behaviourObjectsMapping)
         return scope
     }
 
@@ -37,7 +35,6 @@ export class Scope {
         scope.updateObjects = this.updateObjects
         scope.updateClasses = this.updateClasses
         scope.behaviourObjects = this.behaviourObjects
-        scope.behaviourObjectsMapping = this.behaviourObjectsMapping
         return scope
     }
 
@@ -103,6 +100,25 @@ export class Scope {
 
         // Variable set in this scope
         return name in this.variables ? this.variables[name] : undefined
+    }
+
+    resolveVariableScope(name) {
+        /*
+        Resolves the scope for a given variable.
+        */
+
+        // Variable set in this scope
+        if (name in this.variables) {
+            return this
+        }
+
+        // Resolve in parent scope
+        if (this.parentScope !== undefined) {
+            return this.parentScope.resolveVariableScope(name)
+        }
+
+        // Not found
+        return undefined
     }
 
     setFunction(functionNode) {
@@ -178,7 +194,6 @@ export class Scope {
 
         // Create new behaviour object in current scope
         this.behaviourObjects.push(behaviourObject)
-        this.behaviourObjectsMapping[behaviourObject.classNode.className] = behaviourObject
     }
 
     resolveBehaviour(className) {
@@ -187,8 +202,10 @@ export class Scope {
         */
 
         // Behaviour set in this scope
-        if (className in this.behaviourObjectsMapping) {
-            return this.behaviourObjectsMapping[className]
+        for (let behaviourObject of this.behaviourObjects) {
+            if (behaviourObject.classNode.instanceOf(className)) {
+                return behaviourObject
+            }
         }
 
         // Resolve in parent scope

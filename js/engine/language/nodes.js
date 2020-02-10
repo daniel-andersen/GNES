@@ -117,7 +117,6 @@ export class AssignmentNode extends StatementNode {
         if (this.variableExpressionNode !== undefined) {
             const variableResult = yield* this.variableExpressionNode.evaluate(scope)
             if (variableResult === undefined || variableResult.value === undefined || typeof(variableResult.value.value) !== typeof(Function)) {
-                console.log(variableResult)
                 throw {error: 'Left side expression did not evaluate to an object', node: this.variableExpressionNode}
             }
             variableScope = undefined
@@ -842,15 +841,15 @@ export class ClassNode extends Node {
 }
 
 export class BehaviourDefinitionNode extends ClassNode {
-    constructor(tokens=[], className, contentNode) {
-        super(tokens, className, undefined, contentNode)
+    constructor(tokens=[], className, ofTypeName, contentNode) {
+        super(tokens, className, ofTypeName, contentNode)
     }
 }
 
 export class BehaviourNode extends Node {
     constructor(tokens=[], variableName, className) {
         super(tokens)
-        this.variableName = variableName
+        this.variableName = variableName || ('___' + className)
         this.className = className
         this.newObjectNode = new NewObjectNode(this.tokens, className, new ParameterListNode([], []))
         this.assignmentNode = new AssignmentNode(this.tokens, new ConstantNode([], new Constant(variableName)), this.newObjectNode)
@@ -945,25 +944,62 @@ export class ReferencedBehaviourNode extends Node {
         this.variableName = variableName
         this.className = className
         this.getBehaviourNode = new GetBehaviourNode(this.tokens, className)
-        this.assignmentNode = new AssignmentNode(this.tokens, new ConstantNode([], new Constant(variableName)), this.getBehaviourNode)
+        this.assignmentNode = variableName !== undefined ? new AssignmentNode(this.tokens, new ConstantNode([], new Constant(variableName)), this.getBehaviourNode) : undefined
         this.required = required
     }
 
     *evaluate(scope) {
+        let behaviourObject = undefined
 
-        // Define variable
-        scope.setVariableInOwnScope(new Variable(this.variableName, new Constant(undefined)))
+        // Assignment
+        if (this.assignmentNode !== undefined) {
 
-        // Evaluate assignment node
-        yield
-        yield *this.assignmentNode.evaluate(scope)
+            // Define variable
+            scope.setVariableInOwnScope(new Variable(this.variableName, new Constant(undefined)))
 
-        // Make sure it has been set if required
-        if (this.required) {
+            // Evaluate assignment node
+            yield
+            yield *this.assignmentNode.evaluate(scope)
+
+            // Get behaviour object from variable
             const variable = scope.resolveVariableInOwnScope(this.variableName)
-            if (variable === undefined || variable.value().type === Constant.Type.None) {
+
+            behaviourObject = variable !== undefined ? variable.value() : undefined
+        }
+
+        // Get behaviour object
+        else {
+            yield
+            const result = yield *this.getBehaviourNode.evaluate(scope)
+
+            behaviourObject = result !== undefined ? result.value : undefined
+        }
+
+        // Make sure behaviour has been set if required
+        if (this.required) {
+            if (behaviourObject === undefined || behaviourObject.type !== Constant.Type.ObjectInstance) {
                 throw {error: 'Required behaviour ' + this.className + ' not found in object', node: this}
             }
+        }
+    }
+}
+
+export class IncompatibleBehaviourNode extends Node {
+    constructor(tokens=[], className) {
+        super(tokens)
+        this.className = className
+        this.getBehaviourNode = new GetBehaviourNode(this.tokens, className)
+    }
+
+    *evaluate(scope) {
+
+        // Evaluate get behaviour node
+        yield
+        const result = yield *this.getBehaviourNode.evaluate(scope)
+
+        // Make sure behaviour is undefined
+        if (result.value !== undefined && result.value.type !== Constant.Type.None) {
+            throw {error: 'Incompatible behaviour ' + this.className + ' found in object', node: this}
         }
     }
 }

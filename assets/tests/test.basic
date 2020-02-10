@@ -1,7 +1,9 @@
 Class Hero Of Type Sprite
-    Behaviour joystick Of Type Joystick
-    Behaviour gravity Of Type Gravity
     Behaviour movement Of Type Movement
+    Behaviour Of Type Joystick
+    Behaviour Of Type Gravity
+    Behaviour Of Type AirDrag
+    Behaviour Of Type Jump
 
     Constructor
         load(filename="./assets/sprites/hero.png")
@@ -17,29 +19,27 @@ Class Hero Of Type Sprite
 End
 
 Class Monster Of Type Sprite
-    Property direction = New Direction(x=1, y=1)
+    Behaviour movement Of Type Movement
+
     Property speed = 4.0
 
     Constructor
         load(filename="./assets/sprites/monster.png")
         show()
-        x = 300
-        y = 300
+        movement.velocity = New Vector(x=speed, y=speed)
     End
 
     Update
-        x = x + Screen.frameSpeed * direction.x * speed
-        If x < 0 Then direction.x = 1
-        If x > Screen.width Then direction.x = -1
+        If x < 0 Then movement.velocity.x = speed
+        If x > Screen.width Then movement.velocity.x = -speed
 
-        y = y + Screen.frameSpeed * direction.y * speed
-        If y < 0 Then direction.y = 1
-        If y > Screen.height Then direction.y = -1
+        If y < 0 Then movement.velocity.y = speed
+        If y > Screen.height Then movement.velocity.y = -speed
     End
 End
 
-monster1 = New Monster(speed=4.0)
-monster2 = New Monster(speed=6.0)
+monster1 = New Monster(x=100, y=200, speed=4.0)
+monster2 = New Monster(x=700, y=500, speed=6.0)
 hero = New Hero(x=200, y=0)
 
 Function followHero()

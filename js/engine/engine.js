@@ -12,7 +12,9 @@ import { Screen } from './builtin/ui/screen'
 import { Sprite } from './builtin/ui/sprite'
 import { Joystick } from './builtin/controls/joystick'
 import { Gravity } from './builtin/physics/gravity'
-import { Movement } from './builtin/physics/movement'
+import { AirDrag } from './builtin/physics/air-drag'
+import { Movement } from './builtin/movement/movement'
+import { TileMovement } from './builtin/movement/tile-movement'
 import * as Phaser from 'phaser'
 
 export default class Engine {
@@ -22,7 +24,9 @@ export default class Engine {
             Sprite: Sprite,
             Joystick: Joystick,
             Gravity: Gravity,
+            AirDrag: AirDrag,
             Movement: Movement,
+            TileMovement: TileMovement,
         }
         this.builtinFiles = [
             "./assets/engine/ui/position.basic",
@@ -30,7 +34,11 @@ export default class Engine {
             "./assets/engine/ui/sprite.basic",
             "./assets/engine/controls/joystick.basic",
             "./assets/engine/physics/gravity.basic",
-            "./assets/engine/physics/movement.basic",
+            "./assets/engine/physics/air-drag.basic",
+            "./assets/engine/movement/moveable.basic",
+            "./assets/engine/movement/movement.basic",
+            "./assets/engine/movement/tile-movement.basic",
+            "./assets/engine/movement/jump.basic",
         ]
 
         this.runCallback = undefined

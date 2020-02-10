@@ -86,7 +86,15 @@ export class SourceTree {
             }
         }
 
+        // Register extending behaviours
+        for (let behaviourName of Object.keys(programNode.scope.behaviourDefinitions)) {
+            const behaviourNode = programNode.scope.resolveBehaviourDefinition(behaviourName)
+            if (behaviourNode.ofTypeName !== undefined) {
+                this.registerExtendingBehaviour(behaviourNode, programNode.scope)
+            }
+        }
         // Reset misc
+
         programNode.scope.onUpdateCallbacks = []
     }
 
@@ -763,6 +771,9 @@ export class SourceTree {
             else if (node instanceof Node.ReferencedBehaviourNode) {
                 this.registerReferencedBehaviour(classNode, node)
             }
+            else if (node instanceof Node.IncompatibleBehaviourNode) {
+                this.registerIncompatibleBehaviour(classNode, node)
+            }
             else if (node instanceof Node.ConstructorNode) {
                 this.registerConstructor(classNode, node, classNode.scope)
             }
@@ -801,6 +812,13 @@ export class SourceTree {
         classNode.referencedBehaviourNodes.push(behaviourNode)
     }
 
+    registerIncompatibleBehaviour(classNode, behaviourNode) {
+        if (!(classNode instanceof Node.BehaviourDefinitionNode)) {
+            throw {error: 'Incompatible behaviours can only be used in Behaviour classes', node: behaviourNode}
+        }
+        classNode.referencedBehaviourNodes.push(behaviourNode)
+    }
+
     registerConstructor(classNode, constructorNode, scope) {
         if (scope.resolveFunction('_constructor') !== undefined) {
             throw {error: 'Constructor already defined in this class', node: node}
@@ -835,5 +853,15 @@ export class SourceTree {
 
         classNode.scope.parentScope = extendedClassNode.scope
         classNode.parentClass = extendedClassNode
+    }
+
+    registerExtendingBehaviour(behaviourNode, globalScope) {
+        const extendedBehaviourNode = globalScope.resolveBehaviourDefinition(behaviourNode.ofTypeName)
+        if (extendedBehaviourNode === undefined) {
+            throw {error: 'Behaviour of type "' + behaviourNode.ofTypeName + '" not found', node: behaviourNode}
+        }
+
+        behaviourNode.scope.parentScope = extendedBehaviourNode.scope
+        behaviourNode.parentClass = extendedBehaviourNode
     }
 }

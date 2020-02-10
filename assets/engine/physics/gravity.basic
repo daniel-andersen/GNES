@@ -1,10 +1,9 @@
 Behaviour Gravity
+    Required Behaviour moveable Of Type Moveable
+
     Property drag = 9.806
 
     Update
-        movement = Get Behaviour Movement
-        If movement != None Then
-            movement.velocity.y = movement.velocity.y + (drag * Screen.frameSpeed / 10.0)
-        End
+        Invoke update() In Gravity
     End
 End

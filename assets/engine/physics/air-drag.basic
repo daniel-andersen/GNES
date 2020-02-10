@@ -1,0 +1,18 @@
+Behaviour AirDrag
+    Required Behaviour moveable Of Type Moveable
+    Optional Behaviour gravity Of Type Gravity
+
+    Property drag = 30.0
+
+    Update
+        effectiveDrag = 1 - ((drag / 100) * Screen.frameSpeed)
+        If effectiveDrag < 0 Then
+            effectiveDrag = 0
+        End
+
+        moveable.velocity.x = moveable.velocity.x * effectiveDrag
+        If gravity == None Then
+            moveable.velocity.y = moveable.velocity.y * effectiveDrag
+        End
+    End
+End

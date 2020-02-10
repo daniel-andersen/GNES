@@ -1,8 +1,8 @@
-Behaviour Movement
+Behaviour Movement Of Type Moveable
     Optional Behaviour gravity Of Type Gravity
+    Optional Behaviour jump Of Type Jump
 
     Property speed = 10
-    Property jumpVelocity = 20
 
     Property velocity = New Vector()
 
@@ -15,12 +15,11 @@ Behaviour Movement
     End
 
     Function moveUp()
-        If gravity != None Then
-            If velocity.y == 0 Then
-                velocity.y = -jumpVelocity
-            End
-        Else
+        If gravity == None Then
             velocity.y = -speed
+        End
+        If jump != None And velocity.y == 0 Then
+            velocity.y = -jump.velocity
         End
     End
 
@@ -31,12 +30,7 @@ Behaviour Movement
     End
 
     Update
-        x = x + velocity.x
-        y = y + velocity.y
-
-        velocity.x = 0
-        If gravity == None Then
-            velocity.y = 0
-        End
+        x = x + (velocity.x * Screen.frameSpeed)
+        y = y + (velocity.y * Screen.frameSpeed)
     End
 End

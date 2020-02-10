@@ -31,6 +31,10 @@ export class Builtin {
         return scope.resolveClass(name)
     }
 
+    static resolveVariableScope(scope, name) {
+        return scope.resolveVariableScope(name)
+    }
+
     static resolveFunctionScope(scope) {
         return scope.resolveScope(Scope.Type.Function)
     }

@@ -14,25 +14,23 @@ Class Joystick
 End
 
 Behaviour Joystick
-    Optional Behaviour movement Of Type Movement
+    Required Behaviour moveable Of Type Moveable
 
     Update
         #Invoke updateBehaviour() In Joystick
 
-        If movement == None Then Return
-
         If Joystick.left Then
-            movement.moveLeft()
+            moveable.moveLeft()
         End
         If Joystick.right Then
-            movement.moveRight()
+            moveable.moveRight()
         End
 
         If Joystick.up Then
-            movement.moveUp()
+            moveable.moveUp()
         End
         If Joystick.down Then
-            movement.moveDown()
+            moveable.moveDown()
         End
     End
 End

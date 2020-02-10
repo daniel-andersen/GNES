@@ -1,0 +1,13 @@
+Behaviour Moveable
+    Function moveLeft()
+    End
+
+    Function moveRight()
+    End
+
+    Function moveUp()
+    End
+
+    Function moveDown()
+    End
+End
