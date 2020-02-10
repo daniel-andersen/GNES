@@ -5,6 +5,10 @@ export class Builtin {
         return window.game.phaser.scene
     }
 
+    static config() {
+        return window.game.phaser.config
+    }
+
     static group(type) {
         return window.game.phaser.groups[type]
     }

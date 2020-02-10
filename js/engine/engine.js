@@ -16,11 +16,13 @@ import { Movement } from './builtin/physics/movement'
 import * as Phaser from 'phaser'
 
 export default class Engine {
-    constructor() {
+    constructor(referenceWidth=1280, referenceHeight=800) {
         this.nativeClasses = {
             Screen: Screen,
             Sprite: Sprite,
             Joystick: Joystick,
+            Gravity: Gravity,
+            Movement: Movement,
         }
         this.builtinFiles = [
             "./assets/engine/ui/position.basic",
@@ -35,6 +37,9 @@ export default class Engine {
         this.stopCallback = undefined
         this.pauseCallback = undefined
         this.resumeCallback = undefined
+
+        this.referenceWidth = referenceWidth
+        this.referenceHeight = referenceHeight
     }
 
     async run(filenames=[], texts=[]) {
@@ -224,17 +229,15 @@ export default class Engine {
             const gameConfig = {
                 title: 'GNES',
                 type: Phaser.AUTO,
-                width: '100%',
-                height: '100%',
-                physics: {
-                    default: 'arcade',
-                    arcade: {
-                        debug: true,
-                    },
-                },
                 parent: 'gnes',
                 transparent: false,
                 backgroundColor: '#000000',
+                scale: {
+                    mode: Phaser.Scale.FIT,
+                    autoCenter: Phaser.Scale.CENTER_BOTH,
+                    width: this.referenceWidth,
+                    height: this.referenceHeight
+                },
                 scene: {
                     create: function() {
                         window.game.phaser.scene = this
@@ -252,6 +255,14 @@ export default class Engine {
         })
 
         await promise
+
+        // Add config
+        window.game.phaser.config = {
+            size: {
+                width: this.referenceWidth,
+                height: this.referenceHeight
+            }
+        }
 
         // Add default groups
         window.game.phaser.groups = {
