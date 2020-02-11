@@ -454,14 +454,17 @@ export class FunctionCallNode extends ExpressionNode {
         this.parameterListNode = parameterListNode
     }
 
-    *evaluate(scope) {
+    *evaluate(scope, parameterEvaluationScope) {
+
+        // Setup parameter evaluate scope
+        parameterEvaluationScope = parameterEvaluationScope || scope
 
         // Create new function scope
         const functionScope = new Scope(scope, Scope.Type.Function)
 
         // Evaluate parameters
         yield
-        yield* this.evaluateParameters(scope, functionScope)
+        yield* this.evaluateParameters(parameterEvaluationScope, functionScope)
 
         // Resolve function
         const functionNode = scope.resolveFunction(this.functionName)
@@ -733,12 +736,15 @@ export class ArithmeticNode extends ExpressionNode {
         }
     }
 
-    *evaluate(scope) {
+    *evaluate(scope, callerScope=undefined) {
+
+        // Setup caller scope
+        callerScope = callerScope || scope
 
         // Check if object scoping
         if (this.arithmeticToken.token == '.') {
             yield
-            const result = yield* this.performObjectOperation(scope)
+            const result = yield* this.performObjectOperation(scope, callerScope)
             return result
         }
 
@@ -777,11 +783,11 @@ export class ArithmeticNode extends ExpressionNode {
         }
     }
 
-    *performObjectOperation(scope) {
+    *performObjectOperation(scope, callerScope) {
 
         // Evaluate left side of expression
-        yield
-        const leftSideResult = yield* this.leftSideExpressionNode.evaluate(scope)
+        const leftSideResult = yield* this.evaluateObjectExpression(this.leftSideExpressionNode, scope, callerScope)
+
         if (leftSideResult === undefined) {
             throw {error: 'Result of left side expression is undefined', node: this.leftSideExpressionNode}
         }
@@ -789,6 +795,7 @@ export class ArithmeticNode extends ExpressionNode {
             throw {error: 'Expected expression', node: this.leftSideExpressionNode}
         }
 
+        // Get object scope
         let objectScope = undefined
 
         const value = leftSideResult.value
@@ -802,11 +809,25 @@ export class ArithmeticNode extends ExpressionNode {
             throw {error: 'Left side expression did not evaluate to an object', node: this.leftSideExpressionNode}
         }
 
-        // Evaluate right side of expression - in object scope
-        yield
-        const rightSideResult = yield* this.rightSideExpressionNode.evaluate(objectScope)
-
+        // Evaluate right side of expression
+        const rightSideResult = yield* this.evaluateObjectExpression(this.rightSideExpressionNode, objectScope, callerScope)
         return rightSideResult
+    }
+
+    *evaluateObjectExpression(node, objectScope, callerScope) {
+        yield
+        if (node instanceof FunctionCallNode) {
+            const rightSideResult = yield* node.evaluate(objectScope, callerScope)
+            return rightSideResult
+        }
+        else if (node instanceof ArithmeticNode) {
+            const rightSideResult = yield* node.evaluate(objectScope, callerScope)
+            return rightSideResult
+        }
+        else {
+            const rightSideResult = yield* node.evaluate(objectScope)
+            return rightSideResult
+        }
     }
 }
 
@@ -1133,7 +1154,7 @@ export class LoadSpriteNode extends ExpressionNode {
 
         // Evaluate load
         yield
-        yield* this.loadNode.evaluate(objectScope)
+        yield* this.loadNode.evaluate(objectScope, scope)
 
         return result
     }
@@ -1182,6 +1203,36 @@ export class HideSpriteNode extends StatementNode {
         // Evaluate function call to sprite.show()
         yield
         yield* this.hideNode.evaluate(result.value.value().scope)
+    }
+}
+
+export class LoadTilemapNode extends ExpressionNode {
+    constructor(tokens=[], tilemapNode) {
+        super(tokens)
+        this.tilemapNode = tilemapNode
+
+        this.newObjectNode = new NewObjectNode(undefined, "Tilemap", new ParameterListNode(this.tokens, []))
+        this.loadNode = new FunctionCallNode(this.tokens, "load", new ParameterListNode(this.tokens, [new ParameterAssignmentNode(tilemapNode.tokens, "filename", this.tilemapNode)]))
+    }
+
+    *evaluate(scope) {
+
+        // Evaluate new object node
+        yield
+        const result = yield* this.newObjectNode.evaluate(scope)
+
+        if (!(result.value instanceof Constant) || result.value.type !== Constant.Type.ObjectInstance) {
+            throw {error: 'Expected object', node: this.newObjectNode}
+        }
+
+        // Get object scope
+        const objectScope = result.value.value().scope
+
+        // Evaluate load
+        yield
+        yield* this.loadNode.evaluate(objectScope, scope)
+
+        return result
     }
 }
 

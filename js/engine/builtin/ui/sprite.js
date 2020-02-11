@@ -23,7 +23,7 @@ export class Sprite {
         // Resolve filename
         const filenameConstant = Builtin.resolveParameter(scope, 'filename')
         if (filenameConstant === undefined) {
-            throw new Error('"Filename" not given as parameter.')
+            throw new Error('"filename" not given as parameter.')
         }
         const filename = filenameConstant.value()
 

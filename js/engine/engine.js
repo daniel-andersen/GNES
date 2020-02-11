@@ -10,6 +10,7 @@ import { Error } from './model/error'
 import Util from './util/util'
 import { Screen } from './builtin/ui/screen'
 import { Sprite } from './builtin/ui/sprite'
+import { Tilemap } from './builtin/ui/tilemap'
 import { Joystick } from './builtin/controls/joystick'
 import { Gravity } from './builtin/physics/gravity'
 import { AirDrag } from './builtin/physics/air-drag'
@@ -22,6 +23,7 @@ export default class Engine {
         this.nativeClasses = {
             Screen: Screen,
             Sprite: Sprite,
+            Tilemap: Tilemap,
             Joystick: Joystick,
             Gravity: Gravity,
             AirDrag: AirDrag,
@@ -29,16 +31,17 @@ export default class Engine {
             TileMovement: TileMovement,
         }
         this.builtinFiles = [
-            "./assets/engine/ui/position.basic",
-            "./assets/engine/ui/screen.basic",
-            "./assets/engine/ui/sprite.basic",
-            "./assets/engine/controls/joystick.basic",
-            "./assets/engine/physics/gravity.basic",
-            "./assets/engine/physics/air-drag.basic",
-            "./assets/engine/movement/moveable.basic",
-            "./assets/engine/movement/movement.basic",
-            "./assets/engine/movement/tile-movement.basic",
-            "./assets/engine/movement/jump.basic",
+            "/assets/engine/ui/position.basic",
+            "/assets/engine/ui/screen.basic",
+            "/assets/engine/ui/sprite.basic",
+            "/assets/engine/ui/tilemap.basic",
+            "/assets/engine/controls/joystick.basic",
+            "/assets/engine/physics/gravity.basic",
+            "/assets/engine/physics/air-drag.basic",
+            "/assets/engine/movement/moveable.basic",
+            "/assets/engine/movement/movement.basic",
+            "/assets/engine/movement/tile-movement.basic",
+            "/assets/engine/movement/jump.basic",
         ]
 
         this.runCallback = undefined

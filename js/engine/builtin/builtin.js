@@ -1,4 +1,5 @@
 import { Scope } from '../model/scope'
+import Util from '../util/util'
 
 export class Builtin {
     static scene() {
@@ -58,6 +59,28 @@ export class Builtin {
 
     static resolveGlobalScope(scope) {
         return scope.resolveScope(Scope.Type.Global)
+    }
+
+    static *loadJson(filename) {
+        let complete = false
+
+        // Load json
+        let json = undefined
+        try {
+            Util.readJsonFile(filename).then((_json) => {
+                json = _json
+                complete = true
+            })
+        } catch (e) {
+            throw new Error(e)
+        }
+
+        // Wait until completed
+        while (!complete) {
+            yield
+        }
+
+        return json
     }
 }
 

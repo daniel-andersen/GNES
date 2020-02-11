@@ -24,9 +24,21 @@ export default class Util {
                     if (xmlHttpRequest.status === 200 || xmlHttpRequest.status == 0) {
                         resolve(xmlHttpRequest.responseText)
                     }
+                    else {
+                        reject('Failed to load ' + filename)
+                    }
                 }
             }
             xmlHttpRequest.send(null)
+        })
+    }
+
+    static readJsonFile(filename) {
+        return new Promise((resolve, reject) => {
+            Util.readTextFile(filename).then((text) => {
+                const json = JSON.parse(text)
+                resolve(json)
+            })
         })
     }
 }

@@ -139,6 +139,15 @@ export default class Language {
                 node: (tokens, nodes, sourceTree) => new Node.LoadSpriteNode(tokens, sourceTree.getNodeWithId(nodes, 'expression'))
             },
             {
+                name: 'LoadTilemap',
+                match: [
+                    {type: "token", token: "Load"},
+                    {type: "token", token: "Tilemap"},
+                    {type: "expression", id: "tilemap", endTokens: ['With']},
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.LoadTilemapNode(tokens, sourceTree.getNodeWithId(nodes, 'tilemap'))
+            },
+            {
                 name: 'FunctionCall',
                 match: [
                     {type: "variable", id: 'name'},

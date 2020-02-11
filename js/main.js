@@ -6,5 +6,5 @@ document.addEventListener('DOMContentLoaded', () => {
     window.engine = engine
 
     const editor = new Editor(engine)
-    editor.load(['./assets/tests/test.basic'])
+    editor.load(['/assets/tests/test.basic'])
 })
