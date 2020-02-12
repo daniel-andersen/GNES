@@ -588,6 +588,16 @@ export default class Language {
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.AssignmentNode(tokens, sourceTree.getNodeWithId(nodes, 'variableExpression'), sourceTree.getNodeWithId(nodes, 'assignmentExpression'))
             },
+            {
+                name: 'Assert',
+                match: [
+                    {type: "token", token: "Assert"},
+                    {type: "expression", id: "assertExpression", endTokens: ['Else']},
+                    {type: "token", token: "Else"},
+                    {type: "expression", id: "failExpression"},
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.AssertNode(tokens, sourceTree.getNodeWithId(nodes, 'assertExpression'), sourceTree.getNodeWithId(nodes, 'failExpression'))
+            },
         ]
     }
 }

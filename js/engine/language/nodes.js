@@ -1326,6 +1326,28 @@ export class RunFunctionNode extends StatementNode {
     }
 }
 
+export class AssertNode extends StatementNode {
+    constructor(tokens=[], assertExpressionNode, failExpressionNode) {
+        super(tokens)
+        this.assertExpressionNode = assertExpressionNode
+        this.failExpressionNode = failExpressionNode
+    }
+
+    *evaluate(scope) {
+        yield
+        const result = yield* this.assertExpressionNode.evaluate(scope)
+
+        if (result !== undefined && result.value !== undefined && result.value.value()) {
+            return
+        }
+
+        yield
+        const messageResult = yield* this.failExpressionNode.evaluate(scope)
+
+        throw {error: messageResult.value.value(), node: this.assertExpressionNode}
+    }
+}
+
 export class BlockNode extends Node {
     constructor(tokens=[], nodes=[]) {
         super(tokens)

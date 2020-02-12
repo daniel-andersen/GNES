@@ -1,10 +1,14 @@
+# Basic functions
+
 Function hello(name)
     Return "Hello " + name + "!"
 End
 
-Print hello(name="World")
+Assert hello(name="World") == "Hello World!" Else "Expected 'Hello World!'"
 
-Print
+
+
+# Composite functions
 
 Function sum(a, b)
     Return a + b
@@ -14,34 +18,66 @@ Function multiply(a, b)
     Return a * b
 End
 
-Print "(2 + 3) * 5 = " + multiply(a=sum(a=2, b=3), b=5)
-Print "Does functions work correctly? " + (sum(a=multiply(a=2, b=5), b=multiply(a=3, b=5)) == 25)
-Print
+Assert sum(a=multiply(a=2, b=5), b=multiply(a=3, b=5)) == 25 Else "sum/multiply functions don't work correctly!"
+
+
 
 Function lessThan(x, y)
     Return x < y
 End
 
 Function range(start, stop)
-    Print "Range: ["
+    str = "["
+    delimiter = ""
     While lessThan(x=start, y=stop) Do
-        Print "  " + start
+        str = str + delimiter + start
         start = start + 1
+        delimiter = ","
     End
-    Print "]"
+    str = str + "]"
+    Return str
 End
 
-range(start=0, stop=5)
+Assert range(start=0, stop=5) == "[0,1,2,3,4]" Else "Expected range to return [0,1,2,3,4]"
 
-Print
+
+
+# Default values
+
+Function defaultValue(x=42)
+    Return x
+End
+
+Assert defaultValue() == 42 Else "Expected default value to be 42"
+Assert defaultValue(x=24) == 24 Else "Expected default value to be overriden"
+
+
+
+# Function scoping
+
+s = 128
+Function scope(x=s)
+    Return x
+End
+
+Function scope2(y=scope())
+    Return y
+End
+
+Assert scope() == 128 Else "Expected default parameter value to be evaluated in file scope"
+Assert scope2() == 128 Else "Expected default parameter value to be evaluated in file scope"
+Assert scope2(y=64) == 64 Else "Expected default parameter to be overridden"
+
+
+# Changing file local variables from function
 
 Function changeFileLocalVariable(value="New default value")
-    Print "File local variable before changing: " + fileLocalVariable
     fileLocalVariable = value
-    Print "File local variable after changing: " + fileLocalVariable
+    Return fileLocalVariable
 End
 
 fileLocalVariable = 42
 
-changeFileLocalVariable()
-changeFileLocalVariable(value="Not default anymore")
+Assert fileLocalVariable == 42 Else "fileLocalVariable somehow didn't start at 42"
+Assert changeFileLocalVariable() == "New default value" Else "Expected fileLocalVariable to be changed to default parameter value"
+Assert changeFileLocalVariable(value="Not default anymore") == "Not default anymore" Else "Expected default parameter to be changed"

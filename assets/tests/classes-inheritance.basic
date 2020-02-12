@@ -2,31 +2,27 @@ Class Vehicle
     Property name
 
     Function run(speed)
-        Print name + " cannot run. It's just a base vehicle and don't know how to move!"
+        Return name + " cannot run!"
     End
 End
 
 Class Kart Of Type Vehicle
     Function run(speed)
-        Print name + " running at " + speed + " km/h"
+        Return name + " running at " + speed + " km/h"
     End
 End
 
 Class Plane Of Type Vehicle
     Function run(speed)
-        Print name + " taking off at " + speed + " km/h"
+        Return name + " taking off at " + speed + " km/h"
     End
 End
 
 vehicle = New Vehicle(name="Magic Vehicle")
-vehicle.run(speed=80)
-
-Print
+Assert vehicle.run(speed=80) == "Magic Vehicle cannot run!" Else "Magic vehicles cannot run!"
 
 mariokart = New Kart(name="Mario Kart")
-mariokart.run(speed=15)
-
-Print
+Assert mariokart.run(speed=15) == "Mario Kart running at 15 km/h" Else "Mario Kart isn't going by expected speed!"
 
 plane = New Plane(name="Plane")
-plane.run(speed=500)
+Assert plane.run(speed=500) == "Plane taking off at 500 km/h" Else "Plane crashing with too low speed!"

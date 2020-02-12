@@ -1,23 +1,28 @@
 start = 1
 end = 5
 
-Print "Loop from " + start + " to " + end + ":"
+
+
+# For loops
+
 For x From start To end Do
-    Print x
+    Assert x >= start And x <= end Else "Expected for loop from " + start + " to " + end
 End
 
-Print
-Print "While"
+
+
+# While loops
 
 While start < end Do
     start = start + 1
-    Print start
 End
+Assert start == end Else "Expected while loop until " + end + " but stopped at " + start
 
-Print
-Print "Loop"
+
+
+# Repeats
 
 Repeat
     start = start + 1
-    Print start
 Until start >= end * 2
+Assert start == end * 2 Else "Expected repeat until " + (end * 2) + " but stopped at " + start
