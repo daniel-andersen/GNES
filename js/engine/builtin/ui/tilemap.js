@@ -68,10 +68,15 @@ export class Tilemap {
 
         // Set camera bounding box
         Builtin.scene().cameras.main.setBounds(0, 0, objectScope.map.widthInPixels, objectScope.map.heightInPixels)
-        Builtin.scene().cameras.main.centerOn(0, 1000) // TODO! Remove!
     }
 
     static *loadTilesets(map, json) {
+
+        // As for now, only one tileset supported
+        if (json.tilesets.length > 1) {
+            throw new Error('Only one tileset in map supported')
+        }
+
         let tilesets = []
 
         for (let tilesetJson of json.tilesets) {
@@ -130,7 +135,13 @@ export class Tilemap {
     static *addLayers(map, tilesets, json) {
         let layers = []
         for (let i = 0; i < json.layers.length; i++) {
-            const layer = map.createStaticLayer(i, tilesets[i].tileset, json.layers[i].x, json.layers[i].y)
+            if (json.layers[i].type != 'tilelayer') {
+                continue
+            }
+            if (tilesets.length == 0) {
+                throw new Error('No tileset in tilemap')
+            }
+            const layer = map.createStaticLayer(i, tilesets[0].tileset, json.layers[i].x, json.layers[i].y)
         }
         return layers
     }

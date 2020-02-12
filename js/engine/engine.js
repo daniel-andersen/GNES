@@ -11,6 +11,7 @@ import Util from './util/util'
 import { Screen } from './builtin/ui/screen'
 import { Sprite } from './builtin/ui/sprite'
 import { Tilemap } from './builtin/ui/tilemap'
+import { Camera } from './builtin/ui/camera'
 import { Joystick } from './builtin/controls/joystick'
 import { Gravity } from './builtin/physics/gravity'
 import { AirDrag } from './builtin/physics/air-drag'
@@ -24,6 +25,7 @@ export default class Engine {
             Screen: Screen,
             Sprite: Sprite,
             Tilemap: Tilemap,
+            Camera: Camera,
             Joystick: Joystick,
             Gravity: Gravity,
             AirDrag: AirDrag,
@@ -35,6 +37,7 @@ export default class Engine {
             "/assets/engine/ui/screen.basic",
             "/assets/engine/ui/sprite.basic",
             "/assets/engine/ui/tilemap.basic",
+            "/assets/engine/ui/camera.basic",
             "/assets/engine/controls/joystick.basic",
             "/assets/engine/physics/gravity.basic",
             "/assets/engine/physics/air-drag.basic",

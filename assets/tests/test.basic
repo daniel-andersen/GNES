@@ -6,6 +6,7 @@ Class Hero Of Type Sprite
     Behaviour Of Type Gravity
     Behaviour Of Type AirDrag
     Behaviour Of Type Jump
+    Behaviour Of Type Camera
 
     Constructor
         load(filename="/assets/sprites/hero.png")
