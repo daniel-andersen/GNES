@@ -463,8 +463,14 @@ export default class Language {
                     {type: "token", token: "Of"},
                     {type: "token", token: "Type"},
                     {type: "name", id: "className"},
+                    {type: "group", required: false, group: {
+                        match: [
+                            {type: "parameterList", id: "parameters"}
+                        ],
+                        node: (tokens, nodes, sourceTree) => new Node.GroupNode(tokens, nodes)
+                    }},
                 ],
-                node: (tokens, nodes, sourceTree) => new Node.BehaviourNode(tokens, sourceTree.getConstantNameWithId(nodes, 'name'), sourceTree.getConstantNameWithId(nodes, 'className'))
+                node: (tokens, nodes, sourceTree) => new Node.BehaviourNode(tokens, sourceTree.getConstantNameWithId(nodes, 'name'), sourceTree.getConstantNameWithId(nodes, 'className'), sourceTree.getNodeWithId(nodes, 'parameters'))
             },
             {
                 name: 'RequiredBehaviour',

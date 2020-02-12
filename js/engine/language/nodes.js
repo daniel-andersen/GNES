@@ -867,13 +867,12 @@ export class BehaviourDefinitionNode extends ClassNode {
     }
 }
 
-export class BehaviourNode extends Node {
-    constructor(tokens=[], variableName, className) {
-        super(tokens)
+export class BehaviourNode extends NewObjectNode {
+    constructor(tokens=[], variableName, className, parameterListNode) {
+        super(tokens, className, parameterListNode)
         this.variableName = variableName || ('___' + className)
         this.className = className
-        this.newObjectNode = new NewObjectNode(this.tokens, className, new ParameterListNode([], []))
-        this.assignmentNode = new AssignmentNode(this.tokens, new ConstantNode([], new Constant(variableName)), this.newObjectNode)
+        this.parameterListNode = parameterListNode
     }
 
     *evaluate(scope) {
@@ -887,9 +886,16 @@ export class BehaviourNode extends Node {
         // Create instance of class
         const object = new ObjectInstance(classNode, scope)
 
-        // Evaluate properties
+        // Define all properties
+        this.defineProperties(object)
+
+        // Evaluate parameters to constructor
         yield
-        yield *this.evaluateProperties(object)
+        yield* this.evaluateParameters(scope, object.scope)
+
+        // Evaluate unset properties in all inherited scopes
+        yield
+        yield* this.evaluateUnsetProperties(object)
 
         // Call constructor function, if any
         yield
@@ -899,36 +905,6 @@ export class BehaviourNode extends Node {
         scope.setVariable(new Variable(this.variableName, new Constant(object)))
 
         return new Result(new Constant(object), Result.Type.Expression)
-    }
-
-    *evaluateProperties(object) {
-
-        // Evaluate all inherited scopes
-        for (let objectScope of object.scopes) {
-
-            // Evaluate all properties
-            for (let propertyNode of objectScope.classNode.propertyNodes) {
-
-                // Evaluate all nodes in property
-                for (let node of propertyNode.parameterDefinitionsNode.nodes) {
-
-                    // Evaluate assignment
-                    if (node instanceof ParameterAssignmentNode) {
-
-                        // Evaluation property
-                        yield
-                        const result = yield* node.expressionNode.evaluate(objectScope)
-                        if (result === undefined) {
-                            throw {error: 'Result of expression is undefined', node: node.expressionNode}
-                        }
-                        if (result.type !== Result.Type.Expression) {
-                            throw {error: 'Expected expression', node: node.expressionNode}
-                        }
-                        objectScope.setVariable(new Variable(node.variableName, result.value))
-                    }
-                }
-            }
-        }
     }
 
     *evaluateReferencedBehaviours(object) {
