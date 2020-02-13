@@ -13,9 +13,9 @@ export class Sprite {
         }
 
         // Update sprite according to variables
-        sprite.visible = scope.resolveVariable('visible').value().value()
-        sprite.x = scope.resolveVariable('x').value().value()
-        sprite.y = scope.resolveVariable('y').value().value()
+        sprite.visible = Builtin.resolveVariable(scope, 'visible').value()
+        sprite.x = Builtin.resolveVariable(scope, 'x').value()
+        sprite.y = Builtin.resolveVariable(scope, 'y').value()
     }
 
     static *load(scope) {
@@ -67,8 +67,8 @@ export class Sprite {
         Builtin.group(Builtin.Group.default).add(objectScope.sprite)
 
         // Update size
-        objectScope.setVariable(new Variable('width', new Constant(objectScope.sprite.width)))
-        objectScope.setVariable(new Variable('height', new Constant(objectScope.sprite.height)))
+        objectScope.setVariable('width', new Constant(objectScope.sprite.width))
+        objectScope.setVariable('height', new Constant(objectScope.sprite.height))
     }
 
     static *show(scope) {
@@ -79,7 +79,7 @@ export class Sprite {
             return
         }
 
-        scope.setVariable(new Variable('visible', new Constant(true)))
+        scope.setVariable('visible', new Constant(true))
     }
 
     static *hide(scope) {
@@ -90,6 +90,6 @@ export class Sprite {
             return
         }
 
-        scope.setVariable(new Variable('visible', new Constant(false)))
+        scope.setVariable('visible', new Constant(false))
     }
 }

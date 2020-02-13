@@ -8,8 +8,8 @@ export class Camera {
         const objectScope = Builtin.resolveObjectScope(scope, 'Camera')
 
         // Update camera position
-        const spriteX = scope.resolveVariable('x').value().value()
-        const spriteY = scope.resolveVariable('y').value().value()
+        const spriteX = Builtin.resolveVariable(scope, 'x').value()
+        const spriteY = Builtin.resolveVariable(scope, 'y').value()
 
         const screenWidth = Builtin.config().size.width
         const screenHeight = Builtin.config().size.height

@@ -16,12 +16,12 @@ export class Builtin {
 
     static resolveParameter(scope, name) {
         const variable = scope.resolveVariableInOwnScope(name)
-        return variable !== undefined ? variable.value() : undefined
+        return variable !== undefined ? variable.value : undefined
     }
 
     static resolveVariable(scope, name) {
         const variable = scope.resolveVariable(name)
-        return variable !== undefined ? variable.value() : undefined
+        return variable !== undefined ? variable.value : undefined
     }
 
     static resolveFunction(scope, name) {

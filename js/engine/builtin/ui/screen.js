@@ -13,8 +13,8 @@ export class Screen {
         }
 
         // Set width and height
-        scope.setVariable(new Variable('width', new Constant(classScope.screen.width)))
-        scope.setVariable(new Variable('height', new Constant(classScope.screen.height)))
+        scope.setVariable('width', new Constant(classScope.screen.width))
+        scope.setVariable('height', new Constant(classScope.screen.height))
     }
 
     static *update(scope) {
@@ -46,11 +46,11 @@ export class Screen {
 
             // Set fps
             const fps = Math.max(1, classScope.screen.fpsCount)
-            scope.setVariable(new Variable('fps', new Constant(fps)))
+            scope.setVariable('fps', new Constant(fps))
 
             // Set frameSpeed
             const frameSpeed = 60.0 / fps
-            scope.setVariable(new Variable('frameSpeed', new Constant(frameSpeed)))
+            scope.setVariable('frameSpeed', new Constant(frameSpeed))
 
             // Log fps
             console.log('FPS:', fps, 'frameSpeed:', frameSpeed)

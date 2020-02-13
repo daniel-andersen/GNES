@@ -5,49 +5,9 @@ import Util from '../util/util'
 export class Variable {
     constructor(name, value) {
         this.name = name
-        this.setValue(value)
-    }
-
-    setValue(value) {
-        this.rawValue = value
-
-        if (value === undefined || (this.rawValue instanceof Constant && this.rawValue.type == Constant.Type.None)) {
-            this.type = Variable.Type.None
-        }
-        else if (this.rawValue instanceof Constant) {
-            this.type = Variable.Type.Constant
-        }
-        else {
-            throw 'Unknown variable type "' + value + '"'
-        }
-    }
-
-    value() {
-        return this.rawValue
-    }
-
-    isTrue() {
-        if (this.rawValue instanceof Constant) {
-            return this.rawValue.isTrue()
-        }
-        return true
-    }
-
-    isFalse() {
-        if (this.rawValue instanceof Constant) {
-            return this.rawValue.isFalse()
-        }
-        return false
+        this.value = value
     }
 }
-
-Variable.Type = {
-    Unknown: -1,
-    Constant: 0,
-    ObjectInstance: 1,
-    None: 2
-}
-
 
 export class Constant {
     constructor(value=undefined) {
@@ -160,10 +120,10 @@ export class ObjectInstance {
         for (let propertyNode of propertyNodes) {
             for (let node of propertyNode.parameterDefinitionsNode.nodes) {
                 if (node instanceof Node.ConstantNode) {
-                    scope.setVariableInOwnScope(new Variable(node.constant.value(), new Constant()))
+                    scope.setVariableInOwnScope(node.constant.value(), new Constant())
                 }
                 if (node instanceof Node.ParameterAssignmentNode) {
-                    scope.setVariableInOwnScope(new Variable(node.variableName, new Constant()))
+                    scope.setVariableInOwnScope(node.variableName, new Constant())
                 }
             }
         }

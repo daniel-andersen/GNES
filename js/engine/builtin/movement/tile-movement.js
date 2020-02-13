@@ -65,10 +65,10 @@ export class TileMovement {
         // Move
         const currentValue = Builtin.resolveVariable(scope, variableName).value()
 
-        const stepVectorConstant = Builtin.resolveVariable(scope, 'step')
-        const stepKeyConstant = Builtin.resolveVariable(stepVectorConstant.value().scope, variableName)
+        const stepVector = Builtin.resolveVariable(scope, 'step').value()
+        const stepKey = Builtin.resolveVariable(stepVectorConstant.scope, variableName).value()
 
-        scope.setVariable(new Variable(variableName, new Constant(currentValue + (stepKeyConstant.value() * direction))))
+        scope.setVariable(variableName, new Constant(currentValue + (stepKey * direction)))
 
         // Update last move time
         TileMovement.updateMoveTime(scope)
@@ -97,8 +97,7 @@ export class TileMovement {
         const objectScope = Builtin.resolveObjectScope(scope, 'TileMovement')
         const timeSinceLastMove = Util.currentTimeMillis() - objectScope.state.lastMoveTime
 
-        const delayVariable = Builtin.resolveVariable(scope, 'delay')
-        const delay = delayVariable.value()
+        const delay = Builtin.resolveVariable(scope, 'delay').value()
 
         return timeSinceLastMove >= delay * 1000
     }
@@ -107,8 +106,7 @@ export class TileMovement {
         const objectScope = Builtin.resolveObjectScope(scope, 'TileMovement')
         const timeSinceLastMove = Util.currentTimeMillis() - objectScope.state.lastMoveTime
 
-        const delayVariable = Builtin.resolveVariable(scope, 'delay')
-        const delay = delayVariable.value()
+        const delay = Builtin.resolveVariable(scope, 'delay').value()
 
         return timeSinceLastMove >= (delay * 1000) * 3 / 5
     }

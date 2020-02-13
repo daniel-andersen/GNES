@@ -1,3 +1,5 @@
+import { Constant, Variable } from './variable'
+
 export class Scope {
 
     constructor(parentScope=undefined, type=Scope.Type.Generic) {
@@ -38,26 +40,26 @@ export class Scope {
         return scope
     }
 
-    setVariable(variable) {
+    setVariable(name, value) {
         /*
         Sets the given variable in the appropriate scope.
         */
 
         // Get existing variable (in any scope)
-        let currentVariable = this.resolveVariable(variable.name)
+        let currentVariable = this.resolveVariable(name)
 
         // Overwrite variable if it already exists
         if (currentVariable !== undefined) {
-            currentVariable.setValue(variable.value())
+            currentVariable.value = value
         }
 
         // Create new variable in current scope
         else {
-            this.variables[variable.name] = variable
+            this.variables[name] = new Variable(name, value)
         }
     }
 
-    setVariableInOwnScope(variable) {
+    setVariableInOwnScope(name, value) {
         /*
         Sets the given variable in this scope, e.g. overrides variable.
         */
@@ -65,12 +67,12 @@ export class Scope {
         // Overwrite variable if it already exists
         if (name in this.variables) {
             let currentVariable = this.variables[name]
-            currentVariable.setValue(variable.value())
+            currentVariable.value = value
         }
 
         // Create new variable in current scope
         else {
-            this.variables[variable.name] = variable
+            this.variables[name] = new Variable(name, value)
         }
     }
 

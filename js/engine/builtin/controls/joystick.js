@@ -19,9 +19,9 @@ export class Joystick {
     static *update(scope) {
         const classScope = Builtin.resolveClassScope(scope)
 
-        scope.setVariable(new Variable('left', new Constant(classScope.keys.left.isDown)))
-        scope.setVariable(new Variable('right', new Constant(classScope.keys.right.isDown)))
-        scope.setVariable(new Variable('up', new Constant(classScope.keys.up.isDown)))
-        scope.setVariable(new Variable('down', new Constant(classScope.keys.down.isDown)))
+        scope.setVariable('left', new Constant(classScope.keys.left.isDown))
+        scope.setVariable('right', new Constant(classScope.keys.right.isDown))
+        scope.setVariable('up', new Constant(classScope.keys.up.isDown))
+        scope.setVariable('down', new Constant(classScope.keys.down.isDown))
     }
 }

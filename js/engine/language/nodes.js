@@ -62,8 +62,7 @@ export class ParameterAssignmentNode extends StatementNode {
         if (result.type !== Result.Type.Expression) {
             throw {error: 'Expected expression', node: this.expressionNode}
         }
-        const variable = new Variable(this.variableName, result.value)
-        scope.setVariable(variable)
+        scope.setVariable(this.variableName, result.value)
     }
 }
 
@@ -142,10 +141,9 @@ export class AssignmentNode extends StatementNode {
         }
 
         // Set variable
-        const variable = new Variable(this.variableName, assignmentResult.value)
-        variableScope.setVariable(variable)
+        variableScope.setVariable(this.variableName, assignmentResult.value)
 
-        return new Result(variable, Result.Type.Statement)
+        return new Result(assignmentResult.value, Result.Type.Statement)
     }
 }
 
@@ -293,7 +291,7 @@ export class ForFromToNode extends StatementNode {
         // Push variable onto scope
         const loopScope = new Scope(scope)
         const variable = new Variable(this.variableName, fromResult.value)
-        loopScope.setVariable(variable)
+        loopScope.setVariable(this.variableName, fromResult.value)
 
         while (true) {
 
@@ -309,12 +307,12 @@ export class ForFromToNode extends StatementNode {
 
             // Check if reached to
             if (Arithmetics.greaterThan(stepResult.value, new Constant(0))) {
-                if (Arithmetics.greaterThan(variable.value(), toResult.value).value()) {
+                if (Arithmetics.greaterThan(variable.value, toResult.value).value()) {
                     return
                 }
             }
             else {
-                if (Arithmetics.lessThan(variable.value(), toResult.value).value()) {
+                if (Arithmetics.lessThan(variable.value, toResult.value).value()) {
                     return
                 }
             }
@@ -339,7 +337,7 @@ export class ForFromToNode extends StatementNode {
             }
 
             // Step variable
-            variable.setValue(Arithmetics.plus(variable.value(), stepResult.value))
+            variable.value = Arithmetics.plus(variable.value, stepResult.value)
         }
     }
 }
@@ -434,7 +432,7 @@ export class ConstantNode extends ExpressionNode {
         if (this.constant.type == Constant.Type.Variable) {
             const variable = scope.resolveVariable(this.constant.value())
             if (variable !== undefined) {
-                return new Result(variable.value(), Result.Type.Expression)
+                return new Result(variable.value, Result.Type.Expression)
             }
             const aClass = scope.resolveClass(this.constant.value())
             if (aClass !== undefined) {
@@ -502,8 +500,7 @@ export class FunctionCallNode extends ExpressionNode {
             }
 
             // Assign variable in new scope
-            const variable = new Variable(node.variableName, result.value)
-            functionScope.setVariableInOwnScope(variable)
+            functionScope.setVariableInOwnScope(node.variableName, result.value)
         }
     }
 
@@ -544,8 +541,7 @@ export class FunctionCallNode extends ExpressionNode {
             }
 
             // Assign variable in new scope
-            const variable = new Variable(node.variableName, result.value)
-            functionScope.setVariableInOwnScope(variable)
+            functionScope.setVariableInOwnScope(node.variableName, result.value)
         }
     }
 }
@@ -599,8 +595,7 @@ export class NewObjectNode extends ExpressionNode {
                 for (let node of propertyNode.parameterDefinitionsNode.nodes) {
 
                     // Assign variable in own scope
-                    const variable = new Variable(node.variableName, new Constant(undefined))
-                    objectScope.setVariable(variable)
+                    objectScope.setVariable(node.variableName, new Constant(undefined))
                 }
             }
         }
@@ -620,8 +615,7 @@ export class NewObjectNode extends ExpressionNode {
             }
 
             // Assign variable in new scope
-            const variable = new Variable(node.variableName, result.value)
-            classScope.setVariable(variable)
+            classScope.setVariable(node.variableName, result.value)
         }
     }
 
@@ -650,7 +644,7 @@ export class NewObjectNode extends ExpressionNode {
                 const currentVariable = scope.resolveVariable(node.variableName)
 
                 // Ensure that is has not already been set
-                if (currentVariable === undefined || (currentVariable !== undefined && currentVariable.type == Variable.Type.None)) {
+                if (currentVariable === undefined || (currentVariable !== undefined && currentVariable.value.type == Constant.Type.None)) {
                     yield
                     const result = yield* node.expressionNode.evaluate(scope)
                     if (result === undefined) {
@@ -659,7 +653,7 @@ export class NewObjectNode extends ExpressionNode {
                     if (result.type !== Result.Type.Expression) {
                         throw {error: 'Expected expression', node: node.expressionNode}
                     }
-                    scope.setVariable(new Variable(node.variableName, result.value))
+                    scope.setVariable(node.variableName, result.value)
                 }
             }
         }
@@ -908,7 +902,7 @@ export class BehaviourNode extends NewObjectNode {
         yield* this.evaluateConstructors(object)
 
         // Set variable
-        scope.setVariable(new Variable(this.variableName, new Constant(object)))
+        scope.setVariable(this.variableName, new Constant(object))
 
         return new Result(new Constant(object), Result.Type.Expression)
     }
@@ -958,7 +952,7 @@ export class ReferencedBehaviourNode extends Node {
         if (this.assignmentNode !== undefined) {
 
             // Define variable
-            scope.setVariableInOwnScope(new Variable(this.variableName, new Constant(undefined)))
+            scope.setVariableInOwnScope(this.variableName, new Constant(undefined))
 
             // Evaluate assignment node
             yield
@@ -967,7 +961,7 @@ export class ReferencedBehaviourNode extends Node {
             // Get behaviour object from variable
             const variable = scope.resolveVariableInOwnScope(this.variableName)
 
-            behaviourObject = variable !== undefined ? variable.value() : undefined
+            behaviourObject = variable !== undefined ? variable.value : undefined
         }
 
         // Get behaviour object
@@ -1437,7 +1431,7 @@ export class ProgramNode extends Node {
 
                     // Constant
                     if (node instanceof ConstantNode) {
-                        classNode.sharedScope.setVariableInOwnScope(new Variable(node.constant.value(), new Constant()))
+                        classNode.sharedScope.setVariableInOwnScope(node.constant.value(), new Constant())
                     }
 
                     // Evaluate assignment
@@ -1452,7 +1446,7 @@ export class ProgramNode extends Node {
                         if (result.type !== Result.Type.Expression) {
                             throw {error: 'Expected expression', node: node.expressionNode}
                         }
-                        classNode.sharedScope.setVariable(new Variable(node.variableName, result.value))
+                        classNode.sharedScope.setVariable(node.variableName, result.value)
                     }
                 }
             }

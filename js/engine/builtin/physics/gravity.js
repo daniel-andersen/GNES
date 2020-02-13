@@ -14,6 +14,6 @@ export class Gravity {
         const velocity = Builtin.resolveVariable(moveable.scope, 'velocity').value()
         const y = Builtin.resolveVariable(velocity.scope, 'y').value()
 
-        velocity.scope.setVariable(new Variable('y', new Constant(y + (drag * frameSpeed / 10.0))))
+        velocity.scope.setVariable('y', new Constant(y + (drag * frameSpeed / 10.0)))
     }
 }
