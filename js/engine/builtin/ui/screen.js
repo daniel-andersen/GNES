@@ -5,16 +5,14 @@ import Util from '../../util/util'
 
 export class Screen {
     static *initialize(scope) {
-        const classScope = Builtin.resolveClassScope(scope)
 
-        classScope.screen = {
-            width: Builtin.config().size.width,
-            height: Builtin.config().size.height,
-        }
+        // Create screen dictionary
+        const classScope = Builtin.resolveClassScope(scope)
+        classScope.screen = {}
 
         // Set width and height
-        scope.setVariable('width', new Constant(classScope.screen.width))
-        scope.setVariable('height', new Constant(classScope.screen.height))
+        scope.setVariable('width', new Constant(Builtin.config().size.width))
+        scope.setVariable('height', new Constant(Builtin.config().size.height))
     }
 
     static *update(scope) {

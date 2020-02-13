@@ -1,0 +1,8 @@
+Class World
+    Shared Property width
+    Shared Property height
+
+    Shared Constructor
+        Invoke initialize() In World
+    End
+End

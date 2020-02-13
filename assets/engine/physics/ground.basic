@@ -1,0 +1,9 @@
+Behaviour Ground
+    Required Behaviour movement Of Type Movement
+
+    Property layer = 0
+
+    Update
+        Invoke update() In Ground
+    End
+End

@@ -66,6 +66,15 @@ export class Tilemap {
         yield
         objectScope.layers = yield* Tilemap.addLayers(objectScope.map, objectScope.tilesets, json)
 
+        // Set width and height
+        objectScope.setVariable('width', new Constant(objectScope.map.widthInPixels))
+        objectScope.setVariable('height', new Constant(objectScope.map.heightInPixels))
+
+        // Set world width and height
+        const world = Builtin.resolveClass(objectScope, 'World')
+        world.sharedScope.setVariable('width', new Constant(objectScope.map.widthInPixels))
+        world.sharedScope.setVariable('height', new Constant(objectScope.map.heightInPixels))
+
         // Set camera bounding box
         Builtin.scene().cameras.main.setBounds(0, 0, objectScope.map.widthInPixels, objectScope.map.heightInPixels)
     }

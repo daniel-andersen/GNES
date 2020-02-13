@@ -12,10 +12,15 @@ export class Sprite {
             return
         }
 
+        // Get anchor
+        const anchor = Builtin.resolveVariable(scope, 'anchor').value()
+        const anchorX = Builtin.resolveVariable(anchor.scope, 'x').value()
+        const anchorY = Builtin.resolveVariable(anchor.scope, 'y').value()
+
         // Update sprite according to variables
         sprite.visible = Builtin.resolveVariable(scope, 'visible').value()
-        sprite.x = Builtin.resolveVariable(scope, 'x').value()
-        sprite.y = Builtin.resolveVariable(scope, 'y').value()
+        sprite.x = Builtin.resolveVariable(scope, 'x').value() - ((anchorX - 0.5) * Builtin.resolveVariable(scope, 'width').value())
+        sprite.y = Builtin.resolveVariable(scope, 'y').value() - ((anchorY - 0.5) * Builtin.resolveVariable(scope, 'height').value())
     }
 
     static *load(scope) {

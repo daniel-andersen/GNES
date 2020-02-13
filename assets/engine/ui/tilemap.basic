@@ -1,4 +1,7 @@
 Class Tilemap
+    Property width
+    Property height
+    
     Function load(filename)
         Invoke load(filename=filename) In Tilemap
     End

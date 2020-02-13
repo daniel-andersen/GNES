@@ -1,10 +1,11 @@
 Class Hero Of Type Sprite
-    Behaviour movement Of Type Movement
+    Behaviour movement Of Type Movement(speed=13)
     Behaviour Of Type Joystick
     Behaviour Of Type Gravity
     Behaviour Of Type AirDrag
     Behaviour Of Type Jump
     Behaviour Of Type Camera
+    Behaviour Of Type Ground(layer=1)
 
     Constructor
         load(filename="/assets/sprites/hero.png")
@@ -12,8 +13,8 @@ Class Hero Of Type Sprite
     End
 
     Update
-        If y > Screen.height - 100 Then
-            y = Screen.height - 100
+        If y > World.height - 128 Then
+            y = World.height - 128
             movement.velocity.y = 0
         End
     End
@@ -43,7 +44,7 @@ tilemap = Load Tilemap "/assets/tilemaps/super-mario.json"
 
 monster1 = New Monster(x=100, y=200, speed=4.0)
 monster2 = New Monster(x=700, y=500, speed=6.0)
-hero = New Hero(x=200, y=0)
+hero = New Hero(x=200, y=0, anchor=New Vector(x=0.5, y=1.0))
 
 Function followHero()
     speed = 3.0

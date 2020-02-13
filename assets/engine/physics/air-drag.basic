@@ -1,5 +1,5 @@
 Behaviour AirDrag
-    Required Behaviour moveable Of Type Moveable
+    Required Behaviour movement Of Type Movement
     Optional Behaviour gravity Of Type Gravity
 
     Property drag = 30.0
@@ -10,9 +10,9 @@ Behaviour AirDrag
             effectiveDrag = 0
         End
 
-        moveable.velocity.x = moveable.velocity.x * effectiveDrag
+        movement.velocity.x = movement.velocity.x * effectiveDrag
         If gravity == None Then
-            moveable.velocity.y = moveable.velocity.y * effectiveDrag
+            movement.velocity.y = movement.velocity.y * effectiveDrag
         End
     End
 End
