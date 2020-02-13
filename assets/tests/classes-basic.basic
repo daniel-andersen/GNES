@@ -16,27 +16,27 @@ Class Radio
 End
 
 tesla = New Car(name="Tesla")
-Assert tesla.run(speed=80) == "Tesla running at 80 km/h" Else "Expected Tesla to run at 80 km/h"
-Assert tesla.radio.play(channel="Silent Night") == "Radio playing channel: Silent Night" Else "Expected Tesla's radio channel to play Silent Night"
-Assert tesla.radio.play() == "Radio playing channel: Pop Music" Else "Expected Tesla's radio channel to play Pop Music"
+Assert tesla.run(speed=80) == "Tesla running at 80 km/h" Else Throw "Expected Tesla to run at 80 km/h"
+Assert tesla.radio.play(channel="Silent Night") == "Radio playing channel: Silent Night" Else Throw "Expected Tesla's radio channel to play Silent Night"
+Assert tesla.radio.play() == "Radio playing channel: Pop Music" Else Throw "Expected Tesla's radio channel to play Pop Music"
 
 zoe = New Car(name="ZOE")
 zoe.radio.defaultChannel = "Heavy Rock"
-Assert zoe.run(speed=90) == "ZOE running at 90 km/h" Else "Expected ZOE to run at 90 km/h"
-Assert zoe.radio.play() == "Radio playing channel: Heavy Rock" Else "Expected ZOE's radio channel to play Heavy Rock"
+Assert zoe.run(speed=90) == "ZOE running at 90 km/h" Else Throw "Expected ZOE to run at 90 km/h"
+Assert zoe.radio.play() == "Radio playing channel: Heavy Rock" Else Throw "Expected ZOE's radio channel to play Heavy Rock"
 
 leaf = New Car(name="Leaf", radio=New Radio(defaultChannel="Classical Music"))
-Assert leaf.run(speed=60) == "Leaf running at 60 km/h" Else "Expected Leaf to run at 60 km/h"
-Assert leaf.radio.play() == "Radio playing channel: Classical Music" Else "Expected Leaf's radio channel to play Classical Music"
+Assert leaf.run(speed=60) == "Leaf running at 60 km/h" Else Throw "Expected Leaf to run at 60 km/h"
+Assert leaf.radio.play() == "Radio playing channel: Classical Music" Else Throw "Expected Leaf's radio channel to play Classical Music"
 
 zoe.radio = tesla.radio
-Assert zoe.radio.play() == "Radio playing channel: Pop Music" Else "Expected ZOE's radio channel to play Pop Music because it hijacked Tesla's radio"
+Assert zoe.radio.play() == "Radio playing channel: Pop Music" Else Throw "Expected ZOE's radio channel to play Pop Music because it hijacked Tesla's radio"
 
 zoe.radio.defaultChannel = "Hip Hop"
-Assert zoe.radio.play() == "Radio playing channel: Hip Hop" Else "Expected ZOE's radio channel to play Hip Hop"
-Assert tesla.radio.play() == "Radio playing channel: Hip Hop" Else "Expected Teslas's radio channel to play Hip Hop beucase it was hijacked by ZOE"
+Assert zoe.radio.play() == "Radio playing channel: Hip Hop" Else Throw "Expected ZOE's radio channel to play Hip Hop"
+Assert tesla.radio.play() == "Radio playing channel: Hip Hop" Else Throw "Expected Teslas's radio channel to play Hip Hop beucase it was hijacked by ZOE"
 
 tesla.radio = New Radio(defaultChannel="Fast and Furious")
-Assert tesla.radio.play() == "Radio playing channel: Fast and Furious" Else "Expected Tesla's radio channel to play Fast and Furious"
+Assert tesla.radio.play() == "Radio playing channel: Fast and Furious" Else Throw "Expected Tesla's radio channel to play Fast and Furious"
 
-Assert zoe.radio.play() == "Radio playing channel: Hip Hop" Else "Expected ZOE's radio channel to play Hip Hop"
+Assert zoe.radio.play() == "Radio playing channel: Hip Hop" Else Throw "Expected ZOE's radio channel to play Hip Hop"

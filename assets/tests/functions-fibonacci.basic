@@ -6,13 +6,13 @@ Function fibonacci(n)
     End
 End
 
-Assert fibonacci(n=0) == 0 Else "Fibonacci of 0 should be 0"
-Assert fibonacci(n=1) == 1 Else "Fibonacci of 0 should be 1"
-Assert fibonacci(n=2) == 1 Else "Fibonacci of 0 should be 1"
-Assert fibonacci(n=3) == 2 Else "Fibonacci of 0 should be 2"
-Assert fibonacci(n=4) == 3 Else "Fibonacci of 0 should be 3"
-Assert fibonacci(n=5) == 5 Else "Fibonacci of 0 should be 5"
-Assert fibonacci(n=6) == 8 Else "Fibonacci of 0 should be 8"
-Assert fibonacci(n=7) == 13 Else "Fibonacci of 0 should be 13"
-Assert fibonacci(n=8) == 21 Else "Fibonacci of 0 should be 21"
-Assert fibonacci(n=9) == 34 Else "Fibonacci of 0 should be 34"
+Assert fibonacci(n=0) == 0 Else Throw "Fibonacci of 0 should be 0"
+Assert fibonacci(n=1) == 1 Else Throw "Fibonacci of 0 should be 1"
+Assert fibonacci(n=2) == 1 Else Throw "Fibonacci of 0 should be 1"
+Assert fibonacci(n=3) == 2 Else Throw "Fibonacci of 0 should be 2"
+Assert fibonacci(n=4) == 3 Else Throw "Fibonacci of 0 should be 3"
+Assert fibonacci(n=5) == 5 Else Throw "Fibonacci of 0 should be 5"
+Assert fibonacci(n=6) == 8 Else Throw "Fibonacci of 0 should be 8"
+Assert fibonacci(n=7) == 13 Else Throw "Fibonacci of 0 should be 13"
+Assert fibonacci(n=8) == 21 Else Throw "Fibonacci of 0 should be 21"
+Assert fibonacci(n=9) == 34 Else Throw "Fibonacci of 0 should be 34"

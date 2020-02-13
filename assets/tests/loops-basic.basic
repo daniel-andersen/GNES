@@ -6,7 +6,7 @@ end = 5
 # For loops
 
 For x From start To end Do
-    Assert x >= start And x <= end Else "Expected for loop from " + start + " to " + end
+    Assert x >= start And x <= end Else Throw "Expected for loop from " + start + " to " + end
 End
 
 
@@ -16,7 +16,7 @@ End
 While start < end Do
     start = start + 1
 End
-Assert start == end Else "Expected while loop until " + end + " but stopped at " + start
+Assert start == end Else Throw "Expected while loop until " + end + " but stopped at " + start
 
 
 
@@ -25,4 +25,4 @@ Assert start == end Else "Expected while loop until " + end + " but stopped at "
 Repeat
     start = start + 1
 Until start >= end * 2
-Assert start == end * 2 Else "Expected repeat until " + (end * 2) + " but stopped at " + start
+Assert start == end * 2 Else Throw "Expected repeat until " + (end * 2) + " but stopped at " + start

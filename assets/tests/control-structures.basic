@@ -1,0 +1,7 @@
+Function lowerOrHigher(value=10, reference=10)
+    If value < reference Then Return "Lower"
+    Else Return "Higher"
+End
+
+Assert lowerOrHigher(value=5, reference=10) == "Lower" Else Throw "Expected value to be lower"
+Assert lowerOrHigher(value=15, reference=10) == "Higher" Else Throw "Expected value to be higher"

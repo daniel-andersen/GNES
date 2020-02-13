@@ -19,10 +19,10 @@ Class Plane Of Type Vehicle
 End
 
 vehicle = New Vehicle(name="Magic Vehicle")
-Assert vehicle.run(speed=80) == "Magic Vehicle cannot run!" Else "Magic vehicles cannot run!"
+Assert vehicle.run(speed=80) == "Magic Vehicle cannot run!" Else Throw "Magic vehicles cannot run!"
 
 mariokart = New Kart(name="Mario Kart")
-Assert mariokart.run(speed=15) == "Mario Kart running at 15 km/h" Else "Mario Kart isn't going by expected speed!"
+Assert mariokart.run(speed=15) == "Mario Kart running at 15 km/h" Else Throw "Mario Kart isn't going by expected speed!"
 
 plane = New Plane(name="Plane")
-Assert plane.run(speed=500) == "Plane taking off at 500 km/h" Else "Plane crashing with too low speed!"
+Assert plane.run(speed=500) == "Plane taking off at 500 km/h" Else Throw "Plane crashing with too low speed!"

@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (runTests) {
         engine.run([
             '/assets/tests/loops-basic.basic',
+            '/assets/tests/control-structures.basic',
             '/assets/tests/functions-basic.basic',
             '/assets/tests/functions-fibonacci.basic',
             '/assets/tests/classes-basic.basic',

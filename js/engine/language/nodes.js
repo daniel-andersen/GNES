@@ -17,9 +17,10 @@ Result.Type = {
 }
 
 Result.Action = {
-    Return: 0,
-    Continue: 1,
-    Break: 2
+    None: 0,
+    Return: 1,
+    Continue: 2,
+    Break: 3
 }
 
 
@@ -479,6 +480,11 @@ export class FunctionCallNode extends ExpressionNode {
         // Call function
         yield
         const result = yield* functionNode.contentNode.evaluate(functionScope)
+
+        if (result != undefined && result.action === Result.Action.Return) {
+            result.action = Result.Action.None
+        }
+
         return result
     }
 
@@ -1327,24 +1333,39 @@ export class RunFunctionNode extends StatementNode {
 }
 
 export class AssertNode extends StatementNode {
-    constructor(tokens=[], assertExpressionNode, failExpressionNode) {
+    constructor(tokens=[], expressionNode, statementNode) {
         super(tokens)
-        this.assertExpressionNode = assertExpressionNode
-        this.failExpressionNode = failExpressionNode
+        this.expressionNode = expressionNode
+        this.statementNode = statementNode
     }
 
     *evaluate(scope) {
         yield
-        const result = yield* this.assertExpressionNode.evaluate(scope)
+        const result = yield* this.expressionNode.evaluate(scope)
 
         if (result !== undefined && result.value !== undefined && result.value.value()) {
             return
         }
 
         yield
-        const messageResult = yield* this.failExpressionNode.evaluate(scope)
+        yield* this.statementNode.evaluate(scope)
+    }
+}
 
-        throw {error: messageResult.value.value(), node: this.assertExpressionNode}
+export class ThrowNode extends StatementNode {
+    constructor(tokens=[], expressionNode) {
+        super(tokens)
+        this.expressionNode = expressionNode
+    }
+
+    *evaluate(scope) {
+        yield
+        const result = yield* this.expressionNode.evaluate(scope)
+
+        if (result !== undefined && result.value instanceof Constant) {
+            throw {error: result.value.value(), node: this}
+        }
+        throw {error: '', node: this}
     }
 }
 

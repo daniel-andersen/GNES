@@ -4,7 +4,7 @@ Function hello(name)
     Return "Hello " + name + "!"
 End
 
-Assert hello(name="World") == "Hello World!" Else "Expected 'Hello World!'"
+Assert hello(name="World") == "Hello World!" Else Throw "Expected 'Hello World!'"
 
 
 
@@ -18,7 +18,7 @@ Function multiply(a, b)
     Return a * b
 End
 
-Assert sum(a=multiply(a=2, b=5), b=multiply(a=3, b=5)) == 25 Else "sum/multiply functions don't work correctly!"
+Assert sum(a=multiply(a=2, b=5), b=multiply(a=3, b=5)) == 25 Else Throw "sum/multiply functions don't work correctly!"
 
 
 
@@ -38,7 +38,7 @@ Function range(start, stop)
     Return str
 End
 
-Assert range(start=0, stop=5) == "[0,1,2,3,4]" Else "Expected range to return [0,1,2,3,4]"
+Assert range(start=0, stop=5) == "[0,1,2,3,4]" Else Throw "Expected range to return [0,1,2,3,4]"
 
 
 
@@ -48,8 +48,8 @@ Function defaultValue(x=42)
     Return x
 End
 
-Assert defaultValue() == 42 Else "Expected default value to be 42"
-Assert defaultValue(x=24) == 24 Else "Expected default value to be overriden"
+Assert defaultValue() == 42 Else Throw "Expected default value to be 42"
+Assert defaultValue(x=24) == 24 Else Throw "Expected default value to be overriden"
 
 
 
@@ -64,9 +64,9 @@ Function scope2(y=scope())
     Return y
 End
 
-Assert scope() == 128 Else "Expected default parameter value to be evaluated in file scope"
-Assert scope2() == 128 Else "Expected default parameter value to be evaluated in file scope"
-Assert scope2(y=64) == 64 Else "Expected default parameter to be overridden"
+Assert scope() == 128 Else Throw "Expected default parameter value to be evaluated in file scope"
+Assert scope2() == 128 Else Throw "Expected default parameter value to be evaluated in file scope"
+Assert scope2(y=64) == 64 Else Throw "Expected default parameter to be overridden"
 
 
 # Changing file local variables from function
@@ -78,6 +78,6 @@ End
 
 fileLocalVariable = 42
 
-Assert fileLocalVariable == 42 Else "fileLocalVariable somehow didn't start at 42"
-Assert changeFileLocalVariable() == "New default value" Else "Expected fileLocalVariable to be changed to default parameter value"
-Assert changeFileLocalVariable(value="Not default anymore") == "Not default anymore" Else "Expected default parameter to be changed"
+Assert fileLocalVariable == 42 Else Throw "fileLocalVariable somehow didn't start at 42"
+Assert changeFileLocalVariable() == "New default value" Else Throw "Expected fileLocalVariable to be changed to default parameter value"
+Assert changeFileLocalVariable(value="Not default anymore") == "Not default anymore" Else Throw "Expected default parameter to be changed"
