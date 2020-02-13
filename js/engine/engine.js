@@ -33,6 +33,8 @@ export default class Engine {
             TileMovement: TileMovement,
         }
         this.builtinFiles = [
+            "/assets/engine/structures/array.basic",
+            "/assets/engine/structures/dictionary.basic",
             "/assets/engine/ui/position.basic",
             "/assets/engine/ui/screen.basic",
             "/assets/engine/ui/sprite.basic",

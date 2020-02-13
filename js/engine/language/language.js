@@ -27,8 +27,6 @@ export default class Language {
             'Multiply': 17,
             'Divide': 18,
             'Assignment': 21,
-            'ParenthesisStart': 22,
-            'ParenthesisEnd': 23,
             'StringDelimiter': 24,
             'StringConstant': 25,
             'Colon': 26,
@@ -55,8 +53,6 @@ export default class Language {
             '*': this.tokenType.Multiply,
             '/': this.tokenType.Divide,
             '=': this.tokenType.Assignment,
-            '(': this.tokenType.ParenthesisStart,
-            ')': this.tokenType.ParenthesisEnd,
             '"': this.tokenType.StringDelimiter,
             ':': this.tokenType.Colon,
             ',': this.tokenType.Comma,
@@ -121,6 +117,13 @@ export default class Language {
                 node: (tokens, nodes, sourceTree) => new Node.ConstantNode(tokens, new Constant(undefined))
             },
             {
+                name: 'Array',
+                match: [
+                    {type: "expressionList", id: "expressionList"},
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.ArrayNode(tokens, sourceTree.getNodeWithId(nodes, 'expressionList'))
+            },
+            {
                 name: 'GetBehaviour',
                 match: [
                     {type: "token", token: "Get"},
@@ -169,7 +172,7 @@ export default class Language {
                 match: [
                     {type: "variable", id: "variable"},
                     {type: "token", token: "="},
-                    {type: "expression", id: "expression", endTokens: [',', ')', ']', '}']}
+                    {type: "expression", id: "expression"}
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.ParameterAssignmentNode(tokens, sourceTree.getConstantNameWithId(nodes, 'variable'), sourceTree.getNodeWithId(nodes, 'expression'))
             },
@@ -607,15 +610,6 @@ export default class Language {
                 node: (tokens, nodes, sourceTree) => new Node.InvokeNativeFunctionNode(tokens, sourceTree.getNodeWithId(nodes, 'variableExpression'), sourceTree.getConstantNameWithId(nodes, 'functionName'), sourceTree.getNodeWithId(nodes, 'parameters'), sourceTree.getConstantNameWithId(nodes, 'className'), sourceTree.nativeClasses)
             },
             {
-                name: 'Assignment',
-                match: [
-                    {type: "expression", id: "variableExpression", endTokens: ['=']},
-                    {type: "token", token: "="},
-                    {type: "expression", id: "assignmentExpression"},
-                ],
-                node: (tokens, nodes, sourceTree) => new Node.AssignmentNode(tokens, sourceTree.getNodeWithId(nodes, 'variableExpression'), sourceTree.getNodeWithId(nodes, 'assignmentExpression'))
-            },
-            {
                 name: 'Assert',
                 match: [
                     {type: "token", token: "Assert"},
@@ -632,6 +626,15 @@ export default class Language {
                     {type: "expression", id: "expression"},
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.ThrowNode(tokens, sourceTree.getNodeWithId(nodes, 'expression'))
+            },
+            {
+                name: 'Assignment',
+                match: [
+                    {type: "expression", id: "variableExpression", endTokens: ['=']},
+                    {type: "token", token: "="},
+                    {type: "expression", id: "assignmentExpression"},
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.AssignmentNode(tokens, sourceTree.getNodeWithId(nodes, 'variableExpression'), sourceTree.getNodeWithId(nodes, 'assignmentExpression'))
             },
         ]
     }

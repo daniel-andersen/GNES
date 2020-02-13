@@ -1,0 +1,5 @@
+Class Dictionary
+    Function count()
+        Invoke count() In Dictionary
+    End
+End

@@ -396,11 +396,13 @@ export class PrintNode extends StatementNode {
         }
 
         // Print result
-        yield
         let text = ""
         if (result !== undefined) {
             if (result.value instanceof Constant) {
-                if (result.value.type === Constant.Type.ObjectInstance) {
+                if (result.value.type === Constant.Type.Array) {
+                    text = this.arrayToString(result.value.value())
+                }
+                else if (result.value.type === Constant.Type.ObjectInstance) {
                     text = result.value.value().classNode.className
                 }
                 else if (result.value.type === Constant.Type.None) {
@@ -413,6 +415,17 @@ export class PrintNode extends StatementNode {
         }
         text = ("" + text).replace(/\s/g, '&nbsp;')
         window.game.console.div.innerHTML += text + '<br/>'
+    }
+
+    arrayToString(objectInstance) {
+        let str = '[';
+        let delimiter = ''
+        for (let constant of objectInstance.entries) {
+            str += delimiter + constant.value()
+            delimiter = ','
+        }
+        str += ']'
+        return str
     }
 }
 
@@ -443,6 +456,28 @@ export class ConstantNode extends ExpressionNode {
         else {
             return new Result(this.constant, Result.Type.Expression)
         }
+    }
+}
+
+export class ArrayNode extends ExpressionNode {
+    constructor(tokens=[], expressionListNode) {
+        super(tokens)
+        this.expressionListNode = expressionListNode
+    }
+
+    *evaluate(scope) {
+
+        // Evaluate expression list
+        yield
+        const result = yield *this.expressionListNode.evaluate(scope)
+
+        // Create instance of array class
+        const object = new ObjectInstance(scope.resolveClass('Array'))
+
+        // Set entries
+        object.entries = result.value
+
+        return new Result(new Constant(object), Result.Type.Expression)
     }
 }
 
@@ -1057,6 +1092,33 @@ export class ParameterDefinitionsNode extends Node {
     constructor(tokens=[], nodes) {
         super(tokens)
         this.nodes = nodes
+    }
+}
+
+export class ExpressionListNode extends Node {
+    constructor(tokens=[], expressionNodes) {
+        super(tokens)
+        this.expressionNodes = expressionNodes
+    }
+
+    *evaluate(scope) {
+        let entries = []
+        for (let node of this.expressionNodes) {
+            if (!(node instanceof ExpressionNode)) {
+                throw {error: 'Entry in array must be an expression', node: node}
+            }
+
+            yield
+            const result = yield* node.evaluate(scope)
+
+            if (result === undefined || result.value === undefined) {
+                throw {error: 'Entry in array must evaluate to a value', node: node}
+            }
+
+            entries.push(result.value)
+        }
+
+        return new Result(entries, Result.Type.Expression)
     }
 }
 

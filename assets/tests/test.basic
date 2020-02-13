@@ -1,5 +1,3 @@
-tilemap = Load Tilemap "/assets/tilemaps/super-mario.json"
-
 Class Hero Of Type Sprite
     Behaviour movement Of Type Movement
     Behaviour Of Type Joystick
@@ -40,6 +38,8 @@ Class Monster Of Type Sprite
         If y > Screen.height Then movement.velocity.y = -speed
     End
 End
+
+tilemap = Load Tilemap "/assets/tilemaps/super-mario.json"
 
 monster1 = New Monster(x=100, y=200, speed=4.0)
 monster2 = New Monster(x=700, y=500, speed=6.0)

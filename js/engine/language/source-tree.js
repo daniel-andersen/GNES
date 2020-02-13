@@ -250,10 +250,10 @@ export class SourceTree {
         while (tokens.length > 0) {
 
             // Account for parenthesis
-            if (tokens[0].type == this.language.tokenType.ParenthesisStart) {
+            if (this.isParenthesisStart(tokens[0])) {
                 parenthesisCount += 1
             }
-            if (tokens[0].type == this.language.tokenType.ParenthesisEnd) {
+            if (this.isParenthesisEnd(tokens[0])) {
                 parenthesisCount -= 1
                 if (parenthesisCount < 0) {
                     break
@@ -301,7 +301,7 @@ export class SourceTree {
         }
 
         // Grouped expression
-        if (expressionTokens[0].type == this.language.tokenType.ParenthesisStart) {
+        if (this.isParenthesisStart(expressionTokens[0])) {
             return this.parseExpression(this.findGroupedExpressionTokens(expressionTokens).groupTokens)
         }
 
@@ -320,7 +320,7 @@ export class SourceTree {
         }
 
         // Check starting with parenthesis
-        const startParenthesis = tokens[0].type == this.language.tokenType.ParenthesisStart
+        const startParenthesis = this.isParenthesisStart(tokens[0])
 
         // Find parenthesis group
         let innerTokens = []
@@ -355,10 +355,10 @@ export class SourceTree {
             const token = innerTokens[i]
 
             // Account for parenthesis
-            if (token.type == this.language.tokenType.ParenthesisStart) {
+            if (this.isParenthesisStart(token)) {
                 parenthesisCount += 1
             }
-            if (token.type == this.language.tokenType.ParenthesisEnd) {
+            if (this.isParenthesisEnd(token)) {
                 parenthesisCount -= 1
                 if (parenthesisCount < 0) {
                     break
@@ -369,7 +369,7 @@ export class SourceTree {
                 continue
             }
 
-            // Add token to assignment
+            // Add token if not comma
             if (token.type != this.language.tokenType.Comma) {
                 currentTokens.push(token)
             }
@@ -377,28 +377,14 @@ export class SourceTree {
             // Split assignments by comma
             if ((token.type == this.language.tokenType.Comma && parenthesisCount == 0) || i === innerTokens.length - 1) {
 
-                let result = undefined
-
-                // Add parameter assignment
-                const parameterAssignmentNode = this.parseParameterAssignmentNode(currentTokens)
-                if (!(parameterAssignmentNode instanceof Error)) {
-                    listNodes.push(parameterAssignmentNode)
-                    result = parameterAssignmentNode
+                // Parse expression
+                const node = this.parseExpression(currentTokens)
+                if (node instanceof Error) {
+                    return node
                 }
 
-                // Add constant
-                if (result === undefined && currentTokens.length == 1) {
-                    const constantNode = new Node.ConstantNode(currentTokens, new Constant(currentTokens[0].token))
-                    if (!(constantNode instanceof Error)) {
-                        listNodes.push(constantNode)
-                        result = constantNode
-                    }
-                }
-
-                // Neither assignment, nor constant
-                if (result === undefined) {
-                    return new Error('Unexpected symbol "' + token.token + '". Expected assignment or constant.', token)
-                }
+                // Add expression
+                listNodes.push(node)
 
                 // Reset tokens
                 currentTokens = []
@@ -406,25 +392,6 @@ export class SourceTree {
         }
 
         return {tokens: listTokens, nodes: listNodes}
-    }
-
-    parseParameterAssignmentNode(tokens) {
-        tokens = this.duplicateTokens(tokens)
-
-        // Parse assignment node
-        const assignmentNode = this.parseStatement(tokens)
-        if (assignmentNode instanceof Error) {
-            return assignmentNode
-        }
-        if (!(assignmentNode instanceof Node.AssignmentNode)) {
-            return new Error('Unexpected symbol "' + tokens[0].token + '". Expected parameter assignment.', tokens[0], assignmentNode)
-        }
-
-        // Convert into parameter assignment node
-        if (assignmentNode.variableExpressionNode !== undefined) {
-            return new Error('Unexpected symbol "' + tokens[0].token + '". Expected parameter name.', tokens[0], assignmentNode)
-        }
-        return new Node.ParameterAssignmentNode(assignmentNode.tokens.slice(0), assignmentNode.variableName, assignmentNode.assignmentExpressionNode)
     }
 
     parseArithmeticNode(tokens) {
@@ -439,11 +406,11 @@ export class SourceTree {
             const token = tokens[i]
 
             // Handle parenthesis groups
-            if (token.type == this.language.tokenType.ParenthesisStart) {
+            if (this.isParenthesisStart(token)) {
                 parenthesisCount += 1
                 continue
             }
-            if (token.type == this.language.tokenType.ParenthesisEnd) {
+            if (this.isParenthesisEnd(token)) {
                 parenthesisCount -= 1
                 continue
             }
@@ -484,10 +451,10 @@ export class SourceTree {
         for (let i = 0; i < tokens.length; i++) {
             const token = tokens[i]
 
-            if (token.type == this.language.tokenType.ParenthesisStart) {
+            if (this.isParenthesisStart(token)) {
                 parenthesisCount += 1
             }
-            if (token.type == this.language.tokenType.ParenthesisEnd) {
+            if (this.isParenthesisEnd(token)) {
                 parenthesisCount -= 1
             }
             if (parenthesisCount === 0) {
@@ -577,6 +544,9 @@ export class SourceTree {
             }
             case 'parameterDefinitions': {
                 return this.matchParameterDefinitionsEntry(entry, tokens)
+            }
+            case 'expressionList': {
+                return this.matchExpressionListEntry(entry, tokens)
             }
             case 'group': {
                 return this.matchGroupEntry(entry, tokens)
@@ -673,6 +643,19 @@ export class SourceTree {
         return new Node.ParameterDefinitionsNode(result.tokens, result.nodes)
     }
 
+    matchExpressionListEntry(entry, tokens) {
+        tokens = this.duplicateTokens(tokens)
+
+        if (tokens.length === 0 || tokens[0].token === undefined || tokens[0].token != '[') {
+            return new Error('Expected [', tokens.length > 0 ? tokens[0].token : undefined)
+        }
+        const result = this.parseCommaSeperatedTokens(tokens)
+        if (result instanceof Error) {
+            return result
+        }
+        return new Node.ExpressionListNode(result.tokens, result.nodes)
+    }
+
     matchGroupEntry(entry, tokens) {
         tokens = this.duplicateTokens(tokens)
 
@@ -727,6 +710,14 @@ export class SourceTree {
             }
         }
         return undefined
+    }
+
+    isParenthesisStart(token) {
+        return token.token !== undefined && (token.token == '(' || token.token == '[' || token.token == '{')
+    }
+
+    isParenthesisEnd(token) {
+        return token.token !== undefined && (token.token == ')' || token.token == ']' || token.token == '}')
     }
 
     duplicateTokens(tokens) {

@@ -17,7 +17,12 @@ export class Constant {
             this.type = Constant.Type.None
         }
         else if (value instanceof ObjectInstance) {
-            this.type = Constant.Type.ObjectInstance
+            if (value.classNode.instanceOf('Array')) {
+                this.type = Constant.Type.Array
+            }
+            else {
+                this.type = Constant.Type.ObjectInstance
+            }
         }
         else if (typeof(this.rawValue) == typeof(true)) {
             this.type = Constant.Type.Boolean
@@ -71,12 +76,13 @@ export class Constant {
 
 Constant.Type = {
     Unknown: -1,
-    Boolean: 0,
-    Number: 1,
-    String: 2,
-    Variable: 3,
-    ObjectInstance: 4,
-    None: 5
+    None: 0,
+    Boolean: 1,
+    Number: 2,
+    String: 3,
+    Variable: 4,
+    ObjectInstance: 5,
+    Array: 6,
 }
 
 export class ObjectInstance {
