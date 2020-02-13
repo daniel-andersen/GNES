@@ -74,7 +74,7 @@ export default class Engine {
         const execution = new Execution(this.sourceTree.programNode)
 
         this.interpreter = new Interpreter(this.sourceTree)
-        this.interpreter.stopCallback = this.stopCallback
+        this.interpreter.stopCallback = () => { this.interpreterStoped() }
         this.interpreter.addExecution(execution)
 
         document.addEventListener('keydown', event => {
@@ -89,6 +89,14 @@ export default class Engine {
         this.start()
     }
 
+    interpreterStoped() {
+        console.log('Engine stopped')
+        if (this.stopCallback !== undefined) {
+            this.stopCallback()
+        }
+        this.destroy()
+    }
+
     start() {
         if (this.isRunning() || this.isPaused()) {
             this.stop()
@@ -101,10 +109,6 @@ export default class Engine {
 
     stop() {
         this.interpreter.stop()
-        this.destroy()
-        if (this.stopCallback !== undefined) {
-            this.stopCallback()
-        }
     }
 
     pause() {
