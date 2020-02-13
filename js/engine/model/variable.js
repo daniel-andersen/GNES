@@ -17,12 +17,7 @@ export class Constant {
             this.type = Constant.Type.None
         }
         else if (value instanceof ObjectInstance) {
-            if (value.classNode.instanceOf('Array')) {
-                this.type = Constant.Type.Array
-            }
-            else {
-                this.type = Constant.Type.ObjectInstance
-            }
+            this.type = Constant.Type.ObjectInstance
         }
         else if (typeof(this.rawValue) == typeof(true)) {
             this.type = Constant.Type.Boolean
@@ -82,7 +77,6 @@ Constant.Type = {
     String: 3,
     Variable: 4,
     ObjectInstance: 5,
-    Array: 6,
 }
 
 export class ObjectInstance {
@@ -133,5 +127,13 @@ export class ObjectInstance {
                 }
             }
         }
+    }
+
+    isArray() {
+        return this.classNode.instanceOf('Array')
+    }
+
+    isDictionary() {
+        return this.classNode.instanceOf('Dictionary')
     }
 }

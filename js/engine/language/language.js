@@ -185,6 +185,17 @@ export default class Language {
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.NewObjectNode(tokens, sourceTree.getConstantNameWithId(nodes, 'className'), sourceTree.getNodeWithId(nodes, 'parameters'))
             },
+            {
+                name: 'InvokeNativeFunction',
+                match: [
+                    {type: "token", token: "Invoke"},
+                    {type: "variable", id: 'functionName'},
+                    {type: "parameterList", id: "parameters"},
+                    {type: "token", token: "In"},
+                    {type: "name", id: "className"},
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.InvokeNativeFunctionNode(tokens, sourceTree.getConstantNameWithId(nodes, 'functionName'), sourceTree.getNodeWithId(nodes, 'parameters'), sourceTree.getConstantNameWithId(nodes, 'className'), sourceTree.nativeClasses)
+            },
         ]
 
         this.statements = [
@@ -589,25 +600,6 @@ export default class Language {
                     {type: "token", code: this.tokenType.EOL}
                 ],
                 node: (tokens, nodes, sourceTree) => new Node.HideSpriteNode(tokens, sourceTree.getNodeWithId(nodes, 'expression'))
-            },
-            {
-                name: 'InvokeNativeFunction',
-                match: [
-                    {type: "group", required: false, group: {
-                        match: [
-                            {type: "expression", id: "variableExpression", endTokens: ['=']},
-                            {type: "token", token: "="}
-                        ],
-                        node: (tokens, nodes, sourceTree) => new Node.GroupNode(tokens, nodes)
-                    }},
-                    {type: "token", token: "Invoke"},
-                    {type: "variable", id: 'functionName'},
-                    {type: "parameterList", id: "parameters"},
-                    {type: "token", token: "In"},
-                    {type: "name", id: "className"},
-                    {type: "token", code: this.tokenType.EOL}
-                ],
-                node: (tokens, nodes, sourceTree) => new Node.InvokeNativeFunctionNode(tokens, sourceTree.getNodeWithId(nodes, 'variableExpression'), sourceTree.getConstantNameWithId(nodes, 'functionName'), sourceTree.getNodeWithId(nodes, 'parameters'), sourceTree.getConstantNameWithId(nodes, 'className'), sourceTree.nativeClasses)
             },
             {
                 name: 'Assert',

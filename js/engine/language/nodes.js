@@ -399,11 +399,13 @@ export class PrintNode extends StatementNode {
         let text = ""
         if (result !== undefined) {
             if (result.value instanceof Constant) {
-                if (result.value.type === Constant.Type.Array) {
-                    text = this.arrayToString(result.value.value())
-                }
-                else if (result.value.type === Constant.Type.ObjectInstance) {
-                    text = result.value.value().classNode.className
+                if (result.value.type === Constant.Type.ObjectInstance) {
+                    if (result.value.value().isArray()) {
+                        text = this.arrayToString(result.value.value())
+                    }
+                    else {
+                        text = result.value.value().classNode.className
+                    }
                 }
                 else if (result.value.type === Constant.Type.None) {
                     text = 'None'
@@ -420,7 +422,7 @@ export class PrintNode extends StatementNode {
     arrayToString(objectInstance) {
         let str = '[';
         let delimiter = ''
-        for (let constant of objectInstance.entries) {
+        for (let constant of objectInstance.scope.entries) {
             str += delimiter + constant.value()
             delimiter = ','
         }
@@ -475,7 +477,7 @@ export class ArrayNode extends ExpressionNode {
         const object = new ObjectInstance(scope.resolveClass('Array'))
 
         // Set entries
-        object.entries = result.value
+        object.scope.entries = result.value
 
         return new Result(new Constant(object), Result.Type.Expression)
     }
@@ -1274,19 +1276,15 @@ export class LoadTilemapNode extends ExpressionNode {
     }
 }
 
-export class InvokeNativeFunctionNode extends StatementNode {
-    constructor(tokens=[], variableExpressionNode, functionName, parameterListNode, className, nativeClasses) {
+export class InvokeNativeFunctionNode extends ExpressionNode {
+    constructor(tokens=[], functionName, parameterListNode, className, nativeClasses) {
         super(tokens)
-        this.variableExpressionNode = variableExpressionNode
         this.functionName = functionName
         this.parameterListNode = parameterListNode
         this.className = className
         this.nativeClasses = nativeClasses
 
         this.functionCallNode = new FunctionCallNode(undefined, "NativeMethod", this.parameterListNode)
-        if (this.variableExpressionNode !== undefined) {
-            this.assignmentNode = new AssignmentNode(this.tokens, this.variableExpressionNode, this.functionCallNode)
-        }
     }
 
     *evaluate(scope) {
@@ -1305,16 +1303,8 @@ export class InvokeNativeFunctionNode extends StatementNode {
             result = new Constant(undefined)
         }
 
-        // Evaluate assignment
-        if (this.assignmentNode !== undefined) {
-            this.assignmentNode.assignmentExpressionNode = new ConstantNode(this.tokens, result)
-            yield
-            const assignmentResult = yield* this.assignmentNode.evaluate(scope)
-            return assignmentResult
-        }
-        else {
-            return result
-        }
+        // Return result
+        return new Result(result, Result.Type.Expression)
     }
 }
 

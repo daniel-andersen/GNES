@@ -8,6 +8,7 @@ import { Scope } from './model/scope'
 import { Variable } from './model/variable'
 import { Error } from './model/error'
 import Util from './util/util'
+import { Array } from './builtin/structures/array'
 import { Screen } from './builtin/ui/screen'
 import { Sprite } from './builtin/ui/sprite'
 import { Tilemap } from './builtin/ui/tilemap'
@@ -22,6 +23,7 @@ import * as Phaser from 'phaser'
 export default class Engine {
     constructor(referenceWidth=1280, referenceHeight=800) {
         this.nativeClasses = {
+            Array: Array,
             Screen: Screen,
             Sprite: Sprite,
             Tilemap: Tilemap,
