@@ -8,7 +8,7 @@ Class Hero Of Type Sprite
     Behaviour Of Type Ground(layer=1)
 
     Constructor
-        load(filename="/assets/sprites/hero.png")
+        load(filename="./assets/sprites/hero.png")
         show()
     End
 End
@@ -19,7 +19,7 @@ Class Monster Of Type Sprite
     Property speed = 4.0
 
     Constructor
-        load(filename="/assets/sprites/monster.png")
+        load(filename="./assets/sprites/monster.png")
         show()
         movement.velocity = New Vector(x=speed, y=speed)
     End
@@ -33,7 +33,7 @@ Class Monster Of Type Sprite
     End
 End
 
-tilemap = Load Tilemap "/assets/tilemaps/super-mario.json"
+tilemap = Load Tilemap "./assets/tilemaps/super-mario.json"
 
 monster1 = New Monster(x=100, y=200, speed=4.0)
 monster2 = New Monster(x=700, y=500, speed=6.0)
@@ -41,7 +41,7 @@ hero = New Hero(x=200, y=0, anchor=New Vector(x=0.5, y=1.0))
 
 Function followHero()
     speed = 3.0
-    monster = Load Sprite "/assets/sprites/monster.png"
+    monster = Load Sprite "./assets/sprites/monster.png"
     monster.x = Screen.width / 2
     monster.y = Screen.height - 100
     Show Sprite monster

@@ -47,7 +47,7 @@
         {
          "columns":11,
          "firstgid":1,
-         "image":"/assets/tilesets/super-mario.png",
+         "image":"./assets/tilesets/super-mario.png",
          "imageheight":256,
          "imagewidth":704,
          "margin":0,
