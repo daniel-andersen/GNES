@@ -19,6 +19,9 @@ export class Ground {
 
     static *tileCollision(scope) {
 
+        // Number of steps a tile is divided into
+        const tileStepGranularity = 8
+
         // Resolve variables
         const objectScope = Builtin.resolveObjectScope(scope, 'Ground')
         const spriteScope = Builtin.resolveObjectScope(scope, 'Sprite')
@@ -30,8 +33,10 @@ export class Ground {
         const screen = Builtin.resolveClass(objectScope, 'Screen')
         const frameSpeed = Builtin.resolveVariable(screen.sharedScope, 'frameSpeed').value()
 
-        const spriteWidth = Builtin.resolveVariable(scope, 'width').value()
-        const spriteHeight = Builtin.resolveVariable(scope, 'height').value()
+        const spriteSize = {
+            width: Builtin.resolveVariable(scope, 'width').value(),
+            height: Builtin.resolveVariable(scope, 'height').value()
+        }
 
         const position = {
             x: Builtin.resolveVariable(scope, 'x').value(),
@@ -48,9 +53,18 @@ export class Ground {
         // Get tile layer
         const layer = Ground.getLayer(scope, tilemapObjectInstance)
 
-        // Get tile size
+        // Get step size
         const tileSize = {width: layer.tileToWorldX(1) - layer.tileToWorldX(0), height: layer.tileToWorldY(1) - layer.tileToWorldY(0)}
-        const stepSize = {x: tileSize.x / 2, y: tileSize.y / 2}
+
+        const stepSizePerTile = {
+            x: tileSize.width / tileStepGranularity,
+            y: tileSize.height / tileStepGranularity
+        }
+
+        const stepSize = {
+            x: stepSizePerTile.x * (spriteSize.width + (Math.round(spriteSize.width) % Math.round(tileSize.width))) / (spriteSize.width - 2),
+            y: stepSizePerTile.y * (spriteSize.height + (Math.round(spriteSize.height) % Math.round(tileSize.height))) / (spriteSize.height - 2)
+        }
 
         // Project position in time
         const targetPosition = {
@@ -73,11 +87,11 @@ export class Ground {
 
         let projectedLines = []
 
-        for (let y = spriteScope.spriteMeta.top; y <= spriteScope.spriteMeta.bottom; y += stepSize.y) {
+        for (let y = spriteScope.spriteMeta.top + 1; y <= spriteScope.spriteMeta.bottom; y += stepSize.y) {
             projectedLines.push({startX: border.x, startY: y, endX: border.x + delta.x, endY: y + delta.y})
         }
 
-        for (let x = spriteScope.spriteMeta.left; x <= spriteScope.spriteMeta.right; x += stepSize.x) {
+        for (let x = spriteScope.spriteMeta.left + 1; x <= spriteScope.spriteMeta.right; x += stepSize.x) {
             projectedLines.push({startX: x, startY: border.y, endX: x + delta.x, endY: border.y + delta.y})
         }
 
@@ -111,39 +125,36 @@ export class Ground {
         }
 
         border = {
-            x: remainingDelta.x < 0 ? spriteScope.spriteMeta.left : spriteScope.spriteMeta.right,
-            y: remainingDelta.y < 0 ? spriteScope.spriteMeta.top : spriteScope.spriteMeta.bottom
+            x: delta.x < 0 ? spriteScope.spriteMeta.left : spriteScope.spriteMeta.right,
+            y: delta.y < 0 ? spriteScope.spriteMeta.top : spriteScope.spriteMeta.bottom
         }
 
-        // Check if sprite can move horizontally still
+        // Get collision horizontally away from first collision point
         projectedLines = []
-        for (let y = spriteScope.spriteMeta.top; y <= spriteScope.spriteMeta.bottom; y += stepSize.y) {
+        for (let y = spriteScope.spriteMeta.top + 1; y <= spriteScope.spriteMeta.bottom; y += stepSize.y) {
             projectedLines.push({startX: border.x, startY: y, endX: border.x + delta.x, endY: y})
         }
-        const horizontalCollision = Ground.getCollisionPoint(projectedLines, tilemap, layer)
+        let horizontalCollision = Ground.getCollisionPoint(projectedLines, tilemap, layer)
+        horizontalCollision = horizontalCollision || {x: border.x + remainingDelta.x, distance: Math.abs(remainingDelta.x)}
 
-        // Move sprite remaining horizontal delta
-        if (horizontalCollision !== undefined) {
-            objectScope.setVariable('x', new Constant(firstCollisionPosition.x + horizontalCollision.distance))
-        }
-        else {
-            objectScope.setVariable('x', new Constant(firstCollisionPosition.x + remainingDelta.x))
-        }
-
-        // Check if sprite can move vertically still
+        // Get collision vertically away from first collision point
         projectedLines = []
-        for (let x = spriteScope.spriteMeta.left; x <= spriteScope.spriteMeta.right; x += stepSize.x) {
+        for (let x = spriteScope.spriteMeta.left + 1; x <= spriteScope.spriteMeta.right; x += stepSize.x) {
             projectedLines.push({startX: x, startY: border.y, endX: x, endY: border.y + delta.y})
         }
-        const verticalCollision = Ground.getCollisionPoint(projectedLines, tilemap, layer)
+        let verticalCollision = Ground.getCollisionPoint(projectedLines, tilemap, layer)
+        verticalCollision = verticalCollision || {y: border.y + remainingDelta.y, distance: Math.abs(remainingDelta.y)}
 
-        // Move sprite remaining vertical delta
-        if (verticalCollision !== undefined) {
-            objectScope.setVariable('y', new Constant(firstCollisionPosition.y + verticalCollision.distance))
+        // Move remaining amount in apropriate direction
+        if (horizontalCollision.distance > verticalCollision.distance) {
+            objectScope.setVariable('x', new Constant(firstCollisionPosition.x + horizontalCollision.x - border.x))
         }
         else {
-            objectScope.setVariable('y', new Constant(firstCollisionPosition.y + remainingDelta.y))
+            objectScope.setVariable('y', new Constant(firstCollisionPosition.y + verticalCollision.y - border.y))
         }
+
+        // Update sprite position
+        Sprite.updatePosition(spriteScope)
     }
 
     static *pixelCollision(scope) {
