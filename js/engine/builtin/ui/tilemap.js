@@ -4,7 +4,7 @@ import { Constant, Variable } from '../../model/variable'
 import Util from '../../util/util'
 
 export class Tilemap {
-    static *load(scope) {
+    static *load(scope, objectInstance) {
 
         // Resolve filename
         const filenameConstant = Builtin.resolveParameter(scope, 'filename')
@@ -48,7 +48,7 @@ export class Tilemap {
         }
 
         // Create tilemap
-        objectScope.map = Builtin.scene().make.tilemap({ key: objectScope.tilemapName })
+        objectScope.tilemap = Builtin.scene().make.tilemap({ key: objectScope.tilemapName })
 
         // Load tilemap as json
         yield
@@ -56,27 +56,28 @@ export class Tilemap {
 
         // Load tilesets
         yield
-        objectScope.tilesets = yield* Tilemap.loadTilesets(objectScope.map, json)
+        objectScope.tilesets = yield* Tilemap.loadTilesets(objectScope.tilemap, json)
 
         // Add tileset images
         yield
-        objectScope.tilesetImages = yield* Tilemap.addTilesetImages(objectScope.map, objectScope.tilesets)
+        objectScope.tilesetImages = yield* Tilemap.addTilesetImages(objectScope.tilemap, objectScope.tilesets)
 
         // Add layers
         yield
-        objectScope.layers = yield* Tilemap.addLayers(objectScope.map, objectScope.tilesets, json)
+        objectScope.layers = yield* Tilemap.addLayers(objectScope.tilemap, objectScope.tilesets, json)
 
         // Set width and height
-        objectScope.setVariable('width', new Constant(objectScope.map.widthInPixels))
-        objectScope.setVariable('height', new Constant(objectScope.map.heightInPixels))
+        objectScope.setVariable('width', new Constant(objectScope.tilemap.widthInPixels))
+        objectScope.setVariable('height', new Constant(objectScope.tilemap.heightInPixels))
 
-        // Set world width and height
+        // Register world variables
         const world = Builtin.resolveClass(objectScope, 'World')
-        world.sharedScope.setVariable('width', new Constant(objectScope.map.widthInPixels))
-        world.sharedScope.setVariable('height', new Constant(objectScope.map.heightInPixels))
+        world.sharedScope.setVariable('width', new Constant(objectScope.tilemap.widthInPixels))
+        world.sharedScope.setVariable('height', new Constant(objectScope.tilemap.heightInPixels))
+        world.sharedScope.setVariable('tilemap', new Constant(objectScope.objectInstance))
 
         // Set camera bounding box
-        Builtin.scene().cameras.main.setBounds(0, 0, objectScope.map.widthInPixels, objectScope.map.heightInPixels)
+        Builtin.scene().cameras.main.setBounds(0, 0, objectScope.tilemap.widthInPixels, objectScope.tilemap.heightInPixels)
     }
 
     static *loadTilesets(map, json) {
@@ -151,6 +152,7 @@ export class Tilemap {
                 throw new Error('No tileset in tilemap')
             }
             const layer = map.createStaticLayer(i, tilesets[0].tileset, json.layers[i].x, json.layers[i].y)
+            layers.push(layer)
         }
         return layers
     }

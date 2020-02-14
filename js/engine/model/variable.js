@@ -105,6 +105,7 @@ export class ObjectInstance {
             objectScope.type = Scope.Type.Object
             objectScope.parentScope = classScope
             objectScope.classNode = inheritedClass
+            objectScope.objectInstance = this
 
             this.populateScope(objectScope, inheritedClass.propertyNodes)
 

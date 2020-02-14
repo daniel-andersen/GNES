@@ -1,7 +1,8 @@
 Class World
     Shared Property width
     Shared Property height
-
+    Shared Property tilemap
+    
     Shared Constructor
         Invoke initialize() In World
     End

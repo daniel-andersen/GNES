@@ -6,6 +6,9 @@ export class Scope {
         this.parentScope = parentScope
         this.type = type
 
+        this.classNode = undefined
+        this.objectInstance = undefined
+
         this.variables = {}
         this.functions = {}
         this.classes = {}
@@ -18,6 +21,8 @@ export class Scope {
 
     clone() {
         const scope = new Scope(this.parentScope, this.type)
+        scope.classNode = this.classNode
+        scope.objectInstance = this.objectInstance
         scope.variables = Object.assign({}, this.variables)
         scope.functions = Object.assign({}, this.functions)
         scope.classes = Object.assign({}, this.classes)
@@ -30,6 +35,8 @@ export class Scope {
 
     cloneWithReferences() {
         const scope = new Scope(this.parentScope, this.type)
+        scope.classNode = this.classNode
+        scope.objectInstance = this.objectInstance
         scope.variables = this.variables
         scope.functions = this.functions
         scope.classes = this.classes

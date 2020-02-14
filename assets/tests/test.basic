@@ -11,13 +11,6 @@ Class Hero Of Type Sprite
         load(filename="/assets/sprites/hero.png")
         show()
     End
-
-    Update
-        If y > World.height - 128 Then
-            y = World.height - 128
-            movement.velocity.y = 0
-        End
-    End
 End
 
 Class Monster Of Type Sprite

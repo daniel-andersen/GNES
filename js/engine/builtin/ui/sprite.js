@@ -4,6 +4,16 @@ import { Constant, Variable } from '../../model/variable'
 import Util from '../../util/util'
 
 export class Sprite {
+    static *initialize(scope) {
+        const objectScope = Builtin.resolveObjectScope(scope, 'Sprite')
+        objectScope.spriteMeta = {
+            left: 0,
+            top: 0,
+            right: 64,
+            bottom: 64
+        }
+    }
+
     static *update(scope) {
         const objectScope = Builtin.resolveObjectScope(scope, 'Sprite')
 
@@ -12,15 +22,11 @@ export class Sprite {
             return
         }
 
-        // Get anchor
-        const anchor = Builtin.resolveVariable(scope, 'anchor').value()
-        const anchorX = Builtin.resolveVariable(anchor.scope, 'x').value()
-        const anchorY = Builtin.resolveVariable(anchor.scope, 'y').value()
-
-        // Update sprite according to variables
+        // Update visibility
         sprite.visible = Builtin.resolveVariable(scope, 'visible').value()
-        sprite.x = Builtin.resolveVariable(scope, 'x').value() - ((anchorX - 0.5) * Builtin.resolveVariable(scope, 'width').value())
-        sprite.y = Builtin.resolveVariable(scope, 'y').value() - ((anchorY - 0.5) * Builtin.resolveVariable(scope, 'height').value())
+
+        // Update position
+        Sprite.updatePosition(scope)
     }
 
     static *load(scope) {
@@ -96,5 +102,29 @@ export class Sprite {
         }
 
         scope.setVariable('visible', new Constant(false))
+    }
+
+    static updatePosition(scope) {
+        const objectScope = Builtin.resolveObjectScope(scope, 'Sprite')
+        const sprite = objectScope.sprite
+
+        // Get anchor
+        const anchor = Builtin.resolveVariable(scope, 'anchor').value()
+        const anchorX = Builtin.resolveVariable(anchor.scope, 'x').value()
+        const anchorY = Builtin.resolveVariable(anchor.scope, 'y').value()
+
+        // Get width and height
+        const width = Builtin.resolveVariable(scope, 'width').value()
+        const height = Builtin.resolveVariable(scope, 'height').value()
+
+        // Update sprite according to variables
+        sprite.x = Builtin.resolveVariable(scope, 'x').value() - ((anchorX - 0.5) * width)
+        sprite.y = Builtin.resolveVariable(scope, 'y').value() - ((anchorY - 0.5) * height)
+
+        // Update borders
+        objectScope.spriteMeta.left = sprite.x - (width / 2)
+        objectScope.spriteMeta.top = sprite.y - (height / 2)
+        objectScope.spriteMeta.right = objectScope.spriteMeta.left + width
+        objectScope.spriteMeta.bottom = objectScope.spriteMeta.top + height
     }
 }

@@ -8,6 +8,10 @@ Class Sprite
 
     Property anchor = New Vector(x=0.5, y=0.5)
 
+    Constructor
+        Invoke initialize() In Sprite
+    End
+
     Update
         Invoke update() In Sprite
     End
