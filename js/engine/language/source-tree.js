@@ -50,10 +50,10 @@ export class SourceTree {
         // Postprocess source tree
         this.postProcess(this.programNode)
 
-        console.log("---------")
-        console.log("Result:")
+        console.log('---------')
+        console.log('Result:')
         console.log(this.programNode)
-        console.log("---------")
+        console.log('---------')
 
         return undefined
     }
@@ -705,7 +705,7 @@ export class SourceTree {
                 if (node instanceof Node.ConstantNode && node.constant.type == Constant.Type.Variable) {
                     return node.constant.value()
                 } else {
-                    return new Error("Expected variable", node)
+                    return new Error('Expected variable', node)
                 }
             }
         }

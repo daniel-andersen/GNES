@@ -39,23 +39,23 @@ export default class Engine {
             TileMovement: TileMovement,
         }
         this.builtinFiles = [
-            "./assets/engine/language/array.basic",
-            "./assets/engine/language/dictionary.basic",
-            "./assets/engine/language/misc.basic",
-            "./assets/engine/ui/position.basic",
-            "./assets/engine/ui/screen.basic",
-            "./assets/engine/ui/world.basic",
-            "./assets/engine/ui/sprite.basic",
-            "./assets/engine/ui/tilemap.basic",
-            "./assets/engine/ui/camera.basic",
-            "./assets/engine/controls/joystick.basic",
-            "./assets/engine/physics/gravity.basic",
-            "./assets/engine/physics/air-drag.basic",
-            "./assets/engine/physics/ground.basic",
-            "./assets/engine/movement/moveable.basic",
-            "./assets/engine/movement/movement.basic",
-            "./assets/engine/movement/tile-movement.basic",
-            "./assets/engine/movement/jump.basic",
+            './assets/engine/language/array.basic',
+            './assets/engine/language/dictionary.basic',
+            './assets/engine/language/misc.basic',
+            './assets/engine/ui/position.basic',
+            './assets/engine/ui/screen.basic',
+            './assets/engine/ui/world.basic',
+            './assets/engine/ui/sprite.basic',
+            './assets/engine/ui/tilemap.basic',
+            './assets/engine/ui/camera.basic',
+            './assets/engine/controls/joystick.basic',
+            './assets/engine/physics/gravity.basic',
+            './assets/engine/physics/air-drag.basic',
+            './assets/engine/physics/ground.basic',
+            './assets/engine/movement/moveable.basic',
+            './assets/engine/movement/movement.basic',
+            './assets/engine/movement/tile-movement.basic',
+            './assets/engine/movement/jump.basic',
         ]
 
         this.runCallback = undefined
@@ -240,7 +240,7 @@ export default class Engine {
             return
         }
 
-        console.log("Destroying game...")
+        console.log('Destroying game...')
 
         // Destroy phaser game
         if (window.game.phaser !== undefined) {

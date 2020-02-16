@@ -49,6 +49,8 @@ Function followHero()
     While True Do
         If monster.x < hero.x Then monster.x = monster.x + Screen.frameSpeed * speed
         If monster.x > hero.x Then monster.x = monster.x - Screen.frameSpeed * speed
+        If monster.y < hero.y Then monster.y = monster.y + Screen.frameSpeed * speed
+        If monster.y > hero.y Then monster.y = monster.y - Screen.frameSpeed * speed
         Wait For Update
     End
 End

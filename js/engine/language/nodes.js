@@ -396,7 +396,7 @@ export class PrintNode extends StatementNode {
         }
 
         // Print result
-        let text = ""
+        let text = ''
         if (result !== undefined) {
             if (result.value instanceof Constant) {
                 if (result.value.type === Constant.Type.ObjectInstance) {
@@ -415,7 +415,7 @@ export class PrintNode extends StatementNode {
                 }
             }
         }
-        text = ("" + text).replace(/\s/g, '&nbsp;')
+        text = ('' + text).replace(/\s/g, '&nbsp;')
         window.game.console.div.innerHTML += text + '<br/>'
     }
 
@@ -1182,8 +1182,8 @@ export class LoadSpriteNode extends ExpressionNode {
         super(tokens)
         this.expressionNode = expressionNode
 
-        this.newObjectNode = new NewObjectNode(undefined, "Sprite", new ParameterListNode(this.tokens, []))
-        this.loadNode = new FunctionCallNode(this.tokens, "load", new ParameterListNode(this.tokens, [new ParameterAssignmentNode(expressionNode.tokens, "filename", this.expressionNode)]))
+        this.newObjectNode = new NewObjectNode(undefined, 'Sprite', new ParameterListNode(this.tokens, []))
+        this.loadNode = new FunctionCallNode(this.tokens, 'load', new ParameterListNode(this.tokens, [new ParameterAssignmentNode(expressionNode.tokens, 'filename', this.expressionNode)]))
     }
 
     *evaluate(scope) {
@@ -1212,7 +1212,7 @@ export class ShowSpriteNode extends StatementNode {
         super(tokens)
         this.expressionNode = expressionNode
 
-        this.showNode = new FunctionCallNode(this.tokens, "show", new ParameterListNode(this.tokens, []))
+        this.showNode = new FunctionCallNode(this.tokens, 'show', new ParameterListNode(this.tokens, []))
     }
 
     *evaluate(scope) {
@@ -1235,7 +1235,7 @@ export class HideSpriteNode extends StatementNode {
         super(tokens)
         this.expressionNode = expressionNode
 
-        this.hideNode = new FunctionCallNode(this.tokens, "hide", new ParameterListNode(this.tokens, []))
+        this.hideNode = new FunctionCallNode(this.tokens, 'hide', new ParameterListNode(this.tokens, []))
     }
 
     *evaluate(scope) {
@@ -1258,8 +1258,8 @@ export class LoadTilemapNode extends ExpressionNode {
         super(tokens)
         this.tilemapNode = tilemapNode
 
-        this.newObjectNode = new NewObjectNode(undefined, "Tilemap", new ParameterListNode(this.tokens, []))
-        this.loadNode = new FunctionCallNode(this.tokens, "load", new ParameterListNode(this.tokens, [new ParameterAssignmentNode(tilemapNode.tokens, "filename", this.tilemapNode)]))
+        this.newObjectNode = new NewObjectNode(undefined, 'Tilemap', new ParameterListNode(this.tokens, []))
+        this.loadNode = new FunctionCallNode(this.tokens, 'load', new ParameterListNode(this.tokens, [new ParameterAssignmentNode(tilemapNode.tokens, 'filename', this.tilemapNode)]))
     }
 
     *evaluate(scope) {
@@ -1291,7 +1291,7 @@ export class InvokeNativeFunctionNode extends ExpressionNode {
         this.className = className
         this.nativeClasses = nativeClasses
 
-        this.functionCallNode = new FunctionCallNode(undefined, "NativeMethod", this.parameterListNode)
+        this.functionCallNode = new FunctionCallNode(undefined, 'NativeMethod', this.parameterListNode)
     }
 
     *evaluate(scope) {

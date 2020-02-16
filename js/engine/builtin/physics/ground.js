@@ -5,16 +5,8 @@ import { Sprite } from '../ui/sprite'
 
 export class Ground {
     static *update(scope) {
-
-        // Check if tile collection or pixel collision
-        if (true) {
-            yield
-            yield *Ground.tileCollision(scope)
-        }
-        else {
-            yield
-            yield *Ground.pixelCollision(scope)
-        }
+        yield
+        yield *Ground.tileCollision(scope)
     }
 
     static *tileCollision(scope) {
@@ -38,17 +30,8 @@ export class Ground {
             height: Builtin.resolveVariable(scope, 'height').value()
         }
 
-        const position = {
-            x: Builtin.resolveVariable(scope, 'x').value(),
-            y: Builtin.resolveVariable(scope, 'y').value()
-        }
-
         const movement = Builtin.resolveVariable(objectScope, 'movement').value()
         const velocityObjectInstance = Builtin.resolveVariable(movement.scope, 'velocity').value()
-        const velocity = {
-            x: Builtin.resolveVariable(velocityObjectInstance.scope, 'x').value(),
-            y: Builtin.resolveVariable(velocityObjectInstance.scope, 'y').value()
-        }
 
         // Get tile layer
         const layer = Ground.getLayer(scope, tilemapObjectInstance)
@@ -66,134 +49,166 @@ export class Ground {
             y: stepSizePerTile.y * (spriteSize.height + (Math.round(spriteSize.height) % Math.round(tileSize.height))) / (spriteSize.height - 2)
         }
 
-        // Project position in time
-        const targetPosition = {
+        // Get initial values
+        let position = {
+            x: Builtin.resolveVariable(scope, 'x').value(),
+            y: Builtin.resolveVariable(scope, 'y').value()
+        }
+
+        let velocity = {
+            x: Builtin.resolveVariable(velocityObjectInstance.scope, 'x').value(),
+            y: Builtin.resolveVariable(velocityObjectInstance.scope, 'y').value()
+        }
+
+        // Calculate target
+        let targetPosition = {
             x: position.x + (velocity.x * frameSpeed),
             y: position.y + (velocity.y * frameSpeed)
         }
 
-        const delta = {
+        let delta = {
             x: targetPosition.x - position.x,
             y: targetPosition.y - position.y
         }
 
-        const targetDistance = Math.sqrt(delta.x*delta.x + delta.y*delta.y)
-
-        // Project lines from current position border edge to target position border edge
-        let border = {
-            x: delta.x < 0 ? (spriteScope.spriteMeta.left - 1) : (spriteScope.spriteMeta.right + 1),
-            y: delta.y < 0 ? (spriteScope.spriteMeta.top - 1) : (spriteScope.spriteMeta.bottom + 1)
+        // Initial values
+        const initialPosition = {
+            x: position.x,
+            y: position.y
         }
 
-        let projectedLines = []
-
-        for (let y = spriteScope.spriteMeta.top + 1; y <= spriteScope.spriteMeta.bottom; y += stepSize.y) {
-            projectedLines.push({startX: border.x, startY: y, endX: border.x + delta.x, endY: y + delta.y})
+        const initialDelta = {
+            x: delta.x,
+            y: delta.y
         }
 
-        for (let x = spriteScope.spriteMeta.left + 1; x <= spriteScope.spriteMeta.right; x += stepSize.x) {
-            projectedLines.push({startX: x, startY: border.y, endX: x + delta.x, endY: border.y + delta.y})
+        // Define output
+        let outputPosition = {
+            x: position.x,
+            y: position.y
         }
 
-        // Get first collision tile
-        const closestCollision = Ground.getCollisionPoint(projectedLines, tilemap, layer)
+        let outputVelocity = {
+            x: velocity.x,
+            y: velocity.y
+        }
 
-        // Check if any collision
-        if (closestCollision === undefined) {
-            return
+        // Check collision
+        while (delta.x != 0.0 || delta.y != 0.0) {
+
+            // Calculate target position in current direction
+            targetPosition = {
+                x: position.x + delta.x,
+                y: position.y + delta.y
+            }
+
+            // Calculate distance to target
+            const targetDistance = Math.sqrt(delta.x*delta.x + delta.y*delta.y)
+
+            // Project lines from current position border edge to target position border edge
+            const border = {
+                x: delta.x < 0 ? (spriteScope.spriteMeta.left - 1) : (spriteScope.spriteMeta.right + 1),
+                y: delta.y < 0 ? (spriteScope.spriteMeta.top - 1) : (spriteScope.spriteMeta.bottom + 1)
+            }
+
+            let projectedLines = []
+            if (delta.x != 0.0) {
+                for (let y = spriteScope.spriteMeta.top + 1; y <= spriteScope.spriteMeta.bottom; y += stepSize.y) {
+                    projectedLines.push({startX: border.x, startY: y, endX: border.x + delta.x, endY: y + delta.y})
+                }
+            }
+            if (delta.y != 0.0) {
+                for (let x = spriteScope.spriteMeta.left + 1; x <= spriteScope.spriteMeta.right; x += stepSize.x) {
+                    projectedLines.push({startX: x, startY: border.y, endX: x + delta.x, endY: border.y + delta.y})
+                }
+            }
+
+            // Get first collision tile in velocity direction
+            const closestCollision = Ground.getCollisionPoint(projectedLines, tilemap, layer)
+
+            // Check if any collision
+            if (closestCollision === undefined) {
+                break
+            }
+
+            // Position sprite at collision point
+            position = {
+                x: Math.round(position.x + (delta.x * closestCollision.distance / targetDistance)),
+                y: Math.round(position.y + (delta.y * closestCollision.distance / targetDistance))
+            }
+
+            objectScope.setVariable('x', new Constant(position.x))
+            objectScope.setVariable('y', new Constant(position.y))
+
+            // Update sprite position
+            Sprite.updatePosition(spriteScope)
+
+            // Calculate remaining velocity
+            delta = {
+                x: targetPosition.x - position.x,
+                y: targetPosition.y - position.y
+            }
+
+            border = {
+                x: delta.x < 0 ? (spriteScope.spriteMeta.left - 1) : (spriteScope.spriteMeta.right + 1),
+                y: delta.y < 0 ? (spriteScope.spriteMeta.top - 1) : (spriteScope.spriteMeta.bottom + 1)
+            }
+
+            // Horizontal collision
+            if (delta.x != 0.0) {
+                projectedLines = []
+                projectedLines.push({startX: border.x, startY: spriteScope.spriteMeta.top + 1, endX: border.x, endY: spriteScope.spriteMeta.bottom - 1})
+                const horizontalCollision = Ground.getCollisionPoint(projectedLines, tilemap, layer)
+
+                if (horizontalCollision !== undefined) {
+                    position.x += (border.x - horizontalCollision.x) - Math.sign(delta.x)
+                    delta.x = 0.0
+                    outputPosition.x = position.x
+                    outputVelocity.x = 0.0
+                }
+            }
+
+            // Vertical collision
+            if (delta.y != 0.0) {
+                projectedLines = []
+                projectedLines.push({startX: spriteScope.spriteMeta.left + 1, startY: border.y, endX: spriteScope.spriteMeta.right - 1, endY: border.y})
+                const verticalCollision = Ground.getCollisionPoint(projectedLines, tilemap, layer)
+
+                if (verticalCollision !== undefined) {
+                    position.y += (border.y - verticalCollision.y) - Math.sign(delta.y)
+
+                    // Bounce if jumping
+                    if (delta.y < 0.0 && Builtin.resolveVariable(objectScope, 'jump') !== undefined) {
+                        outputVelocity.y = Math.abs(outputVelocity.y)
+                        outputPosition.y = position.y - (outputVelocity.y * frameSpeed)
+                    }
+
+                    // No bounce
+                    else {
+                        outputVelocity.y = 0.0
+                        outputPosition.y = position.y
+                    }
+
+                    delta.y = 0.0
+                }
+            }
         }
 
         // Position sprite at collision point
-        const firstCollisionPosition = {
-            x: Math.round(position.x + (delta.x * closestCollision.distance / targetDistance)),
-            y: Math.round(position.y + (delta.y * closestCollision.distance / targetDistance))
+        position = {
+            x: Math.round(outputPosition.x),
+            y: Math.round(outputPosition.y)
         }
 
-        objectScope.setVariable('x', new Constant(firstCollisionPosition.x))
-        objectScope.setVariable('y', new Constant(firstCollisionPosition.y))
+        objectScope.setVariable('x', new Constant(position.x))
+        objectScope.setVariable('y', new Constant(position.y))
+
+        // Set velocity
+        velocityObjectInstance.scope.setVariable('x', new Constant(outputVelocity.x))
+        velocityObjectInstance.scope.setVariable('y', new Constant(outputVelocity.y))
 
         // Update sprite position
         Sprite.updatePosition(spriteScope)
-
-        // Calculate remaining velocity
-        const remainingDelta = {
-            x: targetPosition.x - firstCollisionPosition.x,
-            y: targetPosition.y - firstCollisionPosition.y
-        }
-
-        border = {
-            x: delta.x < 0 ? (spriteScope.spriteMeta.left - 1) : (spriteScope.spriteMeta.right + 1),
-            y: delta.y < 0 ? (spriteScope.spriteMeta.top - 1) : (spriteScope.spriteMeta.bottom + 1)
-        }
-
-        // Check if it was a horizontal or vertical collision (or both)
-        projectedLines = []
-        projectedLines.push({startX: border.x, startY: spriteScope.spriteMeta.top + 1, endX: border.x, endY: spriteScope.spriteMeta.bottom - 1})
-        let horizontalCollision = Ground.getCollisionPoint(projectedLines, tilemap, layer)
-
-        projectedLines = []
-        projectedLines.push({startX: spriteScope.spriteMeta.left + 1, startY: border.y, endX: spriteScope.spriteMeta.right - 1, endY: border.y})
-        let verticalCollision = Ground.getCollisionPoint(projectedLines, tilemap, layer)
-
-        // Stop moving horizontally
-        if (horizontalCollision !== undefined) {
-            velocityObjectInstance.scope.setVariable('x', new Constant(0))
-        }
-
-        // Move remaining horizontal velocity
-        else {
-
-            // Get collision horizontally away from first collision point
-            projectedLines = []
-            for (let y = spriteScope.spriteMeta.top + 1; y < spriteScope.spriteMeta.bottom; y += stepSize.y) {
-                projectedLines.push({startX: border.x, startY: y, endX: border.x + remainingDelta.x, endY: y})
-            }
-            horizontalCollision = Ground.getCollisionPoint(projectedLines, tilemap, layer)
-
-            // Move remaining horizontal velocity
-            if (horizontalCollision !== undefined) {
-                objectScope.setVariable('x', new Constant(firstCollisionPosition.x + horizontalCollision.x - border.x))
-                velocityObjectInstance.scope.setVariable('x', new Constant(0))
-            }
-
-            // Revert to original position and velocity
-            else {
-                objectScope.setVariable('x', new Constant(position.x))
-            }
-        }
-
-        // Stop moving vertically
-        if (verticalCollision !== undefined) {
-            velocityObjectInstance.scope.setVariable('y', new Constant(0))
-        }
-
-        // Move remaining vertical velocity
-        else {
-
-            // Get collision vertically away from first collision point
-            projectedLines = []
-            for (let x = spriteScope.spriteMeta.left + 1; x < spriteScope.spriteMeta.right; x += stepSize.x) {
-                projectedLines.push({startX: x, startY: border.y, endX: x, endY: border.y + remainingDelta.y})
-            }
-            verticalCollision = Ground.getCollisionPoint(projectedLines, tilemap, layer)
-
-            // Move remaining vertical velocity
-            if (verticalCollision !== undefined) {
-                objectScope.setVariable('y', new Constant(firstCollisionPosition.y + verticalCollision.y - border.y))
-                velocityObjectInstance.scope.setVariable('y', new Constant(0))
-            }
-
-            // Revert to original position and velocity
-            else {
-                objectScope.setVariable('y', new Constant(position.y))
-            }
-        }
-
-        // Update sprite position
-        Sprite.updatePosition(spriteScope)
-    }
-
-    static *pixelCollision(scope) {
     }
 
     static getLayer(scope, tilemapObjectInstance) {

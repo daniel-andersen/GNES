@@ -1,5 +1,6 @@
 Behaviour Ground
     Required Behaviour movement Of Type Movement
+    Optional Behaviour jump Of Type Jump
 
     Property layer = 0
 
