@@ -8,7 +8,7 @@ import { Scope } from './model/scope'
 import { Variable } from './model/variable'
 import { Error } from './model/error'
 import Util from './util/util'
-import { Array } from './builtin/structures/array'
+import { Array } from './builtin/language/structures'
 import { Screen } from './builtin/ui/screen'
 import { World } from './builtin/ui/world'
 import { Sprite } from './builtin/ui/sprite'
@@ -39,8 +39,9 @@ export default class Engine {
             TileMovement: TileMovement,
         }
         this.builtinFiles = [
-            "./assets/engine/structures/array.basic",
-            "./assets/engine/structures/dictionary.basic",
+            "./assets/engine/language/array.basic",
+            "./assets/engine/language/dictionary.basic",
+            "./assets/engine/language/misc.basic",
             "./assets/engine/ui/position.basic",
             "./assets/engine/ui/screen.basic",
             "./assets/engine/ui/world.basic",
@@ -173,31 +174,49 @@ export default class Engine {
     addUpdateExecutions() {
         let executions = []
 
-        // Add class update (shared update functions)
-        for (let classNode of this.sourceTree.programNode.scope.updateClasses) {
-            const functionCallNode = new Node.FunctionCallNode([], '_update', new Node.ParameterListNode([], []))
-            executions.push(new Execution(functionCallNode, classNode.sharedScope))
-        }
+        // Orders
+        const orders = ['First', 'Normal', 'Last']
 
-        // Add object update
-        for (let object of Object.values(this.sourceTree.programNode.scope.updateObjects)) {
+        // Add updates in order
+        for (let order of orders) {
+            let functionName = Node.UpdateOrder.updateFunctionName(order)
 
-            // Add behaviours
-            for (let i = object.scopes.length - 1; i >= 0; i--) {
-                let scope = object.scopes[i]
-                for (let behaviourObject of scope.behaviourObjects) {
-                    const functionCallNode = new Node.FunctionCallNode([], '_update', new Node.ParameterListNode([], []))
-                    executions.push(new Execution(functionCallNode, behaviourObject.scope))
-                }
+            // Add class update (shared update functions)
+            for (let dict of this.sourceTree.programNode.scope.updateClasses[order] || {}) {
+                const functionCallNode = new Node.FunctionCallNode([], functionName, new Node.ParameterListNode([], []))
+                executions.push(new Execution(functionCallNode, classNode.sharedScope))
             }
 
-            // Add Update function
-            for (let i = object.scopes.length - 1; i >= 0; i--) {
-                let scope = object.scopes[i]
-                for (let functionNode of Object.values(scope.functions)) {
-                    if (functionNode.functionName == '_update') {
-                        const functionCallNode = new Node.FunctionCallNode([], '_update', new Node.ParameterListNode([], []))
-                        executions.push(new Execution(functionCallNode, scope))
+            // Add object update
+            for (let dict of this.sourceTree.programNode.scope.updateObjects[order] || {}) {
+                const object = dict.objectInstance
+
+                // Add behaviours with update functions
+                for (let i = object.scopes.length - 1; i >= 0; i--) {
+                    let scope = object.scopes[i]
+                    for (let behaviourObject of scope.behaviourObjects) {
+
+                        // Go through behaviour object's scopes and functions
+                        for (let i = behaviourObject.scopes.length - 1; i >= 0; i--) {
+                            let behaviourScope = behaviourObject.scopes[i]
+                            for (let functionNode of Object.values(behaviourScope.functions)) {
+                                if (functionNode.functionName == functionName) {
+                                    const functionCallNode = new Node.FunctionCallNode([], functionName, new Node.ParameterListNode([], []))
+                                    executions.push(new Execution(functionCallNode, behaviourScope))
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Add Update function
+                for (let i = object.scopes.length - 1; i >= 0; i--) {
+                    let scope = object.scopes[i]
+                    for (let functionNode of Object.values(scope.functions)) {
+                        if (functionNode.functionName == functionName) {
+                            const functionCallNode = new Node.FunctionCallNode([], functionName, new Node.ParameterListNode([], []))
+                            executions.push(new Execution(functionCallNode, scope))
+                        }
                     }
                 }
             }

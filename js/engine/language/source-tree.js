@@ -831,8 +831,10 @@ export class SourceTree {
         }
         classNode.sharedScope.setFunction(node)
 
-        if (node.functionName == '_update') {
-            globalScope.updateClasses.push(classNode)
+        for (let order of Node.UpdateOrder.orders) {
+            if (node.functionName == Node.UpdateOrder.updateFunctionName(order)) {
+                globalScope.addUpdateClass(node, classNode)
+            }
         }
     }
 

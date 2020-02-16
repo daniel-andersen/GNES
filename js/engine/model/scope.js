@@ -15,7 +15,7 @@ export class Scope {
         this.behaviourDefinitions = {}
 
         this.updateObjects = {}
-        this.updateClasses = []
+        this.updateClasses = {}
         this.behaviourObjects = []
     }
 
@@ -27,8 +27,14 @@ export class Scope {
         scope.functions = Object.assign({}, this.functions)
         scope.classes = Object.assign({}, this.classes)
         scope.behaviourDefinitions = Object.assign({}, this.behaviourDefinitions)
-        scope.updateObjects = Object.assign({}, this.updateObjects)
-        scope.updateClasses = this.updateClasses.slice(0)
+        scope.updateObjects = {}
+        for (let key of Object.keys(this.updateObjects)) {
+            scope.updateObjects[key] = this.updateObjects[key].slice(0)
+        }
+        scope.updateClasses = {}
+        for (let key of Object.keys(this.updateClasses)) {
+            scope.updateClasses[key] = this.updateClasses[key].slice(0)
+        }
         scope.behaviourObjects = this.behaviourObjects.slice(0)
         return scope
     }
@@ -285,6 +291,26 @@ export class Scope {
 
         // Not found
         return undefined
+    }
+
+    addUpdateClass(node, classNode) {
+        if (this.updateClasses[node.order] === undefined) {
+            this.updateClasses[node.order] = []
+        }
+        this.updateClasses[node.order].push({
+            updateNode: node,
+            classNode: classNode
+        })
+    }
+
+    addUpdateObject(node, object) {
+        if (this.updateObjects[node.order] === undefined) {
+            this.updateObjects[node.order] = []
+        }
+        this.updateObjects[node.order].push({
+            updateNode: node,
+            objectInstance: object
+        })
     }
 }
 
