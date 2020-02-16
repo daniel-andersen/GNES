@@ -1,7 +1,7 @@
 Behaviour Camera
     Property center = New Vector(x=0.5, y=0.5)
 
-    Update
+    Post Update
         Invoke update() In Camera
     End
 End

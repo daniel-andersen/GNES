@@ -9,15 +9,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (runTests) {
         engine.run([
-            '/assets/tests/loops-basic.basic',
-            '/assets/tests/control-structures.basic',
-            '/assets/tests/functions-basic.basic',
-            '/assets/tests/functions-fibonacci.basic',
-            '/assets/tests/classes-basic.basic',
-            '/assets/tests/classes-inheritance.basic',
+            './assets/tests/loops-basic.basic',
+            './assets/tests/control-structures.basic',
+            './assets/tests/functions-basic.basic',
+            './assets/tests/functions-fibonacci.basic',
+            './assets/tests/classes-basic.basic',
+            './assets/tests/classes-inheritance.basic',
         ])
     }
 
     const editor = new Editor(engine)
-    editor.load(['/assets/tests/test.basic'])
+    editor.load(['./assets/tests/test.basic'])
 })

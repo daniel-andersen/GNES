@@ -3,7 +3,7 @@ Behaviour Gravity
 
     Property drag = 9.806
 
-    Update
+    Pre Update
         Invoke update() In Gravity
     End
 End

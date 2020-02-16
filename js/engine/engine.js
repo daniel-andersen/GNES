@@ -174,21 +174,19 @@ export default class Engine {
     addUpdateExecutions() {
         let executions = []
 
-        // Orders
-        const orders = ['First', 'Normal', 'Last']
-
         // Add updates in order
-        for (let order of orders) {
+        for (let order of Node.UpdateOrder.orders) {
             let functionName = Node.UpdateOrder.updateFunctionName(order)
 
             // Add class update (shared update functions)
-            for (let dict of this.sourceTree.programNode.scope.updateClasses[order] || {}) {
+            for (let dict of this.sourceTree.programNode.scope.updateClasses[order] || []) {
+                const classNode = dict.classNode
                 const functionCallNode = new Node.FunctionCallNode([], functionName, new Node.ParameterListNode([], []))
                 executions.push(new Execution(functionCallNode, classNode.sharedScope))
             }
 
-            // Add object update
-            for (let dict of this.sourceTree.programNode.scope.updateObjects[order] || {}) {
+            // Add updates
+            for (let dict of this.sourceTree.programNode.scope.updateObjects[order] || []) {
                 const object = dict.objectInstance
 
                 // Add behaviours with update functions
@@ -209,7 +207,7 @@ export default class Engine {
                     }
                 }
 
-                // Add Update function
+                // Add object update function
                 for (let i = object.scopes.length - 1; i >= 0; i--) {
                     let scope = object.scopes[i]
                     for (let functionNode of Object.values(scope.functions)) {

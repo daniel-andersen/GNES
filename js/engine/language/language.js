@@ -436,34 +436,68 @@ export default class Language {
                 name: 'UpdateFunctionDefinition',
                 match: [
                     {type: "token", token: "Update"},
-                    {type: "group", required: false, group: {
-                        match: [
-                            {type: "name", id: "order"},
-                        ],
-                        node: (tokens, nodes, sourceTree) => new Node.GroupNode(tokens, nodes)
-                    }},
                     {type: "subtree", endTokens: ["End"], id: "content"},
                     {type: "token", token: "End"},
                     {type: "token", code: this.tokenType.EOL}
                 ],
-                node: (tokens, nodes, sourceTree) => new Node.UpdateFunctionDefinitionNode(tokens, sourceTree.getConstantNameWithId(nodes, 'order'), sourceTree.getNodeWithId(nodes, 'content'))
+                node: (tokens, nodes, sourceTree) => new Node.UpdateFunctionDefinitionNode(tokens, Node.UpdateOrder.Normal, sourceTree.getNodeWithId(nodes, 'content'))
+            },
+            {
+                name: 'PreUpdateFunctionDefinition',
+                match: [
+                    {type: "token", token: "Pre"},
+                    {type: "token", token: "Update"},
+                    {type: "subtree", endTokens: ["End"], id: "content"},
+                    {type: "token", token: "End"},
+                    {type: "token", code: this.tokenType.EOL}
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.UpdateFunctionDefinitionNode(tokens, Node.UpdateOrder.Pre, sourceTree.getNodeWithId(nodes, 'content'))
+            },
+            {
+                name: 'PostUpdateFunctionDefinition',
+                match: [
+                    {type: "token", token: "Post"},
+                    {type: "token", token: "Update"},
+                    {type: "subtree", endTokens: ["End"], id: "content"},
+                    {type: "token", token: "End"},
+                    {type: "token", code: this.tokenType.EOL}
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.UpdateFunctionDefinitionNode(tokens, Node.UpdateOrder.Post, sourceTree.getNodeWithId(nodes, 'content'))
             },
             {
                 name: 'SharedUpdateFunctionDefinition',
                 match: [
                     {type: "token", token: "Shared"},
                     {type: "token", token: "Update"},
-                    {type: "group", required: false, group: {
-                        match: [
-                            {type: "name", id: "order"},
-                        ],
-                        node: (tokens, nodes, sourceTree) => new Node.GroupNode(tokens, nodes)
-                    }},
                     {type: "subtree", endTokens: ["End"], id: "content"},
                     {type: "token", token: "End"},
                     {type: "token", code: this.tokenType.EOL}
                 ],
-                node: (tokens, nodes, sourceTree) => new Node.SharedUpdateFunctionDefinitionNode(tokens, sourceTree.getConstantNameWithId(nodes, 'order'), sourceTree.getNodeWithId(nodes, 'content'))
+                node: (tokens, nodes, sourceTree) => new Node.SharedUpdateFunctionDefinitionNode(tokens, Node.UpdateOrder.Normal, sourceTree.getNodeWithId(nodes, 'content'))
+            },
+            {
+                name: 'SharedPreUpdateFunctionDefinition',
+                match: [
+                    {type: "token", token: "Shared"},
+                    {type: "token", token: "Pre"},
+                    {type: "token", token: "Update"},
+                    {type: "subtree", endTokens: ["End"], id: "content"},
+                    {type: "token", token: "End"},
+                    {type: "token", code: this.tokenType.EOL}
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.SharedUpdateFunctionDefinitionNode(tokens, Node.UpdateOrder.Pre, sourceTree.getNodeWithId(nodes, 'content'))
+            },
+            {
+                name: 'SharedPostUpdateFunctionDefinition',
+                match: [
+                    {type: "token", token: "Shared"},
+                    {type: "token", token: "Post"},
+                    {type: "token", token: "Update"},
+                    {type: "subtree", endTokens: ["End"], id: "content"},
+                    {type: "token", token: "End"},
+                    {type: "token", code: this.tokenType.EOL}
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.SharedUpdateFunctionDefinitionNode(tokens, Node.UpdateOrder.Post, sourceTree.getNodeWithId(nodes, 'content'))
             },
             {
                 name: 'RunFunction',

@@ -4,7 +4,7 @@ Behaviour AirDrag
 
     Property drag = 30.0
 
-    Update
+    Pre Update
         effectiveDrag = 1 - ((drag / 100) * Screen.frameSpeed)
         If effectiveDrag < 0 Then
             effectiveDrag = 0

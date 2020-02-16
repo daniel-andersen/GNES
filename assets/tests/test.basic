@@ -37,7 +37,7 @@ tilemap = Load Tilemap "./assets/tilemaps/super-mario.json"
 
 monster1 = New Monster(x=100, y=200, speed=4.0)
 monster2 = New Monster(x=700, y=500, speed=6.0)
-hero = New Hero(x=200, y=0, anchor=New Vector(x=0.5, y=1.0))
+hero = New Hero(x=200, y=150, anchor=New Vector(x=0.5, y=1.0))
 
 Function followHero()
     speed = 3.0

@@ -12,7 +12,7 @@ Class Sprite
         Invoke initialize() In Sprite
     End
 
-    Update
+    Post Update
         Invoke update() In Sprite
     End
 

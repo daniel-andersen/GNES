@@ -24,7 +24,7 @@ Behaviour TileMovement Of Type Moveable
         Invoke moveDown() In TileMovement
     End
 
-    Update
+    Post Update
         Invoke update() In TileMovement
     End
 End

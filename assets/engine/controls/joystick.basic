@@ -16,7 +16,7 @@ End
 Behaviour Joystick
     Required Behaviour moveable Of Type Moveable
 
-    Update
+    Pre Update
         #Invoke updateBehaviour() In Joystick
 
         If Joystick.left Then

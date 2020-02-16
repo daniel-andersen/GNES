@@ -303,12 +303,11 @@ export class Scope {
         })
     }
 
-    addUpdateObject(node, object) {
-        if (this.updateObjects[node.order] === undefined) {
-            this.updateObjects[node.order] = []
+    addUpdateObject(object, order) {
+        if (this.updateObjects[order] === undefined) {
+            this.updateObjects[order] = []
         }
-        this.updateObjects[node.order].push({
-            updateNode: node,
+        this.updateObjects[order].push({
             objectInstance: object
         })
     }

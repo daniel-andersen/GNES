@@ -747,7 +747,7 @@ export class NewObjectNode extends ExpressionNode {
 
         // Check update function
         for (let order of UpdateOrder.orders) {
-            updatable |= UpdateOrder.updateFunction('order', object.scope) !== undefined
+            updatable |= UpdateOrder.updateFunction(order, object.scope) !== undefined
         }
 
         // Check behaviour
@@ -759,10 +759,8 @@ export class NewObjectNode extends ExpressionNode {
         if (updatable) {
             const globalScope = object.scope.resolveScope(Scope.Type.Global)
             for (let order of UpdateOrder.orders) {
-                const updateFunction = UpdateOrder.updateFunction('order', object.scope)
-                if (updateFunction !== undefined) {
-                    globalScope.addUpdateObject(updateFunction, object)
-                }
+                const updateFunction = UpdateOrder.updateFunction(order, object.scope)
+                globalScope.addUpdateObject(object, order)
             }
         }
     }
@@ -1075,15 +1073,15 @@ export class SharedFunctionDefinitionNode extends FunctionDefinitionNode {
 
 export class UpdateFunctionDefinitionNode extends FunctionDefinitionNode {
     constructor(tokens=[], order, contentNode) {
-        super(tokens, UpdateOrder.updateFunctionName(order || 'Normal'), new ParameterDefinitionsNode([], []), contentNode)
-        this.order = order || 'Normal'
+        super(tokens, UpdateOrder.updateFunctionName(order), new ParameterDefinitionsNode([], []), contentNode)
+        this.order = order
     }
 }
 
 export class SharedUpdateFunctionDefinitionNode extends SharedFunctionDefinitionNode {
     constructor(tokens=[], order, contentNode) {
-        super(tokens, UpdateOrder.updateFunctionName(order || 'Normal'), new ParameterDefinitionsNode([], []), contentNode)
-        this.order = order || 'Normal'
+        super(tokens, UpdateOrder.updateFunctionName(order), new ParameterDefinitionsNode([], []), contentNode)
+        this.order = order
     }
 }
 
@@ -1156,25 +1154,6 @@ export class ConstructorNode extends Node {
 export class SharedConstructorNode extends ConstructorNode {
     constructor(tokens=[], contentNode) {
         super(tokens, contentNode)
-    }
-}
-
-export class UpdateOrderNode extends StatementNode {
-    constructor(tokens=[], priority) {
-        super(tokens)
-        this.priority = priority
-    }
-
-    *evaluate(scope) {
-        yield
-        const result = yield* this.expressionNode.evaluate(scope)
-        if (result === undefined) {
-            throw {error: 'Expression must evaluate to a value', node: node}
-        }
-        if (result.type !== Result.Type.Expression) {
-            throw {error: 'Expected expression', node: this.expressionNode}
-        }
-
     }
 }
 
@@ -1558,7 +1537,10 @@ export class UpdateOrder {
     }
 
     static updateFunction(order, scope) {
-        return scope.resolveFunction('_update' + order)
+        return scope.resolveFunction(this.updateFunctionName(order))
     }
 }
-UpdateOrder.orders = ['First', 'Normal', 'High']
+UpdateOrder.Pre = 'Pre'
+UpdateOrder.Normal = 'Normal'
+UpdateOrder.Post = 'Post'
+UpdateOrder.orders = [UpdateOrder.Pre, UpdateOrder.Normal, UpdateOrder.Post]

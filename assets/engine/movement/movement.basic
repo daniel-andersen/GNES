@@ -29,7 +29,7 @@ Behaviour Movement Of Type Moveable
         End
     End
 
-    Update
+    Post Update
         x = x + (velocity.x * Screen.frameSpeed)
         y = y + (velocity.y * Screen.frameSpeed)
     End
