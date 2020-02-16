@@ -1,0 +1,5 @@
+Class Array
+    Function count()
+        Invoke count() In Array
+    End
+End
