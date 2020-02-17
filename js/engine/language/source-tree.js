@@ -16,6 +16,11 @@ export class SourceTree {
     }
 
     async build(files=[], texts=[]) {
+        this.programNode = await this.compile(files, texts)
+        return this.programNode
+    }
+
+    async compile(files=[], texts=[]) {
 
         // All files
         const allFiles = []
@@ -45,17 +50,12 @@ export class SourceTree {
         }
 
         // Create global node
-        this.programNode = new Node.ProgramNode(fileNodes, globalScope)
+        const programNode = new Node.ProgramNode(fileNodes, globalScope)
 
         // Postprocess source tree
-        this.postProcess(this.programNode)
+        this.postProcess(programNode)
 
-        console.log('---------')
-        console.log('Result:')
-        console.log(this.programNode)
-        console.log('---------')
-
-        return undefined
+        return programNode
     }
 
     postProcess(programNode) {

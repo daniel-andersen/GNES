@@ -107,7 +107,11 @@ export default class Interpreter {
             const execution = this.currentExecutions[0]
 
             // Execute
-            execution.step()
+            try {
+                execution.step()
+            } catch (error) {
+                console.log('Runtime error', error)
+            }
 
             // Remove if stopped
             if (execution.hasStopped()) {
@@ -120,7 +124,11 @@ export default class Interpreter {
             for (let execution of this.currentExecutions.slice()) {
 
                 // Execute
-                execution.step()
+                try {
+                    execution.step()
+                } catch (error) {
+                    console.log('Runtime error', error)
+                }
 
                 // Remove if stopped
                 if (execution.hasStopped()) {

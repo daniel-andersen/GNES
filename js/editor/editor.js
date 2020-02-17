@@ -34,6 +34,16 @@ export default class Editor {
 
         this.codeMirror = CodeMirror.fromTextArea(this.textArea, this.config)
         this.codeMirror.setSize('100vw', '50vh')
+        this.codeMirror.on('change', async () => {
+            await this.onChange()
+        })
+
+        // Setup state
+        this.state = {
+            onChangeTimeout: undefined,
+            compileInterval: 2000,
+            compiling: false,
+        }
 
         // Setup engine callbacks
         this.engine.runCallback = () => { this.updatePlayButtons() }
@@ -81,5 +91,36 @@ export default class Editor {
         this.stopButton.style.visibility = this.engine.isRunning() ? 'visible' : 'hidden'
         this.pauseButton.style.visibility = this.engine.isRunning() ? 'visible' : 'hidden'
         this.resumeButton.style.visibility = this.engine.isPaused() ? 'visible' : 'hidden'
+    }
+
+    async compile() {
+        if (this.state.compiling) {
+            this.state.onChangeTimeout = setTimeout(() => {
+                this.compile()
+            }, this.state.compileInterval)
+            return
+        }
+
+        let result = undefined
+        try {
+            this.state.compiling = true
+            result = await this.engine.compile([], [this.codeMirror.getValue()])
+        }
+        finally {
+            this.state.compiling = false
+        }
+
+        return result
+    }
+
+    async onChange() {
+        if (this.state.onChangeTimeout !== undefined) {
+            clearInterval(this.state.onChangeTimeout)
+            this.state.onChangeTimeout = undefined
+        }
+
+        this.state.onChangeTimeout = setTimeout(() => {
+            this.compile()
+        }, this.state.compileInterval)
     }
 }

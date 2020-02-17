@@ -65,39 +65,57 @@ export default class Engine {
 
         this.referenceWidth = referenceWidth
         this.referenceHeight = referenceHeight
+
+        // Prepare sourcetree
+        this.language = new Language()
+        this.sourceTree = new SourceTree(this.language, this.nativeClasses, this.builtinFiles)
+    }
+
+    async compile(filenames=[], texts=[]) {
+        try {
+
+            // Compile
+            return await this.sourceTree.compile(filenames, texts)
+
+        } catch (error) {
+            console.log('Error compiling program', error)
+            return new Error(error.error, error.token, error.node)
+        }
     }
 
     async run(filenames=[], texts=[]) {
+        try {
 
-        // Setup
-        await this.setup()
+            // Setup
+            await this.setup()
 
-        // Parse files
-        this.language = new Language()
-        this.sourceTree = new SourceTree(this.language, this.nativeClasses, this.builtinFiles)
-
-        const result = await this.sourceTree.build(filenames, texts)
-        if (result instanceof Error) {
-            throw result
-        }
-
-        // Prepare execution
-        const execution = new Execution(this.sourceTree.programNode)
-
-        this.interpreter = new Interpreter(this.sourceTree)
-        this.interpreter.stopCallback = () => { this.interpreterStoped() }
-        this.interpreter.addExecution(execution)
-
-        document.addEventListener('keydown', event => {
-            if (!event.isComposing && event.keyCode === 27) {
-                this.stop()
+            // Build
+            const result = await this.sourceTree.build(filenames, texts)
+            if (result instanceof Error) {
+                throw result
             }
-        })
 
-        // Run program
-        console.log('Running...')
+            // Prepare execution
+            const execution = new Execution(this.sourceTree.programNode)
 
-        this.start()
+            this.interpreter = new Interpreter(this.sourceTree)
+            this.interpreter.stopCallback = () => { this.interpreterStoped() }
+            this.interpreter.addExecution(execution)
+
+            document.addEventListener('keydown', event => {
+                if (!event.isComposing && event.keyCode === 27) {
+                    this.stop()
+                }
+            })
+
+            // Run program
+            console.log('Running...')
+
+            this.start()
+        } catch (error) {
+            console.log('Error running program', error)
+            this.stop()
+        }
     }
 
     interpreterStoped() {
@@ -112,27 +130,35 @@ export default class Engine {
         if (this.isRunning() || this.isPaused()) {
             this.stop()
         }
-        this.interpreter.run()
-        if (this.runCallback !== undefined) {
-            this.runCallback()
+        if (this.interpreter !== undefined) {
+            this.interpreter.run()
+            if (this.runCallback !== undefined) {
+                this.runCallback()
+            }
         }
     }
 
     stop() {
-        this.interpreter.stop()
+        if (this.interpreter !== undefined) {
+            this.interpreter.stop()
+        }
     }
 
     pause() {
-        this.interpreter.pause()
-        if (this.pauseCallback !== undefined) {
-            this.pauseCallback()
+        if (this.interpreter !== undefined) {
+            this.interpreter.pause()
+            if (this.pauseCallback !== undefined) {
+                this.pauseCallback()
+            }
         }
     }
 
     resume() {
-        this.interpreter.resume()
-        if (this.resumeCallback !== undefined) {
-            this.resumeCallback()
+        if (this.interpreter !== undefined) {
+            this.interpreter.resume()
+            if (this.resumeCallback !== undefined) {
+                this.resumeCallback()
+            }
         }
     }
 

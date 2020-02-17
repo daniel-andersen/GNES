@@ -11,13 +11,22 @@ export default class Execution {
     }
 
     step() {
-        const result = this.iterator.next()
-        if (result.done) {
-            this.stopped = true
+        try {
+            const result = this.iterator.next()
+            if (result.done) {
+                this.stopped = true
+            }
+        } catch (error) {
+            this.stop()
+            throw error
         }
     }
 
     hasStopped() {
         return this.stopped
+    }
+
+    stop() {
+        this.stopped = true
     }
 }
