@@ -47,25 +47,6 @@ export class StatementNode extends Node {
     }
 }
 
-export class ParameterAssignmentNode extends StatementNode {
-    constructor(tokens=[], variableName, expressionNode) {
-        super(tokens)
-        this.variableName = variableName
-        this.expressionNode = expressionNode
-    }
-
-    *evaluate(scope) {
-        const result = yield* this.expressionNode.evaluate(scope)
-        if (result === undefined) {
-            throw {error: 'Result of expression is undefined', node: this.expressionNode}
-        }
-        if (result.type !== Result.Type.Expression) {
-            throw {error: 'Expected expression', node: this.expressionNode}
-        }
-        scope.setVariable(this.variableName, result.value)
-    }
-}
-
 export class AssignmentNode extends StatementNode {
     constructor(tokens=[], variableExpressionNode, assignmentExpressionNode) {
         super(tokens)
@@ -434,6 +415,7 @@ export class PrintNode extends StatementNode {
 export class ExpressionNode extends Node {
     constructor(tokens=[]) {
         super(tokens)
+        this.validArithmeticExpression = true
     }
 }
 
@@ -763,6 +745,26 @@ export class NewObjectNode extends ExpressionNode {
                 globalScope.addUpdateObject(object, order)
             }
         }
+    }
+}
+
+export class ParameterAssignmentNode extends ExpressionNode {
+    constructor(tokens=[], variableName, expressionNode) {
+        super(tokens)
+        this.variableName = variableName
+        this.expressionNode = expressionNode
+        this.validArithmeticExpression = false
+    }
+
+    *evaluate(scope) {
+        const result = yield* this.expressionNode.evaluate(scope)
+        if (result === undefined) {
+            throw {error: 'Result of expression is undefined', node: this.expressionNode}
+        }
+        if (result.type !== Result.Type.Expression) {
+            throw {error: 'Expected expression', node: this.expressionNode}
+        }
+        scope.setVariable(this.variableName, result.value)
     }
 }
 

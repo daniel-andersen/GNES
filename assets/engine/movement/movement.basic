@@ -3,6 +3,7 @@ Behaviour Movement Of Type Moveable
     Optional Behaviour jump Of Type Jump
 
     Property speed = 10
+    Property maxSpeed = 100
 
     Property velocity = New Vector()
 
@@ -30,6 +31,11 @@ Behaviour Movement Of Type Moveable
     End
 
     Post Update
+        If velocity.x > maxSpeed Then velocity.x = maxSpeed
+        If velocity.x < -maxSpeed Then velocity.x = -maxSpeed
+        If velocity.y > maxSpeed Then velocity.y = maxSpeed
+        If velocity.y < -maxSpeed Then velocity.y = -maxSpeed
+
         x = x + (velocity.x * Screen.frameSpeed)
         y = y + (velocity.y * Screen.frameSpeed)
     End

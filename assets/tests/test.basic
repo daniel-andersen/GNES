@@ -5,7 +5,7 @@ Class Hero Of Type Sprite
     Behaviour Of Type AirDrag
     Behaviour Of Type Jump
     Behaviour Of Type Camera
-    Behaviour Of Type Ground(layer=1)
+    Behaviour Of Type TileCollision(layer=1)
 
     Constructor
         load(filename="./assets/sprites/hero.png")
@@ -13,46 +13,52 @@ Class Hero Of Type Sprite
     End
 End
 
-Class Monster Of Type Sprite
+Class GroundMonster Of Type Sprite
     Behaviour movement Of Type Movement
+    Behaviour Of Type Gravity
+    Behaviour Of Type TileCollision(action=CollisionAction.bounceHorizontal)
 
-    Property speed = 4.0
+    Constructor
+        load(filename="./assets/sprites/skeleton.png")
+        show()
+        movement.speed = 5
+        movement.velocity = New Vector(x=movement.speed, y=movement.speed)
+    End
+
+    Update
+        If x < 0 Then movement.velocity.x = movement.speed
+        If x > World.width Then movement.velocity.x = -movement.speed
+
+        If movement.velocity.y == 0 Then
+            If x > hero.x - 200 And x < hero.x + 200 Then movement.velocity.y = -10
+        End
+    End
+End
+
+Class FlyingMonster Of Type Sprite
+    Behaviour movement Of Type Movement(maxSpeed=5)
+    Behaviour Of Type TileCollision
 
     Constructor
         load(filename="./assets/sprites/monster.png")
         show()
-        movement.velocity = New Vector(x=speed, y=speed)
+        movement.speed = 4
     End
 
-    Update
-        If x < 0 Then movement.velocity.x = speed
-        If x > Screen.width Then movement.velocity.x = -speed
-
-        If y < 0 Then movement.velocity.y = speed
-        If y > Screen.height Then movement.velocity.y = -speed
+    Pre Update
+        If x < hero.x Then movement.velocity.x = movement.velocity.x + 0.1
+        If x > hero.x Then movement.velocity.x = movement.velocity.x - 0.1
+        If y < hero.y Then movement.velocity.y = movement.velocity.y + 0.1
+        If y > hero.y Then movement.velocity.y = movement.velocity.y - 0.1
     End
 End
 
 tilemap = Load Tilemap "./assets/tilemaps/super-mario.json"
 
-monster1 = New Monster(x=100, y=200, speed=4.0)
-monster2 = New Monster(x=700, y=500, speed=6.0)
-hero = New Hero(x=200, y=150, anchor=New Vector(x=0.5, y=1.0))
+hero = New Hero(x=200, y=150)
+monster1 = New GroundMonster(x=100, y=150, hero=hero)
+monster2 = New GroundMonster(x=500, y=150, hero=hero)
+monster3 = New FlyingMonster(x=300, y=500, hero=hero)
 
-Function followHero()
-    speed = 3.0
-    monster = Load Sprite "./assets/sprites/monster.png"
-    monster.x = Screen.width / 2
-    monster.y = Screen.height - 100
-    Show Sprite monster
-
-    While True Do
-        If monster.x < hero.x Then monster.x = monster.x + Screen.frameSpeed * speed
-        If monster.x > hero.x Then monster.x = monster.x - Screen.frameSpeed * speed
-        If monster.y < hero.y Then monster.y = monster.y + Screen.frameSpeed * speed
-        If monster.y > hero.y Then monster.y = monster.y - Screen.frameSpeed * speed
-        Wait For Update
-    End
+While True Do
 End
-
-Run followHero()

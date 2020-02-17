@@ -14,7 +14,7 @@ export default class Editor {
         this.pauseButton = document.getElementById('editor-pause')
         this.resumeButton = document.getElementById('editor-resume')
 
-        this.playButton.addEventListener('click', () => { this.play() }, false)
+        this.playButton.addEventListener('click', async () => { this.play() }, false)
         this.stopButton.addEventListener('click', () => { this.stop() }, false)
         this.pauseButton.addEventListener('click', () => { this.pause() }, false)
         this.resumeButton.addEventListener('click', () => { this.resume() }, false)
@@ -63,12 +63,15 @@ export default class Editor {
         }
     }
 
-    play() {
+    async play() {
         if (this.engine.hasStopped()) {
-            const result = this.engine.run([], [{text: this.codeMirror.getValue(), filename: this.state.filename}])
+            const result = await this.engine.run([], [{text: this.codeMirror.getValue(), filename: this.state.filename}])
             this.clearErrors()
             if (result instanceof Error) {
                 this.onError(result)
+            }
+            else {
+                console.log(result)
             }
         }
         else if (this.engine.isPaused()) {
@@ -137,6 +140,7 @@ export default class Editor {
         if (error.token === undefined && error.node === undefined) {
             return
         }
+        console.log(error)
 
         const token = error.token !== undefined ? error.token : error.node.tokens[0]
 
@@ -150,7 +154,6 @@ export default class Editor {
 
         const errorMarking = this.codeMirror.markText(from, to, {className: 'editor-error', title: error.description})
         this.state.markings.push(errorMarking)
-        console.log(from, to)
     }
 
     clearErrors() {

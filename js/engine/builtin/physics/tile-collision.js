@@ -3,10 +3,10 @@ import { Builtin } from '../builtin'
 import { Constant, Variable } from '../../model/variable'
 import { Sprite } from '../ui/sprite'
 
-export class Ground {
+export class TileCollision {
     static *update(scope) {
         yield
-        yield *Ground.tileCollision(scope)
+        yield *TileCollision.tileCollision(scope)
     }
 
     static *tileCollision(scope) {
@@ -15,7 +15,7 @@ export class Ground {
         const tileStepGranularity = 8
 
         // Resolve variables
-        const objectScope = Builtin.resolveObjectScope(scope, 'Ground')
+        const objectScope = Builtin.resolveObjectScope(scope, 'TileCollision')
         const spriteScope = Builtin.resolveObjectScope(scope, 'Sprite')
 
         const world = Builtin.resolveClass(objectScope, 'World')
@@ -33,8 +33,16 @@ export class Ground {
         const movement = Builtin.resolveVariable(objectScope, 'movement').value()
         const velocityObjectInstance = Builtin.resolveVariable(movement.scope, 'velocity').value()
 
+        // Get collision action
+        const action = Builtin.resolveVariable(objectScope, 'action').value()
+        const bounceHorizontal = action == 'bounce' || action == 'bounceHorizontal'
+        const bounceVertical = action == 'bounce' || action == 'bounceVertical'
+
+        const jump = Builtin.resolveVariable(objectScope, 'jump').value()
+        const jumping = jump !== undefined && jump.type != Constant.Type.None
+
         // Get tile layer
-        const layer = Ground.getLayer(scope, tilemapObjectInstance)
+        const layer = TileCollision.getLayer(scope, tilemapObjectInstance)
 
         // Get step size
         const tileSize = {width: layer.tileToWorldX(1) - layer.tileToWorldX(0), height: layer.tileToWorldY(1) - layer.tileToWorldY(0)}
@@ -94,7 +102,13 @@ export class Ground {
         }
 
         // Check collision
+        let rescueCount = 2
         while (delta.x != 0.0 || delta.y != 0.0) {
+
+            // TODO! Rescue
+            if (rescueCount-- < 0) {
+                break
+            }
 
             // Calculate target position in current direction
             targetPosition = {
@@ -124,7 +138,7 @@ export class Ground {
             }
 
             // Get first collision tile in velocity direction
-            const closestCollision = Ground.getCollisionPoint(projectedLines, tilemap, layer)
+            const closestCollision = TileCollision.getCollisionPoint(projectedLines, tilemap, layer)
 
             // Check if any collision
             if (closestCollision === undefined) {
@@ -158,13 +172,24 @@ export class Ground {
             if (delta.x != 0.0) {
                 projectedLines = []
                 projectedLines.push({startX: border.x, startY: spriteScope.spriteMeta.top + 1, endX: border.x, endY: spriteScope.spriteMeta.bottom - 1})
-                const horizontalCollision = Ground.getCollisionPoint(projectedLines, tilemap, layer)
+                const horizontalCollision = TileCollision.getCollisionPoint(projectedLines, tilemap, layer)
 
                 if (horizontalCollision !== undefined) {
                     position.x += (border.x - horizontalCollision.x) - Math.sign(delta.x)
+
+                    // Bounce
+                    if (bounceHorizontal) {
+                        outputVelocity.x = Math.abs(outputVelocity.x) * -Math.sign(delta.x)
+                        outputPosition.x = position.x - (outputVelocity.x * frameSpeed)
+                    }
+
+                    // No bounce
+                    else {
+                        outputPosition.x = position.x
+                        outputVelocity.x = 0.0
+                    }
+
                     delta.x = 0.0
-                    outputPosition.x = position.x
-                    outputVelocity.x = 0.0
                 }
             }
 
@@ -172,14 +197,14 @@ export class Ground {
             if (delta.y != 0.0) {
                 projectedLines = []
                 projectedLines.push({startX: spriteScope.spriteMeta.left + 1, startY: border.y, endX: spriteScope.spriteMeta.right - 1, endY: border.y})
-                const verticalCollision = Ground.getCollisionPoint(projectedLines, tilemap, layer)
+                const verticalCollision = TileCollision.getCollisionPoint(projectedLines, tilemap, layer)
 
                 if (verticalCollision !== undefined) {
                     position.y += (border.y - verticalCollision.y) - Math.sign(delta.y)
 
-                    // Bounce if jumping
-                    if (delta.y < 0.0 && Builtin.resolveVariable(objectScope, 'jump') !== undefined) {
-                        outputVelocity.y = Math.abs(outputVelocity.y)
+                    // Bounce (if bouncing or if jumping and hitting something above)
+                    if (bounceVertical || (delta.y < 0.0 && jumping)) {
+                        outputVelocity.y = Math.abs(outputVelocity.y) * -Math.sign(delta.y)
                         outputPosition.y = position.y - (outputVelocity.y * frameSpeed)
                     }
 
@@ -222,7 +247,7 @@ export class Ground {
         let closestCollision = undefined
 
         for (let line of lines) {
-            const {tile, x, y} = Ground.getFirstTileOnLine(line, tilemap, layer)
+            const {tile, x, y} = TileCollision.getFirstTileOnLine(line, tilemap, layer)
             if (tile === undefined) {
                 continue
             }

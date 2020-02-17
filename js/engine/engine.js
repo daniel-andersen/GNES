@@ -17,7 +17,7 @@ import { Camera } from './builtin/ui/camera'
 import { Joystick } from './builtin/controls/joystick'
 import { Gravity } from './builtin/physics/gravity'
 import { AirDrag } from './builtin/physics/air-drag'
-import { Ground } from './builtin/physics/ground'
+import { TileCollision } from './builtin/physics/tile-collision'
 import { Movement } from './builtin/movement/movement'
 import { TileMovement } from './builtin/movement/tile-movement'
 import * as Phaser from 'phaser'
@@ -34,7 +34,7 @@ export default class Engine {
             Joystick: Joystick,
             Gravity: Gravity,
             AirDrag: AirDrag,
-            Ground: Ground,
+            TileCollision: TileCollision,
             Movement: Movement,
             TileMovement: TileMovement,
         }
@@ -51,7 +51,7 @@ export default class Engine {
             './assets/engine/controls/joystick.basic',
             './assets/engine/physics/gravity.basic',
             './assets/engine/physics/air-drag.basic',
-            './assets/engine/physics/ground.basic',
+            './assets/engine/physics/tile-collision.basic',
             './assets/engine/movement/moveable.basic',
             './assets/engine/movement/movement.basic',
             './assets/engine/movement/tile-movement.basic',
@@ -112,6 +112,9 @@ export default class Engine {
             console.log('Running...')
 
             this.start()
+
+            return result
+            
         } catch (error) {
             console.log('Error running program', error)
             this.stop()

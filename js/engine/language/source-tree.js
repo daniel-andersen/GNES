@@ -346,7 +346,7 @@ export class SourceTree {
             listTokens = this.duplicateTokens(innerTokens)
         }
 
-        // Parse parameters
+        // Parse tokens
         let listNodes = []
         let currentTokens = []
         let parenthesisCount = 0
@@ -442,6 +442,24 @@ export class SourceTree {
         if (leftSideExpressionNode instanceof Error && leftSideExpressionNode.token.type == this.language.tokenType.Name) {
             leftSideExpressionNode = new Node.ConstantNode(leftSideExpressionNode.tokens, new Constant(leftSideExpressionNode.token.token))
         }
+
+        // Check errors
+        if (leftSideExpressionNode !== undefined && leftSideExpressionNode instanceof Error) {
+            return leftSideExpressionNode
+        }
+        if (rightSideExpressionNode === undefined || rightSideExpressionNode instanceof Error) {
+            return rightSideExpressionNode
+        }
+
+        // Check if both sides are valid arithmetic expressions
+        if (leftSideExpressionNode !== undefined && !leftSideExpressionNode.validArithmeticExpression) {
+            return new Error('Expected arithmetic expression', leftSideExpressionNode.tokens[0], leftSideExpressionNode)
+        }
+        if (!rightSideExpressionNode.validArithmeticExpression) {
+            return new Error('Expected arithmetic expression', rightSideExpressionNode.tokens[0], rightSideExpressionNode)
+        }
+
+        // Return arithmetic expression
         return new Node.ArithmeticNode(tokens, leftSideExpressionNode, arithmeticToken, rightSideExpressionNode)
     }
 
