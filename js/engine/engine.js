@@ -71,11 +71,11 @@ export default class Engine {
         this.sourceTree = new SourceTree(this.language, this.nativeClasses, this.builtinFiles)
     }
 
-    async compile(filenames=[], texts=[]) {
+    async compile(filenames=[], textDicts=[]) {
         try {
 
             // Compile
-            return await this.sourceTree.compile(filenames, texts)
+            return await this.sourceTree.compile(filenames, textDicts)
 
         } catch (error) {
             console.log('Error compiling program', error)
@@ -83,16 +83,16 @@ export default class Engine {
         }
     }
 
-    async run(filenames=[], texts=[]) {
+    async run(filenames=[], textDicts=[]) {
         try {
 
             // Setup
             await this.setup()
 
             // Build
-            const result = await this.sourceTree.build(filenames, texts)
+            const result = await this.sourceTree.build(filenames, textDicts)
             if (result instanceof Error) {
-                throw result
+                return new Error(result.description, result.token, result.node)
             }
 
             // Prepare execution
@@ -115,6 +115,8 @@ export default class Engine {
         } catch (error) {
             console.log('Error running program', error)
             this.stop()
+
+            return new Error(error.error, error.token, error.node)
         }
     }
 

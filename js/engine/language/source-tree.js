@@ -20,7 +20,7 @@ export class SourceTree {
         return this.programNode
     }
 
-    async compile(files=[], texts=[]) {
+    async compile(files=[], textDicts=[]) {
 
         // All files
         const allFiles = []
@@ -41,8 +41,8 @@ export class SourceTree {
             fileNodes.push(fileNode)
         }
 
-        for (let text of texts) {
-            const fileNode = await this.buildFromText(text, globalScope)
+        for (let textDict of textDicts) {
+            const fileNode = await this.buildFromText(textDict.text, textDict.filename, globalScope)
             if (fileNode instanceof Error) {
                 return fileNode
             }
@@ -104,16 +104,16 @@ export class SourceTree {
         const text = await Util.readTextFile(filename)
 
         // Build from text
-        return this.buildFromText(text, globalScope)
+        return this.buildFromText(text, filename, globalScope)
     }
 
-    async buildFromText(text, globalScope) {
+    async buildFromText(text, filename, globalScope) {
 
         // Split into array
         const lines = text.split('\n')
 
         // Tokenize lines
-        const tokens = this.tokenizer.tokenizeLines(lines)
+        const tokens = this.tokenizer.tokenizeLines(lines, filename)
 
         // Parse file
         return this.parseTokens(tokens, globalScope)

@@ -1,5 +1,6 @@
 import * as CodeMirror from 'codemirror'
 import CodeMirrorBasicMode from './codemirror-basic'
+import { Error } from '../engine/model/error'
 import Util from '../engine/util/util'
 
 export default class Editor {
@@ -43,6 +44,8 @@ export default class Editor {
             onChangeTimeout: undefined,
             compileInterval: 2000,
             compiling: false,
+            markings: [],
+            filename: '',
         }
 
         // Setup engine callbacks
@@ -56,12 +59,17 @@ export default class Editor {
         for (let filename of files) {
             const text = await Util.readTextFile(filename)
             this.codeMirror.setValue(text)
+            this.state.filename = filename
         }
     }
 
     play() {
         if (this.engine.hasStopped()) {
-            this.engine.run([], [this.codeMirror.getValue()])
+            const result = this.engine.run([], [{text: this.codeMirror.getValue(), filename: this.state.filename}])
+            this.clearErrors()
+            if (result instanceof Error) {
+                this.onError(result)
+            }
         }
         else if (this.engine.isPaused()) {
             this.engine.resume()
@@ -101,16 +109,15 @@ export default class Editor {
             return
         }
 
-        let result = undefined
-        try {
-            this.state.compiling = true
-            result = await this.engine.compile([], [this.codeMirror.getValue()])
-        }
-        finally {
-            this.state.compiling = false
+        this.state.compiling = true
+
+        const result = await this.engine.compile([], [{text: this.codeMirror.getValue(), filename: this.state.filename}])
+        this.clearErrors()
+        if (result instanceof Error) {
+            this.onError(result)
         }
 
-        return result
+        this.state.compiling = false
     }
 
     async onChange() {
@@ -122,5 +129,34 @@ export default class Editor {
         this.state.onChangeTimeout = setTimeout(() => {
             this.compile()
         }, this.state.compileInterval)
+    }
+
+    onError(error) {
+        this.clearErrors()
+
+        if (error.token === undefined && error.node === undefined) {
+            return
+        }
+
+        const token = error.token !== undefined ? error.token : error.node.tokens[0]
+
+        const filename = token.filename
+        if (filename != this.state.filename) {
+            return
+        }
+
+        const from = {line: token.lineNumber - 1, ch: token.tokenStartPosition}
+        const to = {line: token.lineNumber - 1, ch: token.tokenEndPosition + 1}
+
+        const errorMarking = this.codeMirror.markText(from, to, {className: 'editor-error', title: error.description})
+        this.state.markings.push(errorMarking)
+        console.log(from, to)
+    }
+
+    clearErrors() {
+        for (let marking of this.state.markings) {
+            marking.clear()
+        }
+        this.state.markings = []
     }
 }

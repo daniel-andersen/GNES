@@ -3,7 +3,7 @@ export default class Tokenizer {
         this.language = language
     }
 
-    tokenizeLines(lines) {
+    tokenizeLines(lines, sourceFilename) {
         const tokenPattern = /^\s*(([0-9]+(\.[0-9]+)*)|([_A-Za-z][_A-Za-z0-9]*)|(\+\=)|(\-\=)|(\*\=)|(\/\=)|\*|\+|\-|\/|\(|\)|\[|\]|\{|\}|(\=\=)|\=|\"|(\<\=)|(\>\=)|\<|\>|(\!\=)|\!|\.|\,)/i
 
         // Parse all lines
@@ -92,7 +92,8 @@ export default class Tokenizer {
                         'lineNumber': lineNumber,
                         'tokenStartPosition': tokenStartPosition,
                         'tokenEndPosition': tokenEndPosition,
-                        'tokenIndex': tokenIndex
+                        'tokenIndex': tokenIndex,
+                        'filename': sourceFilename
                     })
                 }
             }
@@ -104,7 +105,8 @@ export default class Tokenizer {
                 'lineNumber': lineNumber,
                 'tokenStartPosition': tokenEndPosition,
                 'tokenEndPosition': tokenEndPosition,
-                'tokenIndex': tokenIndex
+                'tokenIndex': tokenIndex,
+                'filename': sourceFilename
             })
 
             lineNumber += 1
@@ -117,7 +119,8 @@ export default class Tokenizer {
             'lineNumber': lineNumber,
             'tokenStartPosition': 0,
             'tokenEndPosition': 0,
-            'tokenIndex': tokenIndex
+            'tokenIndex': tokenIndex,
+            'filename': sourceFilename
         })
 
         return tokens
