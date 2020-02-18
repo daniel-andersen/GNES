@@ -1,5 +1,5 @@
 Class Hero Of Type Sprite
-    Behaviour movement Of Type Movement(speed=12)
+    Behaviour Of Type Movement(speed=12)
     Behaviour Of Type Joystick
     Behaviour Of Type Gravity
     Behaviour Of Type AirDrag
