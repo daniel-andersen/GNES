@@ -1,4 +1,5 @@
 Class CollisionAction
+    Shared Property glide = "glide"
     Shared Property stop = "stop"
     Shared Property bounce = "bounce"
     Shared Property bounceHorizontal = "bounceHorizontal"
@@ -7,10 +8,10 @@ End
 
 Behaviour TileCollision
     Required Behaviour movement Of Type Movement
-    Optional Behaviour jump Of Type Jump
+    Optional Behaviour gravity Of Type Gravity
 
     Property layer = 0
-    Property action = CollisionAction.stop
+    Property action = CollisionAction.glide
 
     Update
         Invoke update() In TileCollision

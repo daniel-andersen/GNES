@@ -38,8 +38,8 @@ export class TileCollision {
         const bounceHorizontal = action == 'bounce' || action == 'bounceHorizontal'
         const bounceVertical = action == 'bounce' || action == 'bounceVertical'
 
-        const jump = Builtin.resolveVariable(objectScope, 'jump').value()
-        const jumping = jump !== undefined && jump.type != Constant.Type.None
+        const gravity = Builtin.resolveVariable(objectScope, 'gravity').value()
+        const gravityBounce = gravity !== undefined && gravity.type != Constant.Type.None
 
         // Get tile layer
         const layer = TileCollision.getLayer(scope, tilemapObjectInstance)
@@ -101,14 +101,8 @@ export class TileCollision {
             y: velocity.y
         }
 
-        // Check collision
-        let rescueCount = 2
-        while (delta.x != 0.0 || delta.y != 0.0) {
-
-            // TODO! Rescue
-            if (rescueCount-- < 0) {
-                break
-            }
+        // Check collision in two steps (because sprite might have "glide" enabled, etc.)
+        for (let i = 0; i < 2; i++) {
 
             // Calculate target position in current direction
             targetPosition = {
@@ -116,39 +110,15 @@ export class TileCollision {
                 y: position.y + delta.y
             }
 
-            // Calculate distance to target
-            const targetDistance = Math.sqrt(delta.x*delta.x + delta.y*delta.y)
-
-            // Project lines from current position border edge to target position border edge
-            const border = {
-                x: delta.x < 0 ? (spriteScope.spriteMeta.left - 1) : (spriteScope.spriteMeta.right + 1),
-                y: delta.y < 0 ? (spriteScope.spriteMeta.top - 1) : (spriteScope.spriteMeta.bottom + 1)
-            }
-
-            let projectedLines = []
-            if (delta.x != 0.0) {
-                for (let y = spriteScope.spriteMeta.top + 1; y <= spriteScope.spriteMeta.bottom; y += stepSize.y) {
-                    projectedLines.push({startX: border.x, startY: y, endX: border.x + delta.x, endY: y + delta.y})
-                }
-            }
-            if (delta.y != 0.0) {
-                for (let x = spriteScope.spriteMeta.left + 1; x <= spriteScope.spriteMeta.right; x += stepSize.x) {
-                    projectedLines.push({startX: x, startY: border.y, endX: x + delta.x, endY: border.y + delta.y})
-                }
-            }
-
-            // Get first collision tile in velocity direction
-            const closestCollision = TileCollision.getCollisionPoint(projectedLines, tilemap, layer)
-
-            // Check if any collision
-            if (closestCollision === undefined) {
+            const collision = this.getCollisionInDirection(spriteScope.spriteMeta, delta, tileSize, tilemap, layer)
+            if (collision === undefined) {
                 break
             }
 
             // Position sprite at collision point
             position = {
-                x: Math.round(position.x + (delta.x * closestCollision.distance / targetDistance)),
-                y: Math.round(position.y + (delta.y * closestCollision.distance / targetDistance))
+                x: position.x + Math.round(collision.delta.x) - Math.sign(delta.x),
+                y: position.y + Math.round(collision.delta.y) - Math.sign(delta.y)
             }
 
             objectScope.setVariable('x', new Constant(position.x))
@@ -163,70 +133,46 @@ export class TileCollision {
                 y: targetPosition.y - position.y
             }
 
-            border = {
-                x: delta.x < 0 ? (spriteScope.spriteMeta.left - 1) : (spriteScope.spriteMeta.right + 1),
-                y: delta.y < 0 ? (spriteScope.spriteMeta.top - 1) : (spriteScope.spriteMeta.bottom + 1)
-            }
-
             // Horizontal collision
-            if (delta.x != 0.0) {
-                projectedLines = []
-                projectedLines.push({startX: border.x, startY: spriteScope.spriteMeta.top + 1, endX: border.x, endY: spriteScope.spriteMeta.bottom - 1})
-                const horizontalCollision = TileCollision.getCollisionPoint(projectedLines, tilemap, layer)
+            if (collision.horizontal) {
 
-                if (horizontalCollision !== undefined) {
-                    position.x += (border.x - horizontalCollision.x) - Math.sign(delta.x)
-
-                    // Bounce
-                    if (bounceHorizontal) {
-                        outputVelocity.x = Math.abs(outputVelocity.x) * -Math.sign(delta.x)
-                        outputPosition.x = position.x - (outputVelocity.x * frameSpeed)
-                    }
-
-                    // No bounce
-                    else {
-                        outputPosition.x = position.x
-                        outputVelocity.x = 0.0
-                    }
-
-                    delta.x = 0.0
+                // Bounce
+                if (bounceHorizontal) {
+                    outputVelocity.x = Math.abs(outputVelocity.x) * -Math.sign(delta.x)
+                    outputPosition.x = position.x - (outputVelocity.x * frameSpeed)
                 }
+
+                // No bounce
+                else {
+                    outputPosition.x = position.x
+                    outputVelocity.x = 0.0
+                }
+
+                delta.x = 0.0
             }
 
             // Vertical collision
-            if (delta.y != 0.0) {
-                projectedLines = []
-                projectedLines.push({startX: spriteScope.spriteMeta.left + 1, startY: border.y, endX: spriteScope.spriteMeta.right - 1, endY: border.y})
-                const verticalCollision = TileCollision.getCollisionPoint(projectedLines, tilemap, layer)
+            if (collision.vertical) {
 
-                if (verticalCollision !== undefined) {
-                    position.y += (border.y - verticalCollision.y) - Math.sign(delta.y)
-
-                    // Bounce (if bouncing or if jumping and hitting something above)
-                    if (bounceVertical || (delta.y < 0.0 && jumping)) {
-                        outputVelocity.y = Math.abs(outputVelocity.y) * -Math.sign(delta.y)
-                        outputPosition.y = position.y - (outputVelocity.y * frameSpeed)
-                    }
-
-                    // No bounce
-                    else {
-                        outputVelocity.y = 0.0
-                        outputPosition.y = position.y
-                    }
-
-                    delta.y = 0.0
+                // Bounce (if bouncing or if bumping into something above with gravity enabled)
+                if (bounceVertical || (delta.y < 0.0 && gravityBounce)) {
+                    outputVelocity.y = Math.abs(outputVelocity.y) * -Math.sign(delta.y)
+                    outputPosition.y = position.y - (outputVelocity.y * frameSpeed)
                 }
+
+                // No bounce
+                else {
+                    outputVelocity.y = 0.0
+                    outputPosition.y = position.y
+                }
+
+                delta.y = 0.0
             }
         }
 
         // Position sprite at collision point
-        position = {
-            x: Math.round(outputPosition.x),
-            y: Math.round(outputPosition.y)
-        }
-
-        objectScope.setVariable('x', new Constant(position.x))
-        objectScope.setVariable('y', new Constant(position.y))
+        objectScope.setVariable('x', new Constant(Math.round(outputPosition.x)))
+        objectScope.setVariable('y', new Constant(Math.round(outputPosition.y)))
 
         // Set velocity
         velocityObjectInstance.scope.setVariable('x', new Constant(outputVelocity.x))
@@ -241,52 +187,106 @@ export class TileCollision {
         return tilemapObjectInstance.scope.layers[layerIndex]
     }
 
-    static getCollisionPoint(lines, tilemap, layer) {
+    static getCollisionInDirection(spriteMeta, delta, tileSize, tilemap, layer) {
+        const border = {
+            x: delta.x < 0 ? (spriteMeta.left - 1) : (spriteMeta.right + 1),
+            y: delta.y < 0 ? (spriteMeta.top - 1) : (spriteMeta.bottom + 1)
+        }
 
-        // Get first collision
-        let closestCollision = undefined
+        const startX = Math.round(border.x)
+        const startY = Math.round(border.y)
 
-        for (let line of lines) {
-            const {tile, x, y} = TileCollision.getFirstTileOnLine(line, tilemap, layer)
-            if (tile === undefined) {
-                continue
+        // Vertical collision
+        let verticalCollision = undefined
+
+        let y = startY
+        let targetY = Math.round(border.y + delta.y)
+
+        while ((y <= targetY && delta.y > 0) || (y >= targetY && delta.y < 0)) {
+
+            // Get coordinate of tile strip
+            const slope = delta.x * ((y - startY) / (targetY - startY))
+
+            const tileCoordinateX1 = layer.worldToTileXY(Math.round(spriteMeta.left + slope), y)
+            const tileCoordinateX2 = layer.worldToTileXY(Math.round(spriteMeta.right + slope), y)
+
+            const distance = Math.sqrt((y - startY) * (y - startY) + slope * slope)
+
+            // Check collision in strip
+            for (let tileX = tileCoordinateX1.x; tileX <= tileCoordinateX2.x; tileX++) {
+                const tile = tilemap.getTileAt(tileX, tileCoordinateX1.y)
+                if (tile !== undefined && tile !== null) {
+                    verticalCollision = {tile: tile, horizontal: false, vertical: true, distance: distance, delta: {x: slope, y: y - startY}}
+                }
+            }
+            if (verticalCollision !== undefined) {
+                break
             }
 
-            const distance = Math.sqrt((x - line.startX) * (x - line.startX) + (y - line.startY) * (y - line.startY))
-            if (closestCollision === undefined || distance < closestCollision.distance) {
-                closestCollision = {x, y, tile, distance}
+            // Move vertically away from sprite, interchangible between top and bottom edge of tile
+            const tileWorldY = layer.tileToWorldY(tileCoordinateX1.y)
+            if (Math.abs(y - tileWorldY) < (tileSize.height / 2)) { // Edge of current tile
+                y = tileWorldY + (delta.y > 0 ? (tileSize.height - 1) : -1)
+            }
+            else { // Edge of next tile
+                y = tileWorldY + (tileSize.height * Math.sign(delta.y))
             }
         }
 
-        return closestCollision
-    }
+        // Horizontal collision
+        let horizontalCollision = undefined
 
-    static getFirstTileOnLine(line, tilemap, layer) {
-        const _line = new Phaser.Curves.Line(
-            new Phaser.Math.Vector2(Math.round(line.startX), Math.round(line.startY)),
-            new Phaser.Math.Vector2(Math.round(line.endX), Math.round(line.endY))
-        )
-        const points = _line.getPoints(0, 1)
+        let x = startX
+        let targetX = Math.round(border.x + delta.x)
 
-        let currentTilePosition = new Phaser.Math.Vector2(-1, -1)
+        while ((x <= targetX && delta.x > 0) || (x >= targetX && delta.x < 0)) {
 
-        for (let point of points) {
-            const x = Math.round(point.x)
-            const y = Math.round(point.y)
+            // Get coordinate of tile strip
+            const slope = delta.y * ((x - startX) / (targetX - startX))
 
-            const tileCoordinate = layer.worldToTileXY(x, y)
-            if (tileCoordinate.x == currentTilePosition.x && tileCoordinate.y == currentTilePosition.y) {
-                continue
+            const tileCoordinateY1 = layer.worldToTileXY(x, Math.round(spriteMeta.top + slope))
+            const tileCoordinateY2 = layer.worldToTileXY(x, Math.round(spriteMeta.bottom + slope))
+
+            const distance = Math.sqrt((x - startX) * (x - startX) + slope * slope)
+
+            // Check collision in strip
+            for (let tileY = tileCoordinateY1.y; tileY <= tileCoordinateY2.y; tileY++) {
+                const tile = tilemap.getTileAt(tileCoordinateY1.x, tileY)
+                if (tile !== undefined && tile !== null) {
+                    horizontalCollision = {tile: tile, horizontal: true, vertical: false, distance: distance, delta: {x: x - startX, y: slope}}
+                }
+            }
+            if (horizontalCollision !== undefined) {
+                break
             }
 
-            currentTilePosition = tileCoordinate
-
-            const tile = tilemap.getTileAt(tileCoordinate.x, tileCoordinate.y)
-            if (tile !== undefined && tile !== null) {
-                return {tile: tile, x: x, y: y}
+            // Move horizontal away from sprite, interchangible between left and right edge of tile
+            const tileWorldX = layer.tileToWorldX(tileCoordinateY1.x)
+            if (Math.abs(x - tileWorldX) < (tileSize.width / 2)) { // Edge of current tile
+                x = tileWorldX + (delta.x > 0 ? (tileSize.width - 1) : -1)
+            }
+            else { // Edge of next tile
+                x = tileWorldX + (tileSize.width * Math.sign(delta.x))
             }
         }
 
-        return {tile: undefined, x: undefined, y: undefined}
+        // Return closest collision
+        if (horizontalCollision !== undefined && verticalCollision !== undefined) {
+            if (horizontalCollision.distance < verticalCollision.distance) {
+                return horizontalCollision
+            }
+            else {
+                return verticalCollision
+            }
+        }
+        else if (horizontalCollision !== undefined) {
+            return horizontalCollision
+        }
+        else if (verticalCollision !== undefined) {
+            return verticalCollision
+        }
+        else {
+            return undefined
+        }
     }
 }

@@ -10,7 +10,11 @@ export class Sprite {
             left: 0,
             top: 0,
             right: 64,
-            bottom: 64
+            bottom: 64,
+            center: {
+                x: 32,
+                y: 32
+            }
         }
     }
 
@@ -126,5 +130,9 @@ export class Sprite {
         objectScope.spriteMeta.top = sprite.y - (height / 2)
         objectScope.spriteMeta.right = objectScope.spriteMeta.left + width
         objectScope.spriteMeta.bottom = objectScope.spriteMeta.top + height
+        objectScope.spriteMeta.center = {
+            x: (objectScope.spriteMeta.left + objectScope.spriteMeta.right) / 2,
+            y: (objectScope.spriteMeta.top + objectScope.spriteMeta.bottom) / 2,
+        }
     }
 }

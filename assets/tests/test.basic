@@ -1,9 +1,9 @@
 Class Hero Of Type Sprite
-    Behaviour movement Of Type Movement(speed=13)
+    Behaviour movement Of Type Movement(speed=12)
     Behaviour Of Type Joystick
     Behaviour Of Type Gravity
     Behaviour Of Type AirDrag
-    Behaviour Of Type Jump
+    Behaviour Of Type Jump(velocity=26)
     Behaviour Of Type Camera
     Behaviour Of Type TileCollision(layer=1)
 
@@ -14,21 +14,16 @@ Class Hero Of Type Sprite
 End
 
 Class GroundMonster Of Type Sprite
-    Behaviour movement Of Type Movement
+    Behaviour movement Of Type Movement(speed=5, velocity=New Vector(x=5, y=0))
     Behaviour Of Type Gravity
     Behaviour Of Type TileCollision(action=CollisionAction.bounceHorizontal)
 
     Constructor
         load(filename="./assets/sprites/skeleton.png")
         show()
-        movement.speed = 5
-        movement.velocity = New Vector(x=movement.speed, y=movement.speed)
     End
 
     Update
-        If x < 0 Then movement.velocity.x = movement.speed
-        If x > World.width Then movement.velocity.x = -movement.speed
-
         If movement.velocity.y == 0 Then
             If x > hero.x - 200 And x < hero.x + 200 Then movement.velocity.y = -10
         End
@@ -42,7 +37,6 @@ Class FlyingMonster Of Type Sprite
     Constructor
         load(filename="./assets/sprites/monster.png")
         show()
-        movement.speed = 4
     End
 
     Pre Update
