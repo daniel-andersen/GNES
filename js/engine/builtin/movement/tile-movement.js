@@ -35,6 +35,11 @@ export class TileMovement {
 
     static *update(scope) {
 
+        // Stop movement
+        const velocity = Builtin.resolveVariable(scope, 'velocity').value()
+        velocity.scope.setVariable('x', new Constant(0))
+        velocity.scope.setVariable('y', new Constant(0))
+
         // Check time
         if (!TileMovement.readyToMove(scope)) {
             return
@@ -63,12 +68,14 @@ export class TileMovement {
     static move(scope, variableName, direction) {
 
         // Move
-        const currentValue = Builtin.resolveVariable(scope, variableName).value()
+        const velocity = Builtin.resolveVariable(scope, 'velocity').value()
+
+        const currentValue = Builtin.resolveVariable(velocity.scope, variableName).value()
 
         const stepVector = Builtin.resolveVariable(scope, 'step').value()
-        const stepKey = Builtin.resolveVariable(stepVectorConstant.scope, variableName).value()
+        const stepKey = Builtin.resolveVariable(stepVector.scope, variableName).value()
 
-        scope.setVariable(variableName, new Constant(currentValue + (stepKey * direction)))
+        velocity.scope.setVariable(variableName, new Constant(currentValue + (stepKey * direction)))
 
         // Update last move time
         TileMovement.updateMoveTime(scope)

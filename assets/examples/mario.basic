@@ -23,7 +23,7 @@ Class Hero Of Type Sprite
     Behaviour Of Type Camera
 
     Constructor
-        load(filename="./assets/sprites/hero.png")
+        load(filename="./assets/sprites/mario-hero.png")
         show()
     End
 End
@@ -38,7 +38,7 @@ Class GroundMonster Of Type Sprite
     Property hero
 
     Constructor
-        load(filename="./assets/sprites/skeleton.png")
+        load(filename="./assets/sprites/mario-skeleton.png")
         show()
     End
 
@@ -59,7 +59,7 @@ Class FlyingMonster Of Type Sprite
     Property hero
 
     Constructor
-        load(filename="./assets/sprites/monster.png")
+        load(filename="./assets/sprites/mario-monster.png")
         show()
     End
 End

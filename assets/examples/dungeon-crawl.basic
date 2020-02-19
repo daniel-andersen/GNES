@@ -1,0 +1,17 @@
+Class Hero Of Type Sprite
+    Behaviour Of Type Joystick
+    Behaviour Of Type TileMovement(step=New Vector(x=64, y=64))
+    Behaviour Of Type TileCollision(layer=1)
+
+    Constructor
+        load(filename="./assets/sprites/rpg-hero.png")
+        show()
+    End
+End
+
+tilemap = Load Tilemap "./assets/tilemaps/rpg.json"
+
+hero = New Hero(x=64, y=64, anchor=New Vector(x=0.0, y=0.0))
+
+While True Do
+End

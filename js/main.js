@@ -21,6 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const editor = new Editor(engine)
     editor.load([
         './assets/examples/mario.basic',
-        './assets/examples/shooter2D.basic',
+        './assets/examples/dungeon-crawl.basic',
     ])
 })

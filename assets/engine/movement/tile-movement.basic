@@ -1,4 +1,4 @@
-Behaviour TileMovement Of Type Moveable
+Behaviour TileMovement Of Type Movement
     Incompatible Behaviour Gravity
 
     Property step = New Vector(x=64, y=64)
@@ -24,7 +24,7 @@ Behaviour TileMovement Of Type Moveable
         Invoke moveDown() In TileMovement
     End
 
-    Post Update
+    Pre Update
         Invoke update() In TileMovement
     End
 End
