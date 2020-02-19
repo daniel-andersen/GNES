@@ -416,6 +416,7 @@ export class ExpressionNode extends Node {
     constructor(tokens=[]) {
         super(tokens)
         this.validArithmeticExpression = true
+        this.validAsStatement = false
     }
 }
 
@@ -470,6 +471,7 @@ export class FunctionCallNode extends ExpressionNode {
         super(tokens)
         this.functionName = functionName
         this.parameterListNode = parameterListNode
+        this.validAsStatement = true
     }
 
     *evaluate(scope, parameterEvaluationScope) {
@@ -570,6 +572,7 @@ export class NewObjectNode extends ExpressionNode {
         super(tokens)
         this.className = className
         this.parameterListNode = parameterListNode
+        this.validAsStatement = true
     }
 
     *evaluate(scope) {
@@ -774,6 +777,7 @@ export class ArithmeticNode extends ExpressionNode {
         this.leftSideExpressionNode = leftSideExpressionNode
         this.arithmeticToken = arithmeticToken
         this.rightSideExpressionNode = rightSideExpressionNode
+        this.validAsStatement = true
 
         if (this.rightSideExpressionNode === undefined) {
             throw {error: 'Expected expression', node: this}
@@ -1049,6 +1053,7 @@ export class GetBehaviourNode extends ExpressionNode {
     constructor(tokens=[], className) {
         super(tokens)
         this.className = className
+        this.validAsStatement = true
     }
 
     *evaluate(scope) {
@@ -1183,6 +1188,7 @@ export class LoadSpriteNode extends ExpressionNode {
     constructor(tokens=[], expressionNode) {
         super(tokens)
         this.expressionNode = expressionNode
+        this.validAsStatement = true
 
         this.newObjectNode = new NewObjectNode(undefined, 'Sprite', new ParameterListNode(this.tokens, []))
         this.loadNode = new FunctionCallNode(this.tokens, 'load', new ParameterListNode(this.tokens, [new ParameterAssignmentNode(expressionNode.tokens, 'filename', this.expressionNode)]))
@@ -1259,6 +1265,7 @@ export class LoadTilemapNode extends ExpressionNode {
     constructor(tokens=[], tilemapNode) {
         super(tokens)
         this.tilemapNode = tilemapNode
+        this.validAsStatement = true
 
         this.newObjectNode = new NewObjectNode(undefined, 'Tilemap', new ParameterListNode(this.tokens, []))
         this.loadNode = new FunctionCallNode(this.tokens, 'load', new ParameterListNode(this.tokens, [new ParameterAssignmentNode(tilemapNode.tokens, 'filename', this.tilemapNode)]))
@@ -1292,6 +1299,7 @@ export class InvokeNativeFunctionNode extends ExpressionNode {
         this.parameterListNode = parameterListNode
         this.className = className
         this.nativeClasses = nativeClasses
+        this.validAsStatement = true
 
         this.functionCallNode = new FunctionCallNode(undefined, 'NativeMethod', this.parameterListNode)
     }

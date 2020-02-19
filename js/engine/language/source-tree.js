@@ -203,7 +203,10 @@ export class SourceTree {
         }
 
         // Parse expression
-        const expressionResult = this.parseExpression(tokens)
+        let expressionResult = this.parseExpression(tokens)
+        if (expressionResult instanceof Node.ExpressionNode && !expressionResult.validAsStatement) {
+            expressionResult = new Error('Statement expected', expressionResult.tokens[0], expressionResult)
+        }
         if (!(expressionResult instanceof Error)) {
             return expressionResult
         }
