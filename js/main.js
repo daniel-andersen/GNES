@@ -19,5 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const editor = new Editor(engine)
-    editor.load(['./assets/tests/test.basic'])
+    editor.load([
+        './assets/examples/mario.basic',
+        './assets/examples/shooter2D.basic',
+    ])
 })

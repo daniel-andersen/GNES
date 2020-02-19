@@ -1,11 +1,26 @@
+Behaviour FollowHero
+    Required Behaviour movement Of Type Movement
+
+    Property hero
+
+    Pre Update
+        If x < hero.x Then movement.velocity.x = movement.velocity.x + 0.1
+        If x > hero.x Then movement.velocity.x = movement.velocity.x - 0.1
+        If y < hero.y Then movement.velocity.y = movement.velocity.y + 0.1
+        If y > hero.y Then movement.velocity.y = movement.velocity.y - 0.1
+    End
+End
+
+
+
 Class Hero Of Type Sprite
-    Behaviour Of Type Movement(speed=12)
     Behaviour Of Type Joystick
+    Behaviour Of Type Movement(speed=12)
     Behaviour Of Type Gravity
     Behaviour Of Type AirDrag
     Behaviour Of Type Jump(velocity=26)
-    Behaviour Of Type Camera
     Behaviour Of Type TileCollision(layer=1)
+    Behaviour Of Type Camera
 
     Constructor
         load(filename="./assets/sprites/hero.png")
@@ -13,10 +28,14 @@ Class Hero Of Type Sprite
     End
 End
 
+
+
 Class GroundMonster Of Type Sprite
     Behaviour movement Of Type Movement(speed=5, velocity=New Vector(x=5, y=0))
     Behaviour Of Type Gravity
     Behaviour Of Type TileCollision(action=CollisionAction.bounceHorizontal)
+
+    Property hero
 
     Constructor
         load(filename="./assets/sprites/skeleton.png")
@@ -30,22 +49,22 @@ Class GroundMonster Of Type Sprite
     End
 End
 
+
+
 Class FlyingMonster Of Type Sprite
+    Behaviour Of Type FollowHero(hero=hero)
     Behaviour movement Of Type Movement(maxSpeed=5)
     Behaviour Of Type TileCollision
+
+    Property hero
 
     Constructor
         load(filename="./assets/sprites/monster.png")
         show()
     End
-
-    Pre Update
-        If x < hero.x Then movement.velocity.x = movement.velocity.x + 0.1
-        If x > hero.x Then movement.velocity.x = movement.velocity.x - 0.1
-        If y < hero.y Then movement.velocity.y = movement.velocity.y + 0.1
-        If y > hero.y Then movement.velocity.y = movement.velocity.y - 0.1
-    End
 End
+
+
 
 tilemap = Load Tilemap "./assets/tilemaps/super-mario.json"
 

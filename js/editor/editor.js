@@ -6,6 +6,7 @@ import Util from '../engine/util/util'
 export default class Editor {
     constructor(engine) {
         this.engine = engine
+        this.filesDiv = document.getElementById('filesDiv')
         this.textArea = document.getElementById('editor')
 
         // Setup buttons
@@ -45,7 +46,7 @@ export default class Editor {
             compileInterval: 2000,
             compiling: false,
             markings: [],
-            filename: '',
+            file: undefined,
         }
 
         // Setup engine callbacks
@@ -53,14 +54,23 @@ export default class Editor {
         this.engine.stopCallback = () => { this.updatePlayButtons() }
         this.engine.pauseCallback = () => { this.updatePlayButtons() }
         this.engine.resumeCallback = () => { this.updatePlayButtons() }
+
+        // Files
+        this.files = []
     }
 
     async load(files) {
+        this.files = []
+
         for (let filename of files) {
             const text = await Util.readTextFile(filename)
-            this.codeMirror.setValue(text)
-            this.state.filename = filename
+            this.files.push({
+                filename: filename,
+                text: text
+            })
         }
+
+        this.chooseFile(this.files[0])
     }
 
     async play() {
@@ -161,5 +171,54 @@ export default class Editor {
             marking.clear()
         }
         this.state.markings = []
+    }
+
+    chooseFile(file) {
+        if (this.state.file !== undefined) {
+            this.state.file.text = this.codeMirror.getValue()
+        }
+
+        this.state.file = file
+        if (file !== undefined) {
+            this.codeMirror.setValue(file.text)
+        }
+
+        this.updateFilesDiv()
+    }
+
+    updateFilesDiv() {
+
+        // Clear current files
+        while (this.filesDiv.hasChildNodes()) {
+            this.filesDiv.removeChild(this.filesDiv.lastChild)
+        }
+
+        // Add files
+        for (let i = 0; i < this.files.length; i++) {
+            const file = this.files[i]
+
+            const filenameIndex = file.filename.lastIndexOf("/") + 1
+            const filename = file.filename.substr(filenameIndex)
+
+            const div = document.createElement('div')
+            div.style.position = 'absolute'
+            div.style.overflow = 'hidden'
+            div.style.left = 0
+            div.style.top = (i * 25) + 'px'
+            div.style.width = '100%'
+            div.style.height = '25px'
+            div.style.verticalAlign = 'middle'
+            div.style.lineHeight = '25px'
+            div.style.paddingLeft = '8px'
+            div.style.color = file.filename == this.state.file.filename ? '#cccc33' : '#cccccc'
+            div.style.background = file.filename == this.state.file.filename ? '#333333' : 'transparent'
+            div.innerHTML = filename
+
+            div.addEventListener('click', () => {
+                this.chooseFile(file)
+            }, false)
+
+            this.filesDiv.appendChild(div)
+        }
     }
 }
