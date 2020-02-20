@@ -128,8 +128,8 @@ export class Sprite {
         // Update borders
         objectScope.spriteMeta.left = sprite.x - (width / 2)
         objectScope.spriteMeta.top = sprite.y - (height / 2)
-        objectScope.spriteMeta.right = objectScope.spriteMeta.left + width
-        objectScope.spriteMeta.bottom = objectScope.spriteMeta.top + height
+        objectScope.spriteMeta.right = objectScope.spriteMeta.left + width - 1
+        objectScope.spriteMeta.bottom = objectScope.spriteMeta.top + height - 1
         objectScope.spriteMeta.center = {
             x: (objectScope.spriteMeta.left + objectScope.spriteMeta.right) / 2,
             y: (objectScope.spriteMeta.top + objectScope.spriteMeta.bottom) / 2,

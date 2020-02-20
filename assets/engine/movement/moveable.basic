@@ -1,4 +1,6 @@
 Behaviour Moveable
+    Property velocity = New Vector()
+
     Function moveLeft()
     End
 

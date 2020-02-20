@@ -907,6 +907,10 @@ export class ClassNode extends Node {
         }
         return false
     }
+
+    isClass(name) {
+        return this.className == name
+    }
 }
 
 export class BehaviourDefinitionNode extends ClassNode {

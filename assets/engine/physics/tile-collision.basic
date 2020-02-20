@@ -7,7 +7,7 @@ Class CollisionAction
 End
 
 Behaviour TileCollision
-    Required Behaviour movement Of Type Movement
+    Required Behaviour moveable Of Type Moveable
     Optional Behaviour gravity Of Type Gravity
 
     Property layer = 0

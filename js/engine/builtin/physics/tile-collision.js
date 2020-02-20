@@ -5,14 +5,11 @@ import { Sprite } from '../ui/sprite'
 
 export class TileCollision {
     static *update(scope) {
-        yield
-        yield *TileCollision.tileCollision(scope)
+        const objectScope = Builtin.resolveObjectScope(scope, 'TileCollision')
+        TileCollision.tileCollision(scope)
     }
 
-    static *tileCollision(scope) {
-
-        // Number of steps a tile is divided into
-        const tileStepGranularity = 8
+    static tileCollision(scope) {
 
         // Resolve variables
         const objectScope = Builtin.resolveObjectScope(scope, 'TileCollision')
@@ -30,8 +27,8 @@ export class TileCollision {
             height: Builtin.resolveVariable(scope, 'height').value()
         }
 
-        const movement = Builtin.resolveVariable(objectScope, 'movement').value()
-        const velocityObjectInstance = Builtin.resolveVariable(movement.scope, 'velocity').value()
+        const moveable = Builtin.resolveVariable(objectScope, 'moveable').value()
+        const velocityObjectInstance = Builtin.resolveVariable(moveable.scope, 'velocity').value()
 
         // Get collision action
         const action = Builtin.resolveVariable(objectScope, 'action').value()
@@ -46,16 +43,6 @@ export class TileCollision {
 
         // Get step size
         const tileSize = {width: layer.tileToWorldX(1) - layer.tileToWorldX(0), height: layer.tileToWorldY(1) - layer.tileToWorldY(0)}
-
-        const stepSizePerTile = {
-            x: tileSize.width / tileStepGranularity,
-            y: tileSize.height / tileStepGranularity
-        }
-
-        const stepSize = {
-            x: stepSizePerTile.x * (spriteSize.width + (Math.round(spriteSize.width) % Math.round(tileSize.width))) / (spriteSize.width - 2),
-            y: stepSizePerTile.y * (spriteSize.height + (Math.round(spriteSize.height) % Math.round(tileSize.height))) / (spriteSize.height - 2)
-        }
 
         // Get initial values
         let position = {
@@ -117,8 +104,8 @@ export class TileCollision {
 
             // Position sprite at collision point
             position = {
-                x: position.x + Math.round(collision.delta.x) - Math.sign(delta.x),
-                y: position.y + Math.round(collision.delta.y) - Math.sign(delta.y)
+                x: position.x + Math.round(collision.delta.x),
+                y: position.y + Math.round(collision.delta.y)
             }
 
             objectScope.setVariable('x', new Constant(position.x))
@@ -207,8 +194,8 @@ export class TileCollision {
             // Get coordinate of tile strip
             const slope = delta.x * ((y - startY) / (targetY - startY))
 
-            const tileCoordinateX1 = layer.worldToTileXY(Math.round(spriteMeta.left + slope), y)
-            const tileCoordinateX2 = layer.worldToTileXY(Math.round(spriteMeta.right + slope), y)
+            const tileCoordinateX1 = layer.worldToTileXY(Math.round(spriteMeta.left + 1 + slope), y)
+            const tileCoordinateX2 = layer.worldToTileXY(Math.round(spriteMeta.right - 1 + slope), y)
 
             const distance = Math.sqrt((y - startY) * (y - startY) + slope * slope)
 
@@ -216,7 +203,7 @@ export class TileCollision {
             for (let tileX = tileCoordinateX1.x; tileX <= tileCoordinateX2.x; tileX++) {
                 const tile = tilemap.getTileAt(tileX, tileCoordinateX1.y)
                 if (tile !== undefined && tile !== null) {
-                    verticalCollision = {tile: tile, horizontal: false, vertical: true, distance: distance, delta: {x: slope, y: y - startY}}
+                    verticalCollision = {tile: tile, horizontal: false, vertical: true, distance: distance, delta: {x: slope, y: y - startY - Math.sign(delta.y)}}
                 }
             }
             if (verticalCollision !== undefined) {
@@ -244,8 +231,8 @@ export class TileCollision {
             // Get coordinate of tile strip
             const slope = delta.y * ((x - startX) / (targetX - startX))
 
-            const tileCoordinateY1 = layer.worldToTileXY(x, Math.round(spriteMeta.top + slope))
-            const tileCoordinateY2 = layer.worldToTileXY(x, Math.round(spriteMeta.bottom + slope))
+            const tileCoordinateY1 = layer.worldToTileXY(x, Math.round(spriteMeta.top + 1 + slope))
+            const tileCoordinateY2 = layer.worldToTileXY(x, Math.round(spriteMeta.bottom - 1 + slope))
 
             const distance = Math.sqrt((x - startX) * (x - startX) + slope * slope)
 
@@ -253,7 +240,7 @@ export class TileCollision {
             for (let tileY = tileCoordinateY1.y; tileY <= tileCoordinateY2.y; tileY++) {
                 const tile = tilemap.getTileAt(tileCoordinateY1.x, tileY)
                 if (tile !== undefined && tile !== null) {
-                    horizontalCollision = {tile: tile, horizontal: true, vertical: false, distance: distance, delta: {x: x - startX, y: slope}}
+                    horizontalCollision = {tile: tile, horizontal: true, vertical: false, distance: distance, delta: {x: x - startX - Math.sign(delta.x), y: slope}}
                 }
             }
             if (horizontalCollision !== undefined) {

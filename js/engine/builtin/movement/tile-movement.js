@@ -6,120 +6,131 @@ export class TileMovement {
     static *initialize(scope) {
         const objectScope = Builtin.resolveObjectScope(scope, 'TileMovement')
         objectScope.state = {
-            diagonalAllowed: true,
-            lastMoveTime: 0,
-            moves: {
-                left: false,
-                right: false,
-                up: false,
-                down: false
+            targetPosition: {
+                x: undefined,
+                y: undefined
+            },
+            diagonalAllowed: false,
+            canMove: {
+                x: true,
+                y: true
             }
         }
     }
 
     static *moveLeft(scope) {
-        TileMovement.prepareMove(scope, 'left')
+        TileMovement.move(scope, 'x', -1)
     }
 
     static *moveRight(scope) {
-        TileMovement.prepareMove(scope, 'right')
+        TileMovement.move(scope, 'x', 1)
     }
 
     static *moveUp(scope) {
-        TileMovement.prepareMove(scope, 'up')
+        TileMovement.move(scope, 'y', -1)
     }
 
     static *moveDown(scope) {
-        TileMovement.prepareMove(scope, 'down')
+        TileMovement.move(scope, 'y', 1)
     }
 
-    static *update(scope) {
+    static *postUpdate(scope) {
+        const objectScope = Builtin.resolveObjectScope(scope, 'TileMovement')
+
+        // Update velocity
+        const stepObject = Builtin.resolveVariable(scope, 'step').value()
+        const step = {
+            x: Builtin.resolveVariable(stepObject.scope, 'x').value(),
+            y: Builtin.resolveVariable(stepObject.scope, 'y').value()
+        }
+
+        const velocityObject = Builtin.resolveVariable(objectScope, 'velocity').value()
+
+        const velocity = {
+            x: Builtin.resolveVariable(velocityObject.scope, 'x').value(),
+            y: Builtin.resolveVariable(velocityObject.scope, 'y').value()
+        }
+
+        // Calculate target position
+        const screen = Builtin.resolveClass(objectScope, 'Screen')
+        const frameSpeed = Builtin.resolveVariable(screen.sharedScope, 'frameSpeed').value()
+
+        const position = {
+            x: Builtin.resolveVariable(objectScope, 'x').value(),
+            y: Builtin.resolveVariable(objectScope, 'y').value()
+        }
+
+        const finalPosition = {
+            x: position.x + (velocity.x * frameSpeed),
+            y: position.y + (velocity.y * frameSpeed)
+        }
 
         // Stop movement
-        const velocity = Builtin.resolveVariable(scope, 'velocity').value()
-        velocity.scope.setVariable('x', new Constant(0))
-        velocity.scope.setVariable('y', new Constant(0))
-
-        // Check time
-        if (!TileMovement.readyToMove(scope)) {
-            return
+        let stopHorizontally = false
+        stopHorizontally |= velocity.x > 0 && objectScope.state.targetPosition.x !== undefined && finalPosition.x >= objectScope.state.targetPosition.x
+        stopHorizontally |= velocity.x < 0 && objectScope.state.targetPosition.x !== undefined && finalPosition.x <= objectScope.state.targetPosition.x
+        if (stopHorizontally) {
+            finalPosition.x = objectScope.state.targetPosition.x
+            velocityObject.scope.setVariable('x', new Constant(0))
         }
 
-        // Move
-        const objectScope = Builtin.resolveObjectScope(scope, 'TileMovement')
-        if (objectScope.state.moves.left) {
-            TileMovement.move(scope, 'x', -1)
-            objectScope.state.moves.left = false
+        let stopVertically = false
+        stopVertically |= velocity.y > 0 && objectScope.state.targetPosition.y !== undefined && finalPosition.y >= objectScope.state.targetPosition.y
+        stopVertically |= velocity.y < 0 && objectScope.state.targetPosition.y !== undefined && finalPosition.y <= objectScope.state.targetPosition.y
+        if (stopVertically) {
+            finalPosition.y = objectScope.state.targetPosition.y
+            velocityObject.scope.setVariable('y', new Constant(0))
         }
-        if (objectScope.state.moves.right) {
-            TileMovement.move(scope, 'x', 1)
-            objectScope.state.moves.right = false
-        }
-        if (objectScope.state.moves.up) {
-            TileMovement.move(scope, 'y', -1)
-            objectScope.state.moves.up = false
-        }
-        if (objectScope.state.moves.down) {
-            TileMovement.move(scope, 'y', 1)
-            objectScope.state.moves.down = false
-        }
+
+        // Set new position
+        objectScope.setVariable('x', new Constant(finalPosition.x))
+        objectScope.setVariable('y', new Constant(finalPosition.y))
+
+        // Update can move state
+        objectScope.state.canMove.x = this.canMove(scope, 'x')
+        objectScope.state.canMove.y = this.canMove(scope, 'y')
     }
 
     static move(scope, variableName, direction) {
 
-        // Move
-        const velocity = Builtin.resolveVariable(scope, 'velocity').value()
+        // Check if we can move
+        const objectScope = Builtin.resolveObjectScope(scope, 'TileMovement')
 
-        const currentValue = Builtin.resolveVariable(velocity.scope, variableName).value()
-
-        const stepVector = Builtin.resolveVariable(scope, 'step').value()
-        const stepKey = Builtin.resolveVariable(stepVector.scope, variableName).value()
-
-        velocity.scope.setVariable(variableName, new Constant(currentValue + (stepKey * direction)))
-
-        // Update last move time
-        TileMovement.updateMoveTime(scope)
-    }
-
-    static prepareMove(scope, direction) {
-
-        // Check time
-        if (!TileMovement.canPrepareMove(scope)) {
+        if (!objectScope.state.canMove[variableName]) {
             return
         }
 
-        // Only move diagonally if allowed
-        const objectScope = Builtin.resolveObjectScope(scope, 'TileMovement')
-        if (!objectScope.state.diagonalAllowed) {
-            if (objectScope.state.moves.left || objectScope.state.moves.right || objectScope.state.moves.up || objectScope.state.moves.down) {
-                return
-            }
+        // Set target
+        const stepObject = Builtin.resolveVariable(scope, 'step').value()
+        const step = {
+            x: Builtin.resolveVariable(stepObject.scope, 'x').value(),
+            y: Builtin.resolveVariable(stepObject.scope, 'y').value()
         }
 
-        // Prepare move
-        objectScope.state.moves[direction] = true
+        objectScope.state.targetPosition[variableName] = (Math.round(Builtin.resolveVariable(scope, variableName).value() / step[variableName]) + direction) * step[variableName]
+
+        // Set velocity
+        const speed = Builtin.resolveVariable(scope, 'speed').value()
+
+        const velocityObject = Builtin.resolveVariable(scope, 'velocity').value()
+        velocityObject.scope.setVariable(variableName, new Constant(speed * direction))
+
+        // Prevent diagonal moves
+        if (!objectScope.state.diagonalAllowed) {
+            objectScope.state.canMove.x = false
+            objectScope.state.canMove.y = false
+        }
     }
 
-    static readyToMove(scope, variableName) {
+    static canMove(scope, variableName) {
         const objectScope = Builtin.resolveObjectScope(scope, 'TileMovement')
-        const timeSinceLastMove = Util.currentTimeMillis() - objectScope.state.lastMoveTime
 
-        const delay = Builtin.resolveVariable(scope, 'delay').value()
+        const velocityObject = Builtin.resolveVariable(scope, 'velocity').value()
+        const velocity = {
+            x: Builtin.resolveVariable(velocityObject.scope, 'x').value(),
+            y: Builtin.resolveVariable(velocityObject.scope, 'y').value()
+        }
 
-        return timeSinceLastMove >= delay * 1000
-    }
-
-    static canPrepareMove(scope) {
-        const objectScope = Builtin.resolveObjectScope(scope, 'TileMovement')
-        const timeSinceLastMove = Util.currentTimeMillis() - objectScope.state.lastMoveTime
-
-        const delay = Builtin.resolveVariable(scope, 'delay').value()
-
-        return timeSinceLastMove >= (delay * 1000) * 3 / 5
-    }
-
-    static updateMoveTime(scope) {
-        const objectScope = Builtin.resolveObjectScope(scope, 'TileMovement')
-        objectScope.state.lastMoveTime = Util.currentTimeMillis()
+        return velocity.x == 0 && velocity.y == 0
     }
 }
