@@ -10,7 +10,7 @@ export class TileMovement {
                 x: undefined,
                 y: undefined
             },
-            diagonalAllowed: false,
+            diagonalAllowed: true,
             canMove: {
                 x: true,
                 y: true

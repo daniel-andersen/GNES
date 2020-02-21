@@ -33,7 +33,7 @@ End
 Class GroundMonster Of Type Sprite
     Behaviour movement Of Type Movement(speed=5, velocity=New Vector(x=5, y=0))
     Behaviour Of Type Gravity
-    Behaviour Of Type TileCollision(action=CollisionAction.bounceHorizontal)
+    Behaviour Of Type TileCollision(action=CollisionAction.bounceHorizontal, layer=1)
 
     Property hero
 
@@ -54,7 +54,7 @@ End
 Class FlyingMonster Of Type Sprite
     Behaviour Of Type FollowHero(hero=hero)
     Behaviour movement Of Type Movement(maxSpeed=5)
-    Behaviour Of Type TileCollision
+    Behaviour Of Type TileCollision(layer=1)
 
     Property hero
 

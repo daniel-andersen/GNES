@@ -42,6 +42,9 @@ export class Sprite {
         }
         const filename = filenameConstant.value()
 
+        // Resolve layer
+        const layerIndex = Builtin.resolveParameter(scope, 'layer').value()
+
         // Resolve object scope
         const objectScope = Builtin.resolveObjectScope(scope, 'Sprite')
         if (objectScope === undefined) {
@@ -79,7 +82,15 @@ export class Sprite {
         objectScope.sprite.visible = false
 
         // Add to default group
-        Builtin.group(Builtin.Group.default).add(objectScope.sprite)
+        const world = Builtin.resolveClass(objectScope, 'World')
+        const tilemapObjectInstance = Builtin.resolveVariable(world.sharedScope, 'tilemap').value()
+        if (tilemapObjectInstance !== undefined && tilemapObjectInstance.type === Constant.Type.ObjectInstance) {
+            const spriteLayer = tilemapObjectInstance.scope.spriteLayers[Math.min(layerIndex, tilemapObjectInstance.scope.spriteLayers.length - 1)]
+            spriteLayer.add(objectScope.sprite)
+        }
+        else {
+            Builtin.group(Builtin.Group.default).add(objectScope.sprite)
+        }
 
         // Update size
         objectScope.setVariable('width', new Constant(objectScope.sprite.width))

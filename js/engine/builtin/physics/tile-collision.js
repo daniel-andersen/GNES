@@ -201,7 +201,7 @@ export class TileCollision {
 
             // Check collision in strip
             for (let tileX = tileCoordinateX1.x; tileX <= tileCoordinateX2.x; tileX++) {
-                const tile = tilemap.getTileAt(tileX, tileCoordinateX1.y)
+                const tile = tilemap.getTileAt(tileX, tileCoordinateX1.y, false, layer)
                 if (tile !== undefined && tile !== null) {
                     verticalCollision = {tile: tile, horizontal: false, vertical: true, distance: distance, delta: {x: slope, y: y - startY - Math.sign(delta.y)}}
                 }
@@ -238,7 +238,7 @@ export class TileCollision {
 
             // Check collision in strip
             for (let tileY = tileCoordinateY1.y; tileY <= tileCoordinateY2.y; tileY++) {
-                const tile = tilemap.getTileAt(tileCoordinateY1.x, tileY)
+                const tile = tilemap.getTileAt(tileCoordinateY1.x, tileY, false, layer)
                 if (tile !== undefined && tile !== null) {
                     horizontalCollision = {tile: tile, horizontal: true, vertical: false, distance: distance, delta: {x: x - startX - Math.sign(delta.x), y: slope}}
                 }

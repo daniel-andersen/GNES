@@ -11,7 +11,7 @@ End
 
 tilemap = Load Tilemap "./assets/tilemaps/rpg.json"
 
-hero = New Hero(x=64, y=64, anchor=New Vector(x=0.0, y=0.0))
+hero = New Hero(x=128, y=128, anchor=New Vector(x=0.0, y=0.0))
 
 While True Do
 End

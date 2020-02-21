@@ -16,8 +16,8 @@ Class Sprite
         Invoke update() In Sprite
     End
 
-    Function load(filename)
-        Invoke load(filename=filename) In Sprite
+    Function load(filename, layer=0)
+        Invoke load(filename=filename, layer=layer) In Sprite
     End
 
     Function show()

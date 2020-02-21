@@ -114,7 +114,7 @@ export default class Engine {
             this.start()
 
             return result
-            
+
         } catch (error) {
             console.log('Error running program', error)
             this.stop()
@@ -342,10 +342,7 @@ export default class Engine {
 
         // Add default groups
         window.game.phaser.groups = {
-            default: window.game.phaser.scene.add.group(),
-            sprites: window.game.phaser.scene.add.group(),
-            enemies: window.game.phaser.scene.add.group(),
-            loot: window.game.phaser.scene.add.group(),
+            default: window.game.phaser.scene.add.group()
         }
 
         // Add text

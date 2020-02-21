@@ -59,12 +59,18 @@ export class Tilemap {
         objectScope.tilesets = yield* Tilemap.loadTilesets(objectScope.tilemap, json)
 
         // Add tileset images
-        yield
-        objectScope.tilesetImages = yield* Tilemap.addTilesetImages(objectScope.tilemap, objectScope.tilesets)
+        objectScope.tilesetImages = Tilemap.addTilesetImages(objectScope.tilemap, objectScope.tilesets)
 
         // Add layers
-        yield
-        objectScope.layers = yield* Tilemap.addLayers(objectScope.tilemap, objectScope.tilesets, json)
+        objectScope.layers = Tilemap.addLayers(objectScope.tilemap, objectScope.tilesets, json)
+
+        // Add sprite layers
+        objectScope.spriteLayers = []
+        for (let layer of objectScope.layers) {
+            const group = Builtin.scene().add.group()
+            group.setDepth(layer._layerIndex + 1)
+            objectScope.spriteLayers.push(group)
+        }
 
         // Set width and height
         objectScope.setVariable('width', new Constant(objectScope.tilemap.widthInPixels))
@@ -133,7 +139,7 @@ export class Tilemap {
         return map.addTilesetImage(name, id)
     }
 
-    static *addTilesetImages(map, tilesets) {
+    static addTilesetImages(map, tilesets) {
         let tilesetImages = []
         for (let tileset of tilesets) {
             const tilesetImage = map.addTilesetImage(tileset.name, tileset.id)
@@ -142,7 +148,7 @@ export class Tilemap {
         return tilesetImages
     }
 
-    static *addLayers(map, tilesets, json) {
+    static addLayers(map, tilesets, json) {
         let layers = []
         for (let i = 0; i < json.layers.length; i++) {
             if (json.layers[i].type != 'tilelayer') {
@@ -152,6 +158,8 @@ export class Tilemap {
                 throw new Error('No tileset in tilemap')
             }
             const layer = map.createStaticLayer(i, tilesets[0].tileset, json.layers[i].x, json.layers[i].y)
+            layer._layerIndex = i * 100
+            layer.setDepth(layer._layerIndex)
             layers.push(layer)
         }
         return layers
