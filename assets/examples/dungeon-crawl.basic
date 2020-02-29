@@ -1,5 +1,6 @@
 Class Hero Of Type Sprite
     Behaviour Of Type Joystick
+    Behaviour Of Type Camera
     Behaviour Of Type TileMovement(step=New Vector(x=64, y=64))
     Behaviour Of Type TileCollision(layer=1)
 

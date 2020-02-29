@@ -1189,13 +1189,17 @@ export class WaitForUpdateNode extends StatementNode {
 }
 
 export class LoadSpriteNode extends ExpressionNode {
-    constructor(tokens=[], expressionNode) {
+    constructor(tokens=[], filenameExpressionNode, layerIndexExpressionNode) {
         super(tokens)
-        this.expressionNode = expressionNode
+        this.filenameExpressionNode = filenameExpressionNode
+        this.layerIndexExpressionNode = layerIndexExpressionNode
         this.validAsStatement = true
 
         this.newObjectNode = new NewObjectNode(undefined, 'Sprite', new ParameterListNode(this.tokens, []))
-        this.loadNode = new FunctionCallNode(this.tokens, 'load', new ParameterListNode(this.tokens, [new ParameterAssignmentNode(expressionNode.tokens, 'filename', this.expressionNode)]))
+        this.loadNode = new FunctionCallNode(this.tokens, 'load', new ParameterListNode(this.tokens, [
+            new ParameterAssignmentNode(filenameExpressionNode.tokens, 'filename', this.filenameExpressionNode),
+            //new ParameterAssignmentNode(layerIndexExpressionNode.tokens, 'layer', this.layerIndexExpressionNode)
+        ]))
     }
 
     *evaluate(scope) {

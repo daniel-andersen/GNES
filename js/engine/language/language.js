@@ -137,9 +137,17 @@ export default class Language {
                 match: [
                     {type: 'token', token: 'Load'},
                     {type: 'token', token: 'Sprite'},
-                    {type: 'expression', id: 'expression'}
+                    {type: 'expression', id: 'filenameExpression'/*, endTokens: ['In']*/},
+                    /*{type: 'group', required: false, group: {
+                        match: [
+                            {type: 'token', token: 'In'},
+                            {type: 'token', token: 'Layer'},
+                            {type: 'expression', id: 'layerIndexExpression'}
+                        ],
+                        node: (tokens, nodes, sourceTree) => new Node.GroupNode(tokens, nodes)
+                    }},*/
                 ],
-                node: (tokens, nodes, sourceTree) => new Node.LoadSpriteNode(tokens, sourceTree.getNodeWithId(nodes, 'expression'))
+                node: (tokens, nodes, sourceTree) => new Node.LoadSpriteNode(tokens, sourceTree.getNodeWithId(nodes, 'filenameExpression'), sourceTree.getNodeWithId(nodes, 'layerIndexExpression'))
             },
             {
                 name: 'LoadTilemap',
