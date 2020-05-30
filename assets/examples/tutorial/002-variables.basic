@@ -1,0 +1,5 @@
+name = "Mario"
+Print name
+
+firstname = "Super"
+Print firstname + " " + name

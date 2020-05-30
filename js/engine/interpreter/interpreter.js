@@ -16,6 +16,8 @@ export default class Interpreter {
         this.stopped = true
         this.paused = false
 
+        this.stopUpdateDelayCount = 2
+
         this.programExecutions = []
         this.updateExecutions = []
 
@@ -56,6 +58,9 @@ export default class Interpreter {
             return
         }
         this.updateExecutions = executions
+        if (this.programExecutions.length === 0) {
+            this.stopUpdateDelayCount--
+        }
     }
 
     async run() {
@@ -85,7 +90,7 @@ export default class Interpreter {
             this.step()
 
             // Check if all program executors are stopped
-            this.stopped = this.programExecutions.length === 0
+            this.stopped = this.programExecutions.length === 0 && this.stopUpdateDelayCount === 0
 
             // Pause execution a while (if not in update mode)
             if (Util.currentTimeMillis() > nextPauseTime && this.updateExecutions.length == 0) {

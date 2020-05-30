@@ -1,0 +1,6 @@
+mario = Load Sprite "./assets/sprites/mario-hero.png"
+
+mario.x = 150
+mario.y = 350
+
+Show Sprite mario

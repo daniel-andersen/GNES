@@ -1,0 +1,9 @@
+For number From 1 To 10 Do
+    Print number
+End
+
+Print
+
+For number From 1 To 10 Step By 2 Do
+    Print number
+End
