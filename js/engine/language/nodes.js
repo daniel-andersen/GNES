@@ -319,6 +319,8 @@ export class ForFromToNode extends StatementNode {
 
             // Step variable
             variable.value = Arithmetics.plus(variable.value, stepResult.value)
+
+            loopScope.setVariable(variable.name, variable.value)
         }
     }
 }

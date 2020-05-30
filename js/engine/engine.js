@@ -332,6 +332,10 @@ export default class Engine {
 
         await promise
 
+        // Allow cross origin loading
+        console.log(window.game.phaser.scene)
+        window.game.phaser.scene.load.crossOrigin = 'Anonymous'
+
         // Add config
         window.game.phaser.config = {
             size: {
