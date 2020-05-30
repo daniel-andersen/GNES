@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const editor = new Editor(engine)
     editor.load([
+        './assets/examples/empty.basic',
         './assets/examples/tutorial/001-print.basic',
         './assets/examples/tutorial/002-variables.basic',
         './assets/examples/tutorial/003-for-loop.basic',
