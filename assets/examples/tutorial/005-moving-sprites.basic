@@ -1,0 +1,20 @@
+mario = Load Sprite "./assets/sprites/mario.png"
+Move Sprite mario To 100, 500
+Show Sprite mario
+
+luigi = Load Sprite "./assets/sprites/luigi.png"
+Move Sprite luigi To 1000, 500
+Show Sprite luigi
+
+Function moveMario
+    Move Sprite mario To 500, 500 In 1.0
+    Move Sprite mario To 800, 1000 In 1.0
+End
+
+Function moveLuigi
+    Move Sprite luigi To 500, 500 In 1.0
+    Move Sprite luigi To 300, -100 In 1.0
+End
+
+Run moveMario()
+Run moveLuigi()

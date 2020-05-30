@@ -656,6 +656,27 @@ export default class Language {
                 node: (tokens, nodes, sourceTree) => new Node.HideSpriteNode(tokens, sourceTree.getNodeWithId(nodes, 'expression'))
             },
             {
+                name: 'MoveSprite',
+                match: [
+                    {type: 'token', token: 'Move'},
+                    {type: 'token', token: 'Sprite'},
+                    {type: 'expression', id: 'sprite', endTokens: ['To']},
+                    {type: 'token', token: 'To'},
+                    {type: 'expression', id: 'x', endTokens: [',']},
+                    {type: 'token', token: ','},
+                    {type: 'expression', id: 'y', endTokens: ['In']},
+                    {type: 'group', required: false, group: {
+                        match: [
+                            {type: 'token', token: 'In'},
+                            {type: 'expression', id: 'time'},
+                        ],
+                        node: (tokens, nodes, sourceTree) => new Node.GroupNode(tokens, nodes)
+                    }},
+                    {type: 'token', code: this.tokenType.EOL}
+                ],
+                node: (tokens, nodes, sourceTree) => new Node.MoveSpriteNode(tokens, sourceTree.getNodeWithId(nodes, 'sprite'), sourceTree.getNodeWithId(nodes, 'x'), sourceTree.getNodeWithId(nodes, 'y'), sourceTree.getNodeWithId(nodes, 'time'))
+            },
+            {
                 name: 'Assert',
                 match: [
                     {type: 'token', token: 'Assert'},

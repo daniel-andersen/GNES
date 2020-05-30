@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
         './assets/examples/tutorial/002-variables.basic',
         './assets/examples/tutorial/003-for-loop.basic',
         './assets/examples/tutorial/004-sprites.basic',
+        './assets/examples/tutorial/005-moving-sprites.basic',
         './assets/examples/mario.basic',
         './assets/examples/dungeon-crawl.basic',
     ])

@@ -1,6 +1,7 @@
 import { Builtin } from '../builtin'
 import { Error } from '../../model/error'
 import { Constant, Variable } from '../../model/variable'
+import { Scope } from '../../model/scope'
 import Util from '../../util/util'
 
 export class Sprite {
@@ -117,6 +118,72 @@ export class Sprite {
         }
 
         scope.setVariable('visible', new Constant(false))
+    }
+
+    static *move(scope) {
+        const objectScope = Builtin.resolveObjectScope(scope, 'Sprite')
+
+        const sprite = objectScope.sprite
+        if (sprite === undefined) {
+            return
+        }
+
+        // Resolve x coordinate
+        const xConstant = Builtin.resolveParameter(scope, 'x')
+        if (xConstant === undefined) {
+            throw new Error('"x" not given as parameter.')
+        }
+        const x = xConstant.value()
+
+        // Resolve y coordinate
+        const yConstant = Builtin.resolveParameter(scope, 'y')
+        if (yConstant === undefined) {
+            throw new Error('"y" not given as parameter.')
+        }
+        const y = yConstant.value()
+
+        // Resolve time
+        const timeConstant = Builtin.resolveParameter(scope, 'time')
+        const time = timeConstant !== undefined ? timeConstant.value() : undefined
+
+        // Animate move
+        if (time > 0) {
+            const startTime = Util.currentTime()
+            const endTime = startTime + time
+
+            const startPosition = {
+                x: Builtin.resolveVariable(objectScope, 'x').value(),
+                y: Builtin.resolveVariable(objectScope, 'y').value()
+            }
+
+            while (Util.currentTime() < endTime) {
+
+                // Move to delta position
+                const delta = (Util.currentTime() - startTime) / (endTime - startTime)
+
+                objectScope.setVariable('x', new Constant(startPosition.x + ((x - startPosition.x) * delta)))
+                objectScope.setVariable('y', new Constant(startPosition.y + ((y - startPosition.y) * delta)))
+
+                Sprite.updatePosition(objectScope)
+
+                // Register update callback
+                let ready = false
+                scope.resolveScope(Scope.Type.Global).onUpdateCallbacks.push(() => {
+                    ready = true
+                })
+
+                // Wait for update callback
+                while (!ready) {
+                    yield
+                }
+            }
+        }
+
+        // Move to final position
+        objectScope.setVariable('x', new Constant(x))
+        objectScope.setVariable('y', new Constant(y))
+
+        Sprite.updatePosition(objectScope)
     }
 
     static updatePosition(scope) {

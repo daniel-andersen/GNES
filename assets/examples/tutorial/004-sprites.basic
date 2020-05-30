@@ -1,6 +1,5 @@
-mario = Load Sprite "./assets/sprites/mario-hero.png"
-
-mario.x = 150
-mario.y = 350
-
+mario = Load Sprite "./assets/sprites/mario.png"
+Move Sprite mario To 500, 200
 Show Sprite mario
+
+Move Sprite mario To 200, 500 In 2.0

@@ -1271,6 +1271,40 @@ export class HideSpriteNode extends StatementNode {
     }
 }
 
+export class MoveSpriteNode extends StatementNode {
+    constructor(tokens=[], spriteExpressionNode, xExpressionNode, yExpressionNode, timeExpressionNode) {
+        super(tokens)
+        this.spriteExpressionNode = spriteExpressionNode
+        this.xExpressionNode = xExpressionNode
+        this.yExpressionNode = yExpressionNode
+        this.timeExpressionNode = timeExpressionNode
+
+        let parameters = []
+        parameters.push(new ParameterAssignmentNode(this.xExpressionNode.tokens, 'x', this.xExpressionNode))
+        parameters.push(new ParameterAssignmentNode(this.yExpressionNode.tokens, 'y', this.yExpressionNode))
+        if (this.timeExpressionNode !== undefined) {
+            parameters.push(new ParameterAssignmentNode(this.timeExpressionNode.tokens, 'time', this.timeExpressionNode))
+        }
+
+        this.moveNode = new FunctionCallNode(this.tokens, 'move', new ParameterListNode(this.tokens, parameters))
+    }
+
+    *evaluate(scope) {
+
+        // Evaluate sprite expression
+        yield
+        const result = yield* this.spriteExpressionNode.evaluate(scope)
+        if (!(result.value instanceof Constant) || result.value.type !== Constant.Type.ObjectInstance) {
+            throw {error: 'Expected object', node: this.spriteExpressionNode}
+        }
+        const spriteScope = result.value.value().scope
+
+        // Evaluate function call to sprite.move()
+        yield
+        yield* this.moveNode.evaluate(spriteScope, scope)
+    }
+}
+
 export class LoadTilemapNode extends ExpressionNode {
     constructor(tokens=[], tilemapNode) {
         super(tokens)

@@ -3,6 +3,10 @@ export default class Util {
         return new Date().getTime()
     }
 
+    static currentTime() {
+        return this.currentTimeMillis() / 1000.0
+    }
+
     static sleep(ms) {
       return new Promise(resolve => setTimeout(resolve, ms))
     }

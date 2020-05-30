@@ -27,4 +27,8 @@ Class Sprite
     Function hide()
         Invoke hide() In Sprite
     End
+
+    Function move(x, y, time=0)
+        Invoke move(x=x, y=y, time=time) In Sprite
+    End
 End
