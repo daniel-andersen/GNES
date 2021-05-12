@@ -23,7 +23,7 @@
         "babel-loader": "^8.0.6",
         "codemirror": "^5.51.0",
         "phaser": "^3.22.0",
-        "postcss": "^7.0.26",
+        "postcss": "^8.2.10",
         "worker-loader": "^2.0.0"
     },
     "postcss": {
